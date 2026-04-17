@@ -1,5 +1,5 @@
 # Etap 1: Budowanie aplikacji (używamy Maven z Javą 21)
-FROM maven:4.0.0-eclipse-temurin-21 AS build
+FROM maven:3.9.14-eclipse-temurin-21 AS build
 COPY . .
 RUN mvn clean package -DskipTests
 
