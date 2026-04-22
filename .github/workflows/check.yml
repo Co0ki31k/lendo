@@ -26,6 +26,11 @@ jobs:
 
       # 3. Zbuduj backend i uruchom testy
       - name: Build with Maven
+        env:
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          CLOUDINARY_URL: ${{ secrets.CLOUDINARY_URL }}
+          SPRING_DATASOURCE_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
         run: |
           cd backend
           chmod +x mvnw
