@@ -22,9 +22,6 @@ spring:
             scope:
               - email
               - profile
-          github:
-            client-id: ${GITHUB_CLIENT_ID}
-            client-secret: ${GITHUB_CLIENT_SECRET}
     jwt:
       secret-key: ${JWT_SECRET_KEY}
       expiration: 86400000
