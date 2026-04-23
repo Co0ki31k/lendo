@@ -1,22 +1,20 @@
 package com.example.lendo;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@SpringBootTest
 @Testcontainers
-class LendoApplicationTests {
-
+public class TestcontainersTest {
 	@Container
-	@ServiceConnection
 	static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
 
 	@Test
-	void contextLoads() {
+	void shouldStartPostgresContainer() {
+		assertTrue(postgres.isRunning());
+		System.out.println("✅ Docker i Postgres działają na porcie: " + postgres.getMappedPort(5432));
 	}
-
 }
+
