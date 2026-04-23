@@ -1,0 +1,6 @@
+spring:
+  security:
+    jwt:
+      secret-key: test-jwt-secret-key
+    refresh-token:
+      expiration: 604800000
