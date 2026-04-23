@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
@@ -36,8 +37,9 @@ public class User{
     @Column(nullable = false)
     private String provider;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String role;
+    private UserRole role;
 
     @Column(nullable = false)
     private boolean enabled = true;
