@@ -2,5 +2,6 @@ spring:
   security:
     jwt:
       secret-key: test-jwt-secret-key
+      expiration: 900000
     refresh-token:
       expiration: 604800000
