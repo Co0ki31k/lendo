@@ -48,8 +48,9 @@ public class GlobalExceptionHandler {
 
     // 6. Ogólny błąd serwera (fallback)
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Object> handleGeneralException(Exception ex) {
-        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Wystąpił nieoczekiwany błąd serwera");
+    public ResponseEntity<?> handleAllExceptions(Exception e) {
+        e.printStackTrace();
+        return ResponseEntity.status(500).body("Błąd: " + e.getMessage());
     }
 
     // Pomocnicza metoda do budowania spójnego JSONa
