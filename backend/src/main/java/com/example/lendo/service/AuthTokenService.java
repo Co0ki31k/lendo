@@ -87,6 +87,27 @@ public class AuthTokenService {
         refreshTokenService.deleteUserId(userId);
     }
 
+    @Transactional
+    public AuthResponse generateTokensForOAuth2User(String email, String fullName) {
+        User user = userRepository.findByEmail(email)
+                .orElseGet(() -> {
+                    User newUser = User.builder()
+                            .email(email)
+                            .fullName(fullName)
+                            .provider("GOOGLE")
+                            .role(UserRole.ROLE_USER)
+                            .enabled(true)
+                            .password(null)
+                            .build();
+                    return userRepository.save(newUser);
+                });
+
+        String accessToken = jwtService.generateAccessToken(user);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
+
+        return buildAuthResponse(user, accessToken, refreshToken.getToken());
+    }
+
     private AuthResponse buildAuthResponse(User user, String accessToken, String refreshToken) {
         return AuthResponse.of(user, accessToken, refreshToken, jwtExpirationMs/1000, "Bearer");
     }
