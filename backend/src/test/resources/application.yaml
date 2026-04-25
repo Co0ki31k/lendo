@@ -5,3 +5,12 @@ spring:
       expiration: 900000
     refresh-token:
       expiration: 604800000
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: test-id
+            client-secret: test-secret
+app:
+  frontend:
+    url: http://localhost:3000
