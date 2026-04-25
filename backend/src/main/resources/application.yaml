@@ -29,3 +29,6 @@ spring:
       expiration: 900000
     refresh-token:
       expiration: 604800000
+app:
+  frontend:
+    url: ${FRONTEND_URL}
