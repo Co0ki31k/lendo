@@ -29,6 +29,13 @@ spring:
       expiration: 900000
     refresh-token:
       expiration: 604800000
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
 app:
   frontend:
     url: ${FRONTEND_URL}
