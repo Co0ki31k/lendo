@@ -1,4 +1,7 @@
 spring:
+  jpa:
+    hibernate:
+      ddl-auto: none
   security:
     jwt:
       secret-key: test-jwt-secret-key
