@@ -5,7 +5,6 @@ import com.example.lendo.dto.LoginRequest;
 import com.example.lendo.dto.RegisterRequest;
 import com.example.lendo.model.RefreshToken;
 import com.example.lendo.model.User;
-import com.example.lendo.model.UserRole;
 import com.example.lendo.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -54,11 +53,13 @@ public class AuthTokenService {
 
         User user = User.builder()
                 .email(request.email())
-                .password(passwordEncoder.encode(request.password()))
-                .fullName(request.fullName())
-                .provider("local")
-                .role(UserRole.ROLE_USER)
-                .enabled(true)
+                .passwordHash(passwordEncoder.encode(request.password()))
+                .firstName(request.firstName())
+                .lastName(request.lastName())
+                .phoneNumber(request.phoneNumber())
+                .provider("LOCAL")
+                .roleId(2)
+                .isActive(true)
                 .build();
 
         user = userRepository.save(user);
@@ -91,13 +92,18 @@ public class AuthTokenService {
     public AuthResponse generateTokensForOAuth2User(String email, String fullName) {
         User user = userRepository.findByEmail(email)
                 .orElseGet(() -> {
+                    String[] nameParts = fullName != null ? fullName.trim().split("\\s+", 2) : new String[0];
+                    String firstName = nameParts.length > 0 ? nameParts[0] : null;
+                    String lastName = nameParts.length > 1 ? nameParts[1] : null;
+
                     User newUser = User.builder()
                             .email(email)
-                            .fullName(fullName)
+                            .firstName(firstName)
+                            .lastName(lastName)
                             .provider("GOOGLE")
-                            .role(UserRole.ROLE_USER)
-                            .enabled(true)
-                            .password(null)
+                            .roleId(2)
+                            .isActive(true)
+                            .passwordHash(null)
                             .build();
                     return userRepository.save(newUser);
                 });
@@ -112,6 +118,3 @@ public class AuthTokenService {
         return AuthResponse.of(user, accessToken, refreshToken, jwtExpirationMs/1000, "Bearer");
     }
 }
-
-
-

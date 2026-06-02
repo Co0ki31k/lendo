@@ -28,10 +28,11 @@ public record AuthResponse(
                 new UserInfo(
                         user.getId(),
                         user.getEmail(),
-                        user.getFullName(),
-                        user.getAvatarUrl(),
-                        user.getRole().name(),
-                        user.isEnabled()
+                        user.getFirstName(),
+                        user.getLastName(),
+                        user.getPhoneNumber(),
+                        user.getRoleName(),
+                        user.isActive()
                 )
         );
     }
@@ -39,9 +40,10 @@ public record AuthResponse(
     public record UserInfo(
             UUID id,
             String email,
-            String fullName,
-            String avatarUrl,
+            String firstName,
+            String lastName,
+            String phoneNumber,
             String role,
-            Boolean enabled
+            Boolean isActive
     ) {}
 }

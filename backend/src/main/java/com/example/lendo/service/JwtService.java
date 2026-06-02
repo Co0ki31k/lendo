@@ -28,7 +28,7 @@ public class JwtService {
     private Long jwtExpirationMs;
 
     public String generateAccessToken(User user) {
-        return generateToken(Map.of("role", user.getRole().name()), user.getEmail());
+        return generateToken(Map.of("role", user.getRoleName()), user.getEmail());
     }
 
     public String extractUsername(String token) {
@@ -96,4 +96,3 @@ public class JwtService {
         }
     }
 }
-

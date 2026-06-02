@@ -5,7 +5,6 @@ import com.example.lendo.dto.RegisterRequest;
 import com.example.lendo.dto.AuthResponse;
 import com.example.lendo.model.RefreshToken;
 import com.example.lendo.model.User;
-import com.example.lendo.model.UserRole;
 import com.example.lendo.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -60,10 +59,11 @@ class AuthTokenServiceTest {
         testUser = User.builder()
                 .id(UUID.randomUUID())
                 .email("test@example.com")
-                .password("hashedPassword123")
-                .fullName("Test User")
-                .role(UserRole.ROLE_USER)
-                .enabled(true)
+                .passwordHash("hashedPassword123")
+                .firstName("Test")
+                .lastName("User")
+                .roleId(2)
+                .isActive(true)
                 .provider("local")
                 .build();
 
@@ -92,7 +92,8 @@ class AuthTokenServiceTest {
         assertEquals("refresh-token-123", response.refreshToken());
         assertEquals("Bearer", response.tokenType());
         assertEquals("test@example.com", response.user().email());
-        assertEquals("Test User", response.user().fullName());
+        assertEquals("Test", response.user().firstName());
+        assertEquals("User", response.user().lastName());
     }
 
     @Test
@@ -117,7 +118,7 @@ class AuthTokenServiceTest {
 
     @Test
     void shouldRegisterSuccessfully() {
-        RegisterRequest request = new RegisterRequest("newuser@example.com", "password123", "New User");
+        RegisterRequest request = new RegisterRequest("newuser@example.com", "password123", "New", "User", null);
 
         when(userRepository.existsByEmail("newuser@example.com")).thenReturn(false);
         when(passwordEncoder.encode("password123")).thenReturn("hashedPassword123");
@@ -134,7 +135,7 @@ class AuthTokenServiceTest {
 
     @Test
     void shouldThrowExceptionWhenEmailAlreadyExists() {
-        RegisterRequest request = new RegisterRequest("existing@example.com", "password123", "Existing User");
+        RegisterRequest request = new RegisterRequest("existing@example.com", "password123", "Existing", "User", null);
 
         when(userRepository.existsByEmail("existing@example.com")).thenReturn(true);
 

@@ -13,8 +13,14 @@ public record RegisterRequest(
         @Size(min = 6, message = "Hasło powinno mieć co najmniej 6 znaków")
         String password,
 
-        @NotBlank(message = "Nick jest wymagane")
-        @Size(min = 2, max = 100, message = "Imię i nazwisko powinno mieć od 2 do 100 znaków")
-        String fullName
-) {}
+        @NotBlank(message = "Imię jest wymagane")
+        @Size(min = 2, max = 100, message = "Imię powinno mieć od 2 do 100 znaków")
+        String firstName,
 
+        @NotBlank(message = "Nazwisko jest wymagane")
+        @Size(min = 2, max = 100, message = "Nazwisko powinno mieć od 2 do 100 znaków")
+        String lastName,
+
+        @Size(max = 20, message = "Telefon powinien mieć maksymalnie 20 znaków")
+        String phoneNumber
+) {}

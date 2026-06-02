@@ -45,9 +45,9 @@ class JwtAuthenticationFilterTest {
         user = User.builder()
                 .id(java.util.UUID.randomUUID())
                 .email("user@example.com")
-                .password("password")
-                .role(com.example.lendo.model.UserRole.ROLE_USER)
-                .enabled(true)
+                .passwordHash("password")
+                .roleId(2)
+                .isActive(true)
                 .provider("local")
                 .build();
     }

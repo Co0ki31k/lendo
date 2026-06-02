@@ -1,8 +1,6 @@
 package com.example.lendo.service;
 
 import com.example.lendo.model.User;
-import com.example.lendo.model.UserRole;
-import com.nimbusds.jwt.proc.ExpiredJWTException;
 import io.jsonwebtoken.ExpiredJwtException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,8 +26,8 @@ class JwtServiceTest {
         User user = User.builder()
                 .id(UUID.randomUUID())
                 .email("mateusz@example.com")
-                .role(UserRole.ROLE_USER)
-                .enabled(true)
+                .roleId(2)
+                .isActive(true)
                 .provider("google")
                 .build();
 
@@ -47,7 +45,7 @@ class JwtServiceTest {
 
         User user = User.builder()
                 .email("test@lendo.pl")
-                .role(UserRole.ROLE_USER)
+                .roleId(2)
                 .build();
         String token = jwtService.generateAccessToken(user);
 
@@ -58,14 +56,13 @@ class JwtServiceTest {
     void shouldExtractSpecificClaims() {
         User user = User.builder()
                 .email("mateusz@example.com")
-                .role(UserRole.ROLE_USER)
+                .roleId(2)
                 .build();
 
         String token = jwtService.generateAccessToken(user);
 
         String role = jwtService.extractClaim(token, claims -> claims.get("role", String.class));
 
-        assertEquals("ROLE_USER", role);
+        assertEquals("CLIENT", role);
     }
 }
-

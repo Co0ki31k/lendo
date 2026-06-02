@@ -30,11 +30,20 @@ public class User implements UserDetails {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column
+    @Column(name = "password")
     private String password;
 
-    @Column(name = "full_name")
-    private String fullName;
+    @Column(name = "password_hash")
+    private String passwordHash;
+
+    @Column(name = "first_name")
+    private String firstName;
+
+    @Column(name = "last_name")
+    private String lastName;
+
+    @Column(name = "phone_number")
+    private String phoneNumber;
 
     @Column(name = "avatar_url")
     private String avatarUrl;
@@ -42,12 +51,11 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String provider;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private UserRole role;
+    @Column(name = "role_id", nullable = false)
+    private Integer roleId;
 
-    @Column(nullable = false)
-    private boolean enabled = true;
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive = true;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
@@ -61,7 +69,7 @@ public class User implements UserDetails {
     @Override
     @NonNull
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(role.name()));
+        return List.of(new SimpleGrantedAuthority("ROLE_" + getRoleName()));
     }
 
     @Override
@@ -73,11 +81,26 @@ public class User implements UserDetails {
     @Override
     @NonNull
     public String getPassword() {
+        if (passwordHash != null && !passwordHash.isBlank()) {
+            return passwordHash;
+        }
         return password != null ? password : "";
     }
 
     @Override
     public boolean isEnabled() {
-        return enabled;
+        return isActive;
+    }
+
+    public String getRoleName() {
+        if (roleId == null) {
+            return "GUEST";
+        }
+        return switch (roleId) {
+            case 4 -> "ADMIN";
+            case 3 -> "MANAGER";
+            case 2 -> "CLIENT";
+            default -> "GUEST";
+        };
     }
 }
