@@ -32,9 +32,6 @@ public class User implements UserDetails {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(name = "password")
-    private String password;
-
     @Column(name = "password_hash")
     private String passwordHash;
 
@@ -53,8 +50,9 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String provider;
 
-    @Column(name = "role_id", nullable = false)
-    private Integer roleId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "role_id", nullable = false)
+    private Role role;
 
     @Column(name = "is_active", nullable = false)
     private boolean isActive = true;
@@ -103,10 +101,7 @@ public class User implements UserDetails {
     @Override
     @NonNull
     public String getPassword() {
-        if (passwordHash != null && !passwordHash.isBlank()) {
-            return passwordHash;
-        }
-        return password != null ? password : "";
+        return passwordHash != null ? passwordHash : "";
     }
 
     @Override
@@ -115,14 +110,9 @@ public class User implements UserDetails {
     }
 
     public String getRoleName() {
-        if (roleId == null) {
+        if (role == null || role.getName() == null || role.getName().isBlank()) {
             return "GUEST";
         }
-        return switch (roleId) {
-            case 4 -> "ADMIN";
-            case 3 -> "MANAGER";
-            case 2 -> "CLIENT";
-            default -> "GUEST";
-        };
+        return role.getName();
     }
 }

@@ -3,8 +3,10 @@ package com.example.lendo.service;
 import com.example.lendo.dto.AuthResponse;
 import com.example.lendo.dto.LoginRequest;
 import com.example.lendo.dto.RegisterRequest;
+import com.example.lendo.model.Role;
 import com.example.lendo.model.RefreshToken;
 import com.example.lendo.model.User;
+import com.example.lendo.repository.RoleRepository;
 import com.example.lendo.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +30,7 @@ public class AuthTokenService {
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
@@ -58,7 +61,7 @@ public class AuthTokenService {
                 .lastName(request.lastName())
                 .phoneNumber(request.phoneNumber())
                 .provider("LOCAL")
-                .roleId(2)
+                .role(resolveDefaultRole())
                 .isActive(true)
                 .build();
 
@@ -101,7 +104,7 @@ public class AuthTokenService {
                             .firstName(firstName)
                             .lastName(lastName)
                             .provider("GOOGLE")
-                            .roleId(2)
+                            .role(resolveDefaultRole())
                             .isActive(true)
                             .passwordHash(null)
                             .build();
@@ -116,5 +119,10 @@ public class AuthTokenService {
 
     private AuthResponse buildAuthResponse(User user, String accessToken, String refreshToken) {
         return AuthResponse.of(user, accessToken, refreshToken, jwtExpirationMs/1000, "Bearer");
+    }
+
+    private Role resolveDefaultRole() {
+        return roleRepository.findByName("CLIENT")
+                .orElseThrow(() -> new IllegalStateException("Default role CLIENT is missing"));
     }
 }
