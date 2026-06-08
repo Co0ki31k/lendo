@@ -1,10 +1,13 @@
-# Etap 1: Budowanie aplikacji (używamy Maven z Javą 21)
+# Etap 1: Budowanie aplikacji
 FROM maven:3.9.14-eclipse-temurin-21 AS build
-COPY . .
-RUN mvn clean package -DskipTests
+WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+RUN mvn clean package -Dmaven.test.skip=true
 
-# Etap 2: Uruchamianie aplikacji (używamy lekkiego obrazu Javy 21)
+# Etap 2: Uruchamianie aplikacji
 FROM eclipse-temurin:21-jre-jammy
-COPY --from=build /target/*.jar app.jar
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
