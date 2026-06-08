@@ -1,6 +1,7 @@
 package com.example.lendo.security;
 
 import com.example.lendo.model.User;
+import com.example.lendo.model.Role;
 import com.example.lendo.service.CustomUserDetailsService;
 import com.example.lendo.service.JwtService;
 import jakarta.servlet.FilterChain;
@@ -46,7 +47,7 @@ class JwtAuthenticationFilterTest {
                 .id(java.util.UUID.randomUUID())
                 .email("user@example.com")
                 .passwordHash("password")
-                .roleId(2)
+                .role(Role.builder().id(2).name("CLIENT").build())
                 .isActive(true)
                 .provider("local")
                 .build();

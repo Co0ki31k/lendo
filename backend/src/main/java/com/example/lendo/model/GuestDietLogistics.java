@@ -36,15 +36,19 @@ public class GuestDietLogistics {
     private Booking booking;
 
     @Column(name = "menu_standard_count", nullable = false)
+    @Builder.Default
     private Integer menuStandardCount = 0;
 
     @Column(name = "menu_vegetarian_count", nullable = false)
+    @Builder.Default
     private Integer menuVegetarianCount = 0;
 
     @Column(name = "menu_vegan_count", nullable = false)
+    @Builder.Default
     private Integer menuVeganCount = 0;
 
     @Column(name = "menu_gluten_free_count", nullable = false)
+    @Builder.Default
     private Integer menuGlutenFreeCount = 0;
 
     @Lob

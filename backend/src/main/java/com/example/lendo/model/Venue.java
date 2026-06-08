@@ -56,18 +56,22 @@ public class Venue {
     private Integer capacityMax;
 
     @Column(name = "has_accommodation", nullable = false)
+    @Builder.Default
     private boolean hasAccommodation = false;
 
     @Column(name = "accommodation_places", nullable = false)
+    @Builder.Default
     private Integer accommodationPlaces = 0;
 
     @Column(name = "base_price_per_guest", nullable = false, precision = 10, scale = 2)
     private BigDecimal basePricePerGuest;
 
     @Column(name = "no_corkage_fee", nullable = false)
+    @Builder.Default
     private boolean noCorkageFee = false;
 
     @Column(name = "civil_wedding_garden", nullable = false)
+    @Builder.Default
     private boolean civilWeddingGarden = false;
 
     @CreationTimestamp
@@ -75,6 +79,7 @@ public class Venue {
     private LocalDateTime createdAt;
 
     @Column(name = "is_verified", nullable = false)
+    @Builder.Default
     private boolean verified = false;
 
     @OneToMany(mappedBy = "venue", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)

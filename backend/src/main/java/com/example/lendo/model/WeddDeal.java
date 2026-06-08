@@ -50,6 +50,7 @@ public class WeddDeal {
     private String description;
 
     @Column(name = "is_active", nullable = false)
+    @Builder.Default
     private boolean active = true;
 }
 

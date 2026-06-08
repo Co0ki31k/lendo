@@ -40,9 +40,11 @@ public class Contract {
     private String pdfFilePath;
 
     @Column(name = "client_signed", nullable = false)
+    @Builder.Default
     private boolean clientSigned = false;
 
     @Column(name = "manager_signed", nullable = false)
+    @Builder.Default
     private boolean managerSigned = false;
 
     @Column(name = "signed_at")

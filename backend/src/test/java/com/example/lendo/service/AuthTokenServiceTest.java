@@ -1,10 +1,12 @@
 package com.example.lendo.service;
 
+import com.example.lendo.dto.AuthResponse;
 import com.example.lendo.dto.LoginRequest;
 import com.example.lendo.dto.RegisterRequest;
-import com.example.lendo.dto.AuthResponse;
 import com.example.lendo.model.RefreshToken;
+import com.example.lendo.model.Role;
 import com.example.lendo.model.User;
+import com.example.lendo.repository.RoleRepository;
 import com.example.lendo.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,6 +41,9 @@ class AuthTokenServiceTest {
     private UserRepository userRepository;
 
     @Mock
+    private RoleRepository roleRepository;
+
+    @Mock
     private PasswordEncoder passwordEncoder;
 
     @Mock
@@ -52,17 +57,22 @@ class AuthTokenServiceTest {
 
     private User testUser;
     private RefreshToken testRefreshToken;
+    private Role clientRole;
 
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(authTokenService, "jwtExpirationMs", 3600L);
+        clientRole = Role.builder()
+                .id(2)
+                .name("CLIENT")
+                .build();
         testUser = User.builder()
                 .id(UUID.randomUUID())
                 .email("test@example.com")
                 .passwordHash("hashedPassword123")
                 .firstName("Test")
                 .lastName("User")
-                .roleId(2)
+                .role(clientRole)
                 .isActive(true)
                 .provider("local")
                 .build();
@@ -122,6 +132,7 @@ class AuthTokenServiceTest {
 
         when(userRepository.existsByEmail("newuser@example.com")).thenReturn(false);
         when(passwordEncoder.encode("password123")).thenReturn("hashedPassword123");
+        when(roleRepository.findByName("CLIENT")).thenReturn(Optional.of(clientRole));
         when(userRepository.save(any(User.class))).thenReturn(testUser);
         when(jwtService.generateAccessToken(testUser)).thenReturn("access-token-123");
         when(refreshTokenService.createRefreshToken(testUser.getId())).thenReturn(testRefreshToken);

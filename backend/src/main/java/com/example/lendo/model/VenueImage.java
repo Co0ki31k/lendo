@@ -43,9 +43,11 @@ public class VenueImage {
     private String cloudinaryPublicId;
 
     @Column(name = "display_order", nullable = false)
+    @Builder.Default
     private Integer displayOrder = 0;
 
     @Column(name = "is_primary", nullable = false)
+    @Builder.Default
     private boolean primaryImage = false;
 
     @CreationTimestamp
