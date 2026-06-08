@@ -30,7 +30,9 @@ jobs:
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           CLOUDINARY_URL: ${{ secrets.CLOUDINARY_URL }}
-          SPRING_DATASOURCE_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
+          DB_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
+          DB_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
+          DB_PASSWORD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
         run: |
           cd backend
           chmod +x mvnw
