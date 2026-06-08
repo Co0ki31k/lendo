@@ -9,11 +9,12 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: true
   flyway:
     enabled: true
     locations: classpath:db/migration
+    baseline-on-migrate: true
   security:
     oauth2:
       client:
@@ -39,3 +40,7 @@ springdoc:
 app:
   frontend:
     url: ${FRONTEND_URL}
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME}
+  api-key: ${CLOUDINARY_API_KEY}
+  api-secret: ${CLOUDINARY_API_SECRET}
