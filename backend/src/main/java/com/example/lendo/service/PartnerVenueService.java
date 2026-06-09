@@ -1,6 +1,8 @@
 package com.example.lendo.service;
 
 import com.example.lendo.dto.CreateVenueRequest;
+import com.example.lendo.dto.SetPrimaryVenueImageRequest;
+import com.example.lendo.dto.UpdateVenueImageOrderRequest;
 import com.example.lendo.dto.VenueImageUploadResult;
 import com.example.lendo.dto.VenueImageResponse;
 import com.example.lendo.dto.VenueResponse;
@@ -18,7 +20,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -124,6 +129,69 @@ public class PartnerVenueService {
         }
 
         cloudinaryVenueImageService.deleteVenueImage(cloudinaryPublicId);
+    }
+
+    @Transactional
+    public VenueImageResponse setPrimaryVenueImage(
+            User user,
+            Long venueId,
+            Long imageId,
+            SetPrimaryVenueImageRequest request
+    ) {
+        Venue venue = resolveManagedVenue(user, venueId);
+        VenueImage image = venueImageRepository.findByIdAndVenueId(imageId, venue.getId())
+                .orElseThrow(() -> new RuntimeException("Zdjecie nie istnieje"));
+
+        if (!Boolean.TRUE.equals(request.primaryImage())) {
+            throw new RuntimeException("Zdjecie glowne moze byc ustawione tylko na true");
+        }
+
+        List<VenueImage> existingImages = venueImageRepository.findByVenueIdOrderByDisplayOrderAscIdAsc(venue.getId());
+        clearPrimaryImageFlag(existingImages);
+        image.setPrimaryImage(true);
+
+        return VenueImageResponse.from(image);
+    }
+
+    @Transactional
+    public List<VenueImageResponse> updateVenueImageOrder(
+            User user,
+            Long venueId,
+            UpdateVenueImageOrderRequest request
+    ) {
+        Venue venue = resolveManagedVenue(user, venueId);
+        List<VenueImage> existingImages = venueImageRepository.findByVenueIdOrderByDisplayOrderAscIdAsc(venue.getId());
+        Map<Long, VenueImage> imagesById = existingImages.stream()
+                .collect(Collectors.toMap(VenueImage::getId, image -> image));
+
+        Set<Long> requestedIds = request.items().stream()
+                .map(UpdateVenueImageOrderRequest.Item::imageId)
+                .collect(Collectors.toSet());
+
+        if (requestedIds.size() != request.items().size()) {
+            throw new RuntimeException("Lista zdjec zawiera duplikaty");
+        }
+
+        if (requestedIds.size() != existingImages.size() || !imagesById.keySet().equals(requestedIds)) {
+            throw new RuntimeException("Musisz przeslac kolejnosc dla wszystkich zdjec obiektu");
+        }
+
+        Set<Integer> requestedOrders = request.items().stream()
+                .map(UpdateVenueImageOrderRequest.Item::displayOrder)
+                .collect(Collectors.toSet());
+
+        if (requestedOrders.size() != request.items().size()) {
+            throw new RuntimeException("Display order musi byc unikalny dla kazdego zdjecia");
+        }
+
+        for (UpdateVenueImageOrderRequest.Item item : request.items()) {
+            VenueImage image = imagesById.get(item.imageId());
+            image.setDisplayOrder(item.displayOrder());
+        }
+
+        return venueImageRepository.findByVenueIdOrderByDisplayOrderAscIdAsc(venue.getId()).stream()
+                .map(VenueImageResponse::from)
+                .toList();
     }
 
     @Transactional

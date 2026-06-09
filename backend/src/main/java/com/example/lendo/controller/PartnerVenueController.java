@@ -1,6 +1,8 @@
 package com.example.lendo.controller;
 
 import com.example.lendo.dto.CreateVenueRequest;
+import com.example.lendo.dto.SetPrimaryVenueImageRequest;
+import com.example.lendo.dto.UpdateVenueImageOrderRequest;
 import com.example.lendo.dto.VenueImageResponse;
 import com.example.lendo.dto.VenueResponse;
 import com.example.lendo.model.User;
@@ -16,6 +18,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -73,6 +76,27 @@ public class PartnerVenueController {
     ) {
         partnerVenueService.deleteVenueImage(user, venueId, imageId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{venueId}/images/{imageId}/primary")
+    @Operation(summary = "Set primary image for current partner venue")
+    public ResponseEntity<VenueImageResponse> setPrimaryVenueImage(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long venueId,
+            @PathVariable Long imageId,
+            @Valid @RequestBody SetPrimaryVenueImageRequest request
+    ) {
+        return ResponseEntity.ok(partnerVenueService.setPrimaryVenueImage(user, venueId, imageId, request));
+    }
+
+    @PatchMapping("/{venueId}/images/order")
+    @Operation(summary = "Update image order for current partner venue")
+    public ResponseEntity<List<VenueImageResponse>> updateVenueImageOrder(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long venueId,
+            @Valid @RequestBody UpdateVenueImageOrderRequest request
+    ) {
+        return ResponseEntity.ok(partnerVenueService.updateVenueImageOrder(user, venueId, request));
     }
 
     @GetMapping
