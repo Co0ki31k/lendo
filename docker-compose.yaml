@@ -25,6 +25,8 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: lendo-backend
+    env_file:
+      - ./backend/.env.dev
     environment:
       SPRING_PROFILES_ACTIVE: dev
       DB_URL: jdbc:postgresql://postgres:5432/lendo
