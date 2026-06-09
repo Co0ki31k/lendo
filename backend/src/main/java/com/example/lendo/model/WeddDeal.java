@@ -45,6 +45,19 @@ public class WeddDeal {
     @Column(name = "special_price_per_guest", nullable = false, precision = 10, scale = 2)
     private BigDecimal specialPricePerGuest;
 
+    @Column(name = "original_guest_count", nullable = false)
+    private Integer originalGuestCount;
+
+    @Column(name = "allow_guest_count_adjustment", nullable = false)
+    @Builder.Default
+    private boolean allowGuestCountAdjustment = false;
+
+    @Column(name = "min_guest_count")
+    private Integer minGuestCount;
+
+    @Column(name = "max_guest_count")
+    private Integer maxGuestCount;
+
     @Lob
     @Column
     private String description;
