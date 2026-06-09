@@ -4,6 +4,7 @@ import com.example.lendo.dto.VenueCatalogDetailResponse;
 import com.example.lendo.dto.VenueCatalogFilter;
 import com.example.lendo.dto.VenueCatalogListItemResponse;
 import com.example.lendo.dto.VenueImageResponse;
+import com.example.lendo.model.User;
 import com.example.lendo.model.Venue;
 import com.example.lendo.model.VenueAddress;
 import com.example.lendo.model.VenueImage;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -29,9 +31,10 @@ public class VenueCatalogService {
     private final VenueRepository venueRepository;
     private final VenueAddressRepository venueAddressRepository;
     private final VenueImageRepository venueImageRepository;
+    private final UserFavoriteService userFavoriteService;
 
     @Transactional
-    public Page<VenueCatalogListItemResponse> getApprovedVenues(VenueCatalogFilter filter, Pageable pageable) {
+    public Page<VenueCatalogListItemResponse> getApprovedVenues(VenueCatalogFilter filter, Pageable pageable, User user) {
         Page<Venue> venuesPage = venueRepository.findAll(
                 VenueCatalogSpecifications.approvedCatalogFilter(filter),
                 pageable
@@ -40,12 +43,15 @@ public class VenueCatalogService {
         List<Long> venueIds = venuesPage.getContent().stream()
                 .map(Venue::getId)
                 .toList();
+        Set<Long> venueIdSet = Set.copyOf(venueIds);
 
         Map<Long, VenueAddress> addressesByVenueId = venueAddressRepository.findAllByVenueIdIn(venueIds).stream()
                 .collect(Collectors.toMap(VenueAddress::getVenueId, Function.identity()));
 
         Map<Long, VenueImage> primaryImagesByVenueId = venueImageRepository.findByVenueIdInAndPrimaryImageTrue(venueIds).stream()
                 .collect(Collectors.toMap(image -> image.getVenue().getId(), Function.identity()));
+
+        Set<Long> favoriteVenueIds = userFavoriteService.getFavoriteVenueIds(user, venueIdSet);
 
         return venuesPage.map(venue -> {
             VenueAddress address = addressesByVenueId.get(venue.getId());
@@ -56,13 +62,14 @@ public class VenueCatalogService {
             return VenueCatalogListItemResponse.from(
                     venue,
                     address,
-                    primaryImagesByVenueId.get(venue.getId())
+                    primaryImagesByVenueId.get(venue.getId()),
+                    favoriteVenueIds.contains(venue.getId())
             );
         });
     }
 
     @Transactional
-    public VenueCatalogDetailResponse getApprovedVenueDetails(Long venueId) {
+    public VenueCatalogDetailResponse getApprovedVenueDetails(Long venueId, User user) {
         Venue venue = venueRepository.findByIdAndStatus(venueId, VenueStatus.APPROVED)
                 .filter(Venue::isVerified)
                 .orElseThrow(() -> new RuntimeException("Obiekt nie istnieje"));
@@ -74,6 +81,6 @@ public class VenueCatalogService {
                 .map(VenueImageResponse::from)
                 .toList();
 
-        return VenueCatalogDetailResponse.from(venue, address, images);
+        return VenueCatalogDetailResponse.from(venue, address, images, userFavoriteService.isFavorite(user, venueId));
     }
 }

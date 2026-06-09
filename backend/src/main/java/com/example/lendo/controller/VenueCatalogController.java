@@ -4,6 +4,7 @@ import com.example.lendo.dto.VenueCalendarResponse;
 import com.example.lendo.dto.VenueCatalogDetailResponse;
 import com.example.lendo.dto.VenueCatalogFilter;
 import com.example.lendo.dto.VenueCatalogListItemResponse;
+import com.example.lendo.model.User;
 import com.example.lendo.service.VenueCalendarCatalogService;
 import com.example.lendo.service.VenueCatalogService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,6 +37,7 @@ public class VenueCatalogController {
     @GetMapping
     @Operation(summary = "List approved venues with pagination and filters")
     public ResponseEntity<Page<VenueCatalogListItemResponse>> getApprovedVenues(
+            @AuthenticationPrincipal User user,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String city,
             @RequestParam(required = false) String voivodeship,
@@ -53,13 +56,16 @@ public class VenueCatalogController {
                 maxPricePerGuest
         );
 
-        return ResponseEntity.ok(venueCatalogService.getApprovedVenues(filter, pageable));
+        return ResponseEntity.ok(venueCatalogService.getApprovedVenues(filter, pageable, user));
     }
 
     @GetMapping("/{venueId}")
     @Operation(summary = "Get approved venue details")
-    public ResponseEntity<VenueCatalogDetailResponse> getApprovedVenueDetails(@PathVariable Long venueId) {
-        return ResponseEntity.ok(venueCatalogService.getApprovedVenueDetails(venueId));
+    public ResponseEntity<VenueCatalogDetailResponse> getApprovedVenueDetails(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long venueId
+    ) {
+        return ResponseEntity.ok(venueCatalogService.getApprovedVenueDetails(venueId, user));
     }
 
     @GetMapping("/{venueId}/calendar")

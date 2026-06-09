@@ -20,9 +20,15 @@ public record VenueCatalogListItemResponse(
         boolean civilWeddingGarden,
         String city,
         String voivodeship,
-        String primaryImageUrl
+        String primaryImageUrl,
+        boolean favorite
 ) {
-    public static VenueCatalogListItemResponse from(Venue venue, VenueAddress address, VenueImage primaryImage) {
+    public static VenueCatalogListItemResponse from(
+            Venue venue,
+            VenueAddress address,
+            VenueImage primaryImage,
+            boolean favorite
+    ) {
         return new VenueCatalogListItemResponse(
                 venue.getId(),
                 venue.getName(),
@@ -37,7 +43,8 @@ public record VenueCatalogListItemResponse(
                 venue.isCivilWeddingGarden(),
                 address.getCity(),
                 address.getVoivodeship(),
-                primaryImage != null ? primaryImage.getImageUrl() : null
+                primaryImage != null ? primaryImage.getImageUrl() : null,
+                favorite
         );
     }
 }

@@ -19,6 +19,7 @@ public record VenueCatalogDetailResponse(
         BigDecimal basePricePerGuest,
         boolean noCorkageFee,
         boolean civilWeddingGarden,
+        boolean favorite,
         LocalDateTime createdAt,
         Address address,
         List<Image> images
@@ -26,7 +27,8 @@ public record VenueCatalogDetailResponse(
     public static VenueCatalogDetailResponse from(
             Venue venue,
             VenueAddress address,
-            List<VenueImageResponse> images
+            List<VenueImageResponse> images,
+            boolean favorite
     ) {
         return new VenueCatalogDetailResponse(
                 venue.getId(),
@@ -40,6 +42,7 @@ public record VenueCatalogDetailResponse(
                 venue.getBasePricePerGuest(),
                 venue.isNoCorkageFee(),
                 venue.isCivilWeddingGarden(),
+                favorite,
                 venue.getCreatedAt(),
                 new Address(
                         address.getStreet(),
