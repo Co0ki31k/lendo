@@ -1,8 +1,10 @@
 package com.example.lendo.controller;
 
+import com.example.lendo.dto.VenueCalendarResponse;
 import com.example.lendo.dto.VenueCatalogDetailResponse;
 import com.example.lendo.dto.VenueCatalogFilter;
 import com.example.lendo.dto.VenueCatalogListItemResponse;
+import com.example.lendo.service.VenueCalendarCatalogService;
 import com.example.lendo.service.VenueCatalogService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/catalog/venues")
@@ -27,6 +30,7 @@ import java.math.BigDecimal;
 @Tag(name = "Venue Catalog", description = "Public venue catalog APIs")
 public class VenueCatalogController {
     private final VenueCatalogService venueCatalogService;
+    private final VenueCalendarCatalogService venueCalendarCatalogService;
 
     @GetMapping
     @Operation(summary = "List approved venues with pagination and filters")
@@ -56,5 +60,15 @@ public class VenueCatalogController {
     @Operation(summary = "Get approved venue details")
     public ResponseEntity<VenueCatalogDetailResponse> getApprovedVenueDetails(@PathVariable Long venueId) {
         return ResponseEntity.ok(venueCatalogService.getApprovedVenueDetails(venueId));
+    }
+
+    @GetMapping("/{venueId}/calendar")
+    @Operation(summary = "Get approved venue availability calendar")
+    public ResponseEntity<VenueCalendarResponse> getApprovedVenueCalendar(
+            @PathVariable Long venueId,
+            @RequestParam(required = false) LocalDate from,
+            @RequestParam(required = false) LocalDate to
+    ) {
+        return ResponseEntity.ok(venueCalendarCatalogService.getApprovedVenueCalendar(venueId, from, to));
     }
 }
