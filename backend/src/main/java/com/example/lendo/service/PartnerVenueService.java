@@ -23,7 +23,7 @@ public class PartnerVenueService {
 
     @Transactional
     public VenueResponse createVenue(User user, CreateVenueRequest request) {
-        requirePartnerProfile(user);
+        requireVerifiedPartnerProfile(user);
 
         if (request.capacityMax() < request.capacityMin()) {
             throw new RuntimeException("Maksymalna pojemnosc nie moze byc mniejsza od minimalnej");
@@ -84,6 +84,15 @@ public class PartnerVenueService {
     private void requirePartnerProfile(User user) {
         if (!partnerProfileRepository.existsById(user.getId())) {
             throw new RuntimeException("Najpierw uzupelnij profil partnera");
+        }
+    }
+
+    private void requireVerifiedPartnerProfile(User user) {
+        var profile = partnerProfileRepository.findById(user.getId())
+                .orElseThrow(() -> new RuntimeException("Najpierw uzupelnij profil partnera"));
+
+        if (!profile.isVerified()) {
+            throw new RuntimeException("Profil partnera czeka na zatwierdzenie przez administratora");
         }
     }
 }
