@@ -1,1 +1,23 @@
-@import "tailwindcss";
+:root {
+  color: #241712;
+  background: #efe6da;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+}
