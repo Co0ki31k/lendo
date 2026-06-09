@@ -10,4 +10,5 @@ import java.util.UUID;
 @Repository
 public interface VenueRepository extends JpaRepository<Venue, Long> {
     List<Venue> findAllByManagerIdOrderByCreatedAtDesc(UUID managerId);
+    List<Venue> findAllByOrderByCreatedAtDesc();
 }

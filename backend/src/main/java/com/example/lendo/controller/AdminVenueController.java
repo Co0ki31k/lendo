@@ -1,7 +1,7 @@
 package com.example.lendo.controller;
 
-import com.example.lendo.dto.AdminPartnerProfileResponse;
-import com.example.lendo.dto.PartnerVerificationRequest;
+import com.example.lendo.dto.AdminVenueResponse;
+import com.example.lendo.dto.UpdateVenueStatusRequest;
 import com.example.lendo.service.AdminPartnerService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -17,29 +17,27 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/admin/partners")
+@RequestMapping("/api/admin/venues")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
-@Tag(name = "Admin Partners", description = "Admin APIs for partner verification")
-public class AdminPartnerController {
+@Tag(name = "Admin Venues", description = "Admin APIs for venue review")
+public class AdminVenueController {
     private final AdminPartnerService adminPartnerService;
 
     @GetMapping
-    @Operation(summary = "List all partner profiles")
-    public ResponseEntity<List<AdminPartnerProfileResponse>> getAllPartnerProfiles() {
-        return ResponseEntity.ok(adminPartnerService.getAllPartnerProfiles());
+    @Operation(summary = "List all venues for admin review")
+    public ResponseEntity<List<AdminVenueResponse>> getAllVenues() {
+        return ResponseEntity.ok(adminPartnerService.getAllVenues());
     }
 
-    @PatchMapping("/{userId}/verification")
-    @Operation(summary = "Update partner verification status")
-    public ResponseEntity<AdminPartnerProfileResponse> setVerification(
-            @PathVariable UUID userId,
-            @Valid @RequestBody PartnerVerificationRequest request
+    @PatchMapping("/{venueId}/status")
+    @Operation(summary = "Update venue review status")
+    public ResponseEntity<AdminVenueResponse> updateVenueStatus(
+            @PathVariable Long venueId,
+            @Valid @RequestBody UpdateVenueStatusRequest request
     ) {
-        return ResponseEntity.ok(adminPartnerService.setVerification(userId, request.verified()));
+        return ResponseEntity.ok(adminPartnerService.updateVenueStatus(venueId, request.status()));
     }
-
 }

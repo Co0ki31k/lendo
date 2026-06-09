@@ -2,6 +2,7 @@ package com.example.lendo.controller;
 
 import com.example.lendo.dto.CreateVenueRequest;
 import com.example.lendo.dto.SetPrimaryVenueImageRequest;
+import com.example.lendo.dto.UpdateVenueRequest;
 import com.example.lendo.dto.UpdateVenueImageOrderRequest;
 import com.example.lendo.dto.VenueImageResponse;
 import com.example.lendo.dto.VenueResponse;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -43,6 +45,34 @@ public class PartnerVenueController {
             @Valid @RequestBody CreateVenueRequest request
     ) {
         return ResponseEntity.status(HttpStatus.CREATED).body(partnerVenueService.createVenue(user, request));
+    }
+
+    @GetMapping("/{venueId}")
+    @Operation(summary = "Get current partner venue details")
+    public ResponseEntity<VenueResponse> getVenue(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long venueId
+    ) {
+        return ResponseEntity.ok(partnerVenueService.getVenue(user, venueId));
+    }
+
+    @PutMapping("/{venueId}")
+    @Operation(summary = "Update current partner venue")
+    public ResponseEntity<VenueResponse> updateVenue(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long venueId,
+            @Valid @RequestBody UpdateVenueRequest request
+    ) {
+        return ResponseEntity.ok(partnerVenueService.updateVenue(user, venueId, request));
+    }
+
+    @PatchMapping("/{venueId}/submit")
+    @Operation(summary = "Submit current partner venue for admin review")
+    public ResponseEntity<VenueResponse> submitVenueForReview(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long venueId
+    ) {
+        return ResponseEntity.ok(partnerVenueService.submitVenueForReview(user, venueId));
     }
 
     @PostMapping(path = "/{venueId}/images/upload", consumes = "multipart/form-data")

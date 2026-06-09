@@ -18,6 +18,7 @@ public record VenueResponse(
         BigDecimal basePricePerGuest,
         boolean noCorkageFee,
         boolean civilWeddingGarden,
+        String status,
         boolean verified,
         LocalDateTime createdAt,
         Address address
@@ -35,6 +36,7 @@ public record VenueResponse(
                 venue.getBasePricePerGuest(),
                 venue.isNoCorkageFee(),
                 venue.isCivilWeddingGarden(),
+                venue.getStatus().name(),
                 venue.isVerified(),
                 venue.getCreatedAt(),
                 new Address(

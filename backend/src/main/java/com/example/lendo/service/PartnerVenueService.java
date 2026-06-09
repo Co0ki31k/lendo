@@ -2,6 +2,7 @@ package com.example.lendo.service;
 
 import com.example.lendo.dto.CreateVenueRequest;
 import com.example.lendo.dto.SetPrimaryVenueImageRequest;
+import com.example.lendo.dto.UpdateVenueRequest;
 import com.example.lendo.dto.UpdateVenueImageOrderRequest;
 import com.example.lendo.dto.VenueImageUploadResult;
 import com.example.lendo.dto.VenueImageResponse;
@@ -10,6 +11,7 @@ import com.example.lendo.model.User;
 import com.example.lendo.model.Venue;
 import com.example.lendo.model.VenueAddress;
 import com.example.lendo.model.VenueImage;
+import com.example.lendo.model.VenueStatus;
 import com.example.lendo.repository.PartnerProfileRepository;
 import com.example.lendo.repository.VenueAddressRepository;
 import com.example.lendo.repository.VenueImageRepository;
@@ -37,18 +39,12 @@ public class PartnerVenueService {
     @Transactional
     public VenueResponse createVenue(User user, CreateVenueRequest request) {
         requireVerifiedPartnerProfile(user);
-
-        if (request.capacityMax() < request.capacityMin()) {
-            throw new RuntimeException("Maksymalna pojemnosc nie moze byc mniejsza od minimalnej");
-        }
-
-        if (request.accommodationPlaces() < 0) {
-            throw new RuntimeException("Liczba miejsc noclegowych nie moze byc ujemna");
-        }
-
-        if (!request.hasAccommodation() && request.accommodationPlaces() > 0) {
-            throw new RuntimeException("Obiekt bez noclegu nie moze miec dodatniej liczby miejsc noclegowych");
-        }
+        validateVenuePayload(
+                request.capacityMin(),
+                request.capacityMax(),
+                request.hasAccommodation(),
+                request.accommodationPlaces()
+        );
 
         Venue venue = venueRepository.save(
                 Venue.builder()
@@ -64,6 +60,7 @@ public class PartnerVenueService {
                         .noCorkageFee(request.noCorkageFee())
                         .civilWeddingGarden(request.civilWeddingGarden())
                         .verified(false)
+                        .status(VenueStatus.DRAFT)
                         .build()
         );
 
@@ -78,6 +75,73 @@ public class PartnerVenueService {
                         .longitude(request.longitude())
                         .build()
         );
+
+        return VenueResponse.from(venue, address);
+    }
+
+    @Transactional
+    public VenueResponse getVenue(User user, Long venueId) {
+        Venue venue = resolveManagedVenue(user, venueId);
+        VenueAddress address = venueAddressRepository.findById(venue.getId())
+                .orElseThrow(() -> new IllegalStateException("Venue address is missing for venue " + venue.getId()));
+        return VenueResponse.from(venue, address);
+    }
+
+    @Transactional
+    public VenueResponse updateVenue(User user, Long venueId, UpdateVenueRequest request) {
+        Venue venue = resolveManagedVenue(user, venueId);
+        VenueAddress address = venueAddressRepository.findById(venue.getId())
+                .orElseThrow(() -> new IllegalStateException("Venue address is missing for venue " + venue.getId()));
+
+        validateVenuePayload(
+                request.capacityMin(),
+                request.capacityMax(),
+                request.hasAccommodation(),
+                request.accommodationPlaces()
+        );
+
+        venue.setName(request.name());
+        venue.setDescription(request.description());
+        venue.setStyle(request.style());
+        venue.setCapacityMin(request.capacityMin());
+        venue.setCapacityMax(request.capacityMax());
+        venue.setHasAccommodation(request.hasAccommodation());
+        venue.setAccommodationPlaces(request.accommodationPlaces());
+        venue.setBasePricePerGuest(request.basePricePerGuest());
+        venue.setNoCorkageFee(request.noCorkageFee());
+        venue.setCivilWeddingGarden(request.civilWeddingGarden());
+
+        address.setStreet(request.street());
+        address.setCity(request.city());
+        address.setPostalCode(request.postalCode());
+        address.setVoivodeship(request.voivodeship());
+        address.setLatitude(request.latitude());
+        address.setLongitude(request.longitude());
+
+        if (venue.getStatus() == VenueStatus.APPROVED) {
+            venue.setStatus(VenueStatus.PENDING);
+            venue.setVerified(false);
+        }
+
+        return VenueResponse.from(venue, address);
+    }
+
+    @Transactional
+    public VenueResponse submitVenueForReview(User user, Long venueId) {
+        Venue venue = resolveManagedVenue(user, venueId);
+        VenueAddress address = venueAddressRepository.findById(venue.getId())
+                .orElseThrow(() -> new IllegalStateException("Venue address is missing for venue " + venue.getId()));
+
+        if (venue.getStatus() == VenueStatus.APPROVED) {
+            throw new RuntimeException("Obiekt jest juz zatwierdzony");
+        }
+
+        if (venueImageRepository.findByVenueIdOrderByDisplayOrderAscIdAsc(venue.getId()).isEmpty()) {
+            throw new RuntimeException("Dodaj przynajmniej jedno zdjecie przed wyslaniem obiektu do akceptacji");
+        }
+
+        venue.setStatus(VenueStatus.PENDING);
+        venue.setVerified(false);
 
         return VenueResponse.from(venue, address);
     }
@@ -234,6 +298,25 @@ public class PartnerVenueService {
         }
 
         return venue;
+    }
+
+    private void validateVenuePayload(
+            Integer capacityMin,
+            Integer capacityMax,
+            Boolean hasAccommodation,
+            Integer accommodationPlaces
+    ) {
+        if (capacityMax < capacityMin) {
+            throw new RuntimeException("Maksymalna pojemnosc nie moze byc mniejsza od minimalnej");
+        }
+
+        if (accommodationPlaces < 0) {
+            throw new RuntimeException("Liczba miejsc noclegowych nie moze byc ujemna");
+        }
+
+        if (!hasAccommodation && accommodationPlaces > 0) {
+            throw new RuntimeException("Obiekt bez noclegu nie moze miec dodatniej liczby miejsc noclegowych");
+        }
     }
 
     private VenueImageResponse persistVenueImage(

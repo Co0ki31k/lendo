@@ -1,6 +1,12 @@
 package com.example.lendo.service;
 
+import com.example.lendo.dto.AdminVenueResponse;
+import com.example.lendo.model.Venue;
+import com.example.lendo.model.VenueAddress;
+import com.example.lendo.model.VenueStatus;
 import com.example.lendo.dto.AdminPartnerProfileResponse;
+import com.example.lendo.repository.VenueAddressRepository;
+import com.example.lendo.repository.VenueRepository;
 import com.example.lendo.model.PartnerProfile;
 import com.example.lendo.repository.PartnerProfileRepository;
 import jakarta.transaction.Transactional;
@@ -14,6 +20,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AdminPartnerService {
     private final PartnerProfileRepository partnerProfileRepository;
+    private final VenueRepository venueRepository;
+    private final VenueAddressRepository venueAddressRepository;
 
     @Transactional
     public List<AdminPartnerProfileResponse> getAllPartnerProfiles() {
@@ -29,5 +37,36 @@ public class AdminPartnerService {
 
         profile.setVerified(verified);
         return AdminPartnerProfileResponse.from(partnerProfileRepository.save(profile));
+    }
+
+    @Transactional
+    public List<AdminVenueResponse> getAllVenues() {
+        return venueRepository.findAllByOrderByCreatedAtDesc().stream()
+                .map(this::toAdminVenueResponse)
+                .toList();
+    }
+
+    @Transactional
+    public AdminVenueResponse updateVenueStatus(Long venueId, String rawStatus) {
+        Venue venue = venueRepository.findById(venueId)
+                .orElseThrow(() -> new RuntimeException("Obiekt nie istnieje"));
+
+        VenueStatus status;
+        try {
+            status = VenueStatus.valueOf(rawStatus.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new RuntimeException("Nieobslugiwany status obiektu");
+        }
+
+        venue.setStatus(status);
+        venue.setVerified(status == VenueStatus.APPROVED);
+
+        return toAdminVenueResponse(venue);
+    }
+
+    private AdminVenueResponse toAdminVenueResponse(Venue venue) {
+        VenueAddress address = venueAddressRepository.findById(venue.getId())
+                .orElseThrow(() -> new IllegalStateException("Venue address is missing for venue " + venue.getId()));
+        return AdminVenueResponse.from(venue, address);
     }
 }
