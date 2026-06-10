@@ -17,3 +17,7 @@ spring:
 app:
   frontend:
     url: http://localhost:3000
+cloudinary:
+  cloud-name: test-cloud
+  api-key: test-api-key
+  api-secret: test-api-secret
