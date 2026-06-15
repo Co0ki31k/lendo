@@ -1,9 +1,13 @@
+import { Link, NavLink } from 'react-router-dom'
+import { useAuth } from '../../../features/auth'
 import './Navbar.css'
 
 function Navbar() {
+  const { isAuthenticated, logout, user } = useAuth()
+
   return (
     <header className="navbar">
-      <div className="navbar__brand">WeddMatch</div>
+      <Link to="/" className="navbar__brand">WeddMatch</Link>
 
       <nav className="navbar__center" aria-label="Glowna nawigacja">
         <button type="button" className="navbar__link">Katalog sal</button>
@@ -16,9 +20,25 @@ function Navbar() {
         <button type="button" className="navbar__link navbar__link--accent">
           Strefa partnera
         </button>
-        <button type="button" className="navbar__button">
-          Zaloguj sie
-        </button>
+        {isAuthenticated ? (
+          <>
+            <span className="navbar__status">
+              {user?.role ?? 'CLIENT'}
+            </span>
+            <button type="button" className="navbar__button" onClick={logout}>
+              Wyloguj sie
+            </button>
+          </>
+        ) : (
+          <>
+            <NavLink to="/register" className="navbar__link navbar__link--pill">
+              Rejestracja
+            </NavLink>
+            <NavLink to="/login" className="navbar__button navbar__button--link">
+              Zaloguj sie
+            </NavLink>
+          </>
+        )}
       </div>
     </header>
   )
