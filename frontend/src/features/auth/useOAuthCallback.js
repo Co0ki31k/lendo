@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from './AuthContext'
 
 export function useOAuthCallback() {
-  const { completeOAuthLogin, isInitializing } = useAuth()
+  const { completeOAuthLogin, isInitializing, user } = useAuth()
   const [status, setStatus] = useState('idle')
   const [error, setError] = useState('')
 
@@ -25,5 +25,6 @@ export function useOAuthCallback() {
   return {
     status,
     error,
+    user,
   }
 }

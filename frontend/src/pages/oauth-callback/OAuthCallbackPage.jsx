@@ -1,17 +1,18 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useOAuthCallback } from '../../features/auth'
+import { getDefaultRouteForUser } from '../../lib/navigation'
 import '../home/HomePlaceholder.css'
 
 function OAuthCallbackPage() {
   const navigate = useNavigate()
-  const { status, error } = useOAuthCallback()
+  const { status, error, user } = useOAuthCallback()
 
   useEffect(() => {
     if (status === 'success') {
-      navigate('/', { replace: true })
+      navigate(getDefaultRouteForUser(user), { replace: true })
     }
-  }, [navigate, status])
+  }, [navigate, status, user])
 
   return (
     <main className="home-placeholder">

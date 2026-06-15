@@ -1,38 +1,35 @@
-import { Link, NavLink } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../../../features/auth'
+import { getDefaultRouteForUser } from '../../../lib/navigation'
 import './Navbar.css'
 
 function Navbar() {
   const { isAuthenticated, logout, user } = useAuth()
-  const isAdmin = user?.role === 'ADMIN'
+  const homePath = getDefaultRouteForUser(user)
+  const isClient = user?.role === 'CLIENT'
+  const shouldShowClientNav = isAuthenticated && isClient
 
   return (
     <header className="navbar">
-      <Link to="/" className="navbar__brand">WeddMatch</Link>
+      <Link to={homePath} className="navbar__brand">WeddMatch</Link>
 
-      <nav className="navbar__center" aria-label="Glowna nawigacja">
-        <button type="button" className="navbar__link">Katalog sal</button>
-        <button type="button" className="navbar__link">SmartPlaner</button>
-        <button type="button" className="navbar__link">WeddChance</button>
-        <button type="button" className="navbar__link">Ulubione</button>
-      </nav>
+      {shouldShowClientNav ? (
+        <nav className="navbar__center" aria-label="Glowna nawigacja">
+          <button type="button" className="navbar__link">Katalog sal</button>
+          <span className="navbar__dot" aria-hidden="true">•</span>
+          <button type="button" className="navbar__link">SmartPlaner</button>
+          <span className="navbar__dot" aria-hidden="true">•</span>
+          <button type="button" className="navbar__link">WeddChance</button>
+          <span className="navbar__dot" aria-hidden="true">•</span>
+          <button type="button" className="navbar__link">Ulubione</button>
+        </nav>
+      ) : null}
 
       <div className="navbar__actions">
-        <button type="button" className="navbar__link navbar__link--accent">
-          Strefa partnera
-        </button>
-        {isAdmin ? (
-          <NavLink
-            to="/admin"
-            className={({ isActive }) => `navbar__link navbar__link--pill${isActive ? ' navbar__link--active' : ''}`}
-          >
-            Admin
-          </NavLink>
-        ) : null}
         {isAuthenticated ? (
           <>
             <span className="navbar__status">
-              {user?.role ?? 'CLIENT'}
+              {user?.role === 'ADMIN' ? 'Admin' : user?.role ?? 'CLIENT'}
             </span>
             <button type="button" className="navbar__button" onClick={logout}>
               Wyloguj sie
@@ -40,12 +37,15 @@ function Navbar() {
           </>
         ) : (
           <>
-            <NavLink to="/register" className="navbar__link navbar__link--pill">
+            <span className="navbar__status navbar__status--guest">
+              Konto goscia
+            </span>
+            <Link to="/register" className="navbar__button navbar__button--secondary">
               Rejestracja
-            </NavLink>
-            <NavLink to="/login" className="navbar__button navbar__button--link">
-              Zaloguj sie
-            </NavLink>
+            </Link>
+            <Link to="/login" className="navbar__button">
+              Logowanie
+            </Link>
           </>
         )}
       </div>

@@ -1,5 +1,6 @@
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../features/auth'
+import { getDefaultRouteForUser } from '../../lib/navigation'
 import './AuthPage.css'
 
 function AuthFormPage({
@@ -16,17 +17,18 @@ function AuthFormPage({
   alternateActionPath,
 }) {
   const navigate = useNavigate()
-  const { isAuthenticated, startGoogleOAuthLogin } = useAuth()
+  const { isAuthenticated, startGoogleOAuthLogin, user } = useAuth()
+  const defaultRoute = getDefaultRouteForUser(user)
 
   if (isAuthenticated) {
-    return <Navigate to="/" replace />
+    return <Navigate to={defaultRoute} replace />
   }
 
   async function onSubmit(event) {
     const result = await form.handleSubmit(event)
 
     if (result.success) {
-      navigate('/', { replace: true })
+      navigate(getDefaultRouteForUser(result.data?.user), { replace: true })
     }
   }
 
