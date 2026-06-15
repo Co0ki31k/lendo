@@ -1,5 +1,3 @@
-import { useMemo } from 'react'
-import { useSearchParams } from 'react-router-dom'
 import { useLoginForm } from '../../features/auth'
 import AuthFormPage from './AuthFormPage.jsx'
 
@@ -22,8 +20,6 @@ const loginFields = [
 
 function LoginPage() {
   const form = useLoginForm()
-  const [searchParams] = useSearchParams()
-  const externalError = useMemo(() => searchParams.get('oauth_error') ?? '', [searchParams])
 
   return (
     <AuthFormPage
@@ -39,7 +35,6 @@ function LoginPage() {
       ]}
       fields={loginFields}
       form={form}
-      externalError={externalError}
       alternateQuestion="Nie masz jeszcze konta?"
       alternateActionLabel="Zarejestruj sie"
       alternateActionPath="/register"

@@ -14,7 +14,6 @@ function AuthFormPage({
   alternateQuestion,
   alternateActionLabel,
   alternateActionPath,
-  externalError = '',
 }) {
   const navigate = useNavigate()
   const { isAuthenticated, startGoogleOAuthLogin } = useAuth()
@@ -53,9 +52,9 @@ function AuthFormPage({
               <p className="auth-form__subtitle">{subtitle}</p>
             </div>
 
-            {form.submitError || externalError ? (
+            {form.submitError ? (
               <div className="auth-form__error" role="alert">
-                {form.submitError || externalError}
+                {form.submitError}
               </div>
             ) : null}
 
