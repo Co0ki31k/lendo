@@ -2,6 +2,7 @@ package com.example.lendo.config;
 
 import com.example.lendo.security.HttpCookieOAuth2AuthorizationRequestRepository;
 import com.example.lendo.security.JwtAuthenticationFilter;
+import com.example.lendo.security.OAuth2AuthenticationFailureHandler;
 import com.example.lendo.security.OAuth2AuthenticationSuccessHandler;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +42,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler,
+            OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler,
             HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository
     ) throws Exception {
         http
@@ -73,6 +75,7 @@ public class SecurityConfig {
                         )
                         .redirectionEndpoint(red -> red.baseUri("/login/oauth2/code/*"))
                         .successHandler(oAuth2AuthenticationSuccessHandler)
+                        .failureHandler(oAuth2AuthenticationFailureHandler)
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
