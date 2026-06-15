@@ -4,6 +4,7 @@ import './Navbar.css'
 
 function Navbar() {
   const { isAuthenticated, logout, user } = useAuth()
+  const isAdmin = user?.role === 'ADMIN'
 
   return (
     <header className="navbar">
@@ -20,6 +21,14 @@ function Navbar() {
         <button type="button" className="navbar__link navbar__link--accent">
           Strefa partnera
         </button>
+        {isAdmin ? (
+          <NavLink
+            to="/admin"
+            className={({ isActive }) => `navbar__link navbar__link--pill${isActive ? ' navbar__link--active' : ''}`}
+          >
+            Admin
+          </NavLink>
+        ) : null}
         {isAuthenticated ? (
           <>
             <span className="navbar__status">

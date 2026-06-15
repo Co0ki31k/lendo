@@ -5,6 +5,7 @@ import HomePlaceholder from './pages/home/HomePlaceholder.jsx'
 import LoginPage from './pages/auth/LoginPage.jsx'
 import RegisterPage from './pages/auth/RegisterPage.jsx'
 import OAuthCallbackPage from './pages/oauth-callback/OAuthCallbackPage.jsx'
+import AdminRoute from './routes/AdminRoute.jsx'
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/oauth2/callback" element={<OAuthCallbackPage />} />
+        <Route path="/admin" element={<AdminRoute />} />
       </Routes>
     </div>
   )
