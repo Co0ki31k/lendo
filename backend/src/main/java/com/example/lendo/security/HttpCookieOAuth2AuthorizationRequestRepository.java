@@ -40,4 +40,8 @@ public class HttpCookieOAuth2AuthorizationRequestRepository implements Authoriza
 
         return authRequest;
     }
+
+    public void removeAuthorizationRequestCookies(HttpServletRequest request, HttpServletResponse response) {
+        CookieUtils.deleteCookie(request, response, OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME);
+    }
 }

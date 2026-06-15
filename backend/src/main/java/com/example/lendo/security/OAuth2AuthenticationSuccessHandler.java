@@ -41,7 +41,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
         var authResponse = authTokenService.generateTokensForOAuth2User(email, name);
 
-        authorizationRequestRepository.removeAuthorizationRequest(request, response);
+        authorizationRequestRepository.removeAuthorizationRequestCookies(request, response);
 
         String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl + "/oauth2/callback")
                 .queryParam("token", authResponse.accessToken())
