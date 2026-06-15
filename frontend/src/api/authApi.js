@@ -18,7 +18,7 @@ export async function register(payload) {
 }
 
 export async function refreshAuth(refreshToken) {
-  const response = await api.post('/api/auth/refresh', { refreshToken })
+  const response = await api.post('/api/auth/refresh', { refresh_token: refreshToken })
   storeAuthSession(response.data)
   return response.data
 }

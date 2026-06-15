@@ -35,7 +35,7 @@ async function refreshAccessToken() {
 
   if (!refreshPromise) {
     refreshPromise = refreshClient
-      .post('/api/auth/refresh', { refreshToken })
+      .post('/api/auth/refresh', { refresh_token: refreshToken })
       .then((response) => {
         storeAuthSession(response.data)
         return response.data.access_token
