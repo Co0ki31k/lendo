@@ -1,3 +1,5 @@
+import { buildUserFromAccessToken } from './jwt'
+
 const ACCESS_TOKEN_KEY = 'lendo.accessToken'
 const REFRESH_TOKEN_KEY = 'lendo.refreshToken'
 const USER_KEY = 'lendo.user'
@@ -29,7 +31,15 @@ export function getStoredUser() {
 
   const user = window.localStorage.getItem(USER_KEY)
 
-  return user ? JSON.parse(user) : null
+  if (!user) {
+    return null
+  }
+
+  try {
+    return JSON.parse(user)
+  } catch {
+    return null
+  }
 }
 
 export function storeAuthSession(authResponse) {
@@ -37,16 +47,20 @@ export function storeAuthSession(authResponse) {
     return
   }
 
-  if (authResponse.access_token) {
-    window.localStorage.setItem(ACCESS_TOKEN_KEY, authResponse.access_token)
+  const accessToken = authResponse.access_token
+  const refreshToken = authResponse.refresh_token
+  const user = authResponse.user ?? buildUserFromAccessToken(accessToken)
+
+  if (accessToken) {
+    window.localStorage.setItem(ACCESS_TOKEN_KEY, accessToken)
   }
 
-  if (authResponse.refresh_token) {
-    window.localStorage.setItem(REFRESH_TOKEN_KEY, authResponse.refresh_token)
+  if (refreshToken) {
+    window.localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken)
   }
 
-  if (authResponse.user) {
-    window.localStorage.setItem(USER_KEY, JSON.stringify(authResponse.user))
+  if (user) {
+    window.localStorage.setItem(USER_KEY, JSON.stringify(user))
   }
 }
 

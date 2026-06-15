@@ -1,6 +1,6 @@
 import { createContext, useContext, useMemo, useState } from 'react'
 import { authApi } from '../../api'
-import { getStoredUser } from '../../lib/tokenStorage'
+import { getAccessToken, getStoredUser } from '../../lib/tokenStorage'
 
 const AuthContext = createContext(null)
 
@@ -10,7 +10,7 @@ export function AuthProvider({ children }) {
 
   const value = useMemo(() => ({
     user,
-    isAuthenticated: Boolean(user),
+    isAuthenticated: Boolean(user) || Boolean(getAccessToken()),
     isInitializing,
     async login(credentials) {
       const authResponse = await authApi.login(credentials)
@@ -21,6 +21,14 @@ export function AuthProvider({ children }) {
       const authResponse = await authApi.register(payload)
       setUser(authResponse.user)
       return authResponse
+    },
+    completeOAuthLogin(url) {
+      const authSession = authApi.completeOAuthLoginFromUrl(url)
+      setUser(authApi.getCurrentUser())
+      return authSession
+    },
+    startGoogleOAuthLogin() {
+      authApi.startGoogleOAuthLogin()
     },
     logout() {
       authApi.logout()

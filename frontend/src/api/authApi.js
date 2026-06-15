@@ -5,6 +5,8 @@ import {
   storeAuthSession,
 } from '../lib/tokenStorage'
 
+const apiBaseUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
+
 export async function login(credentials) {
   const response = await api.post('/api/auth/login', credentials)
   storeAuthSession(response.data)
@@ -29,4 +31,36 @@ export function logout() {
 
 export function getCurrentUser() {
   return getStoredUser()
+}
+
+export function getGoogleOAuthAuthorizeUrl() {
+  return `${apiBaseUrl}/oauth2/authorize/google`
+}
+
+export function startGoogleOAuthLogin() {
+  window.location.assign(getGoogleOAuthAuthorizeUrl())
+}
+
+export function completeOAuthLoginFromUrl(url = window.location.href) {
+  const currentUrl = new URL(url)
+  const accessToken = currentUrl.searchParams.get('token')
+  const refreshToken = currentUrl.searchParams.get('refresh_token')
+  const error = currentUrl.searchParams.get('error')
+
+  if (error) {
+    throw new Error(error)
+  }
+
+  if (!accessToken || !refreshToken) {
+    throw new Error('OAuth callback is missing required tokens')
+  }
+
+  const authSession = {
+    access_token: accessToken,
+    refresh_token: refreshToken,
+  }
+
+  storeAuthSession(authSession)
+
+  return authSession
 }
