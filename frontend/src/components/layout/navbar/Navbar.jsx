@@ -7,7 +7,7 @@ function Navbar() {
   const { isAuthenticated, logout, user } = useAuth()
   const homePath = getDefaultRouteForUser(user)
   const isClient = user?.role === 'CLIENT'
-  const shouldShowClientNav = isAuthenticated && isClient
+  const shouldShowClientNav = !isAuthenticated || isClient
 
   return (
     <header className="navbar">
