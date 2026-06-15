@@ -5,7 +5,7 @@ import {
   storeAuthSession,
 } from '../lib/tokenStorage'
 
-const apiBaseUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
+const apiBaseUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:10000'
 
 export async function login(credentials) {
   const response = await api.post('/api/auth/login', credentials)

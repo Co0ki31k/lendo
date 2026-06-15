@@ -6,7 +6,7 @@ import {
   storeAuthSession,
 } from './tokenStorage'
 
-const baseURL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
+const baseURL = import.meta.env.VITE_API_URL ?? 'http://localhost:10000'
 
 const api = axios.create({
   baseURL,
@@ -25,6 +25,7 @@ const refreshClient = axios.create({
 })
 
 let refreshPromise = null
+const authBypassUrls = ['/api/auth/login', '/api/auth/register', '/api/auth/refresh']
 
 async function refreshAccessToken() {
   const refreshToken = getRefreshToken()
@@ -66,13 +67,17 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config
+    const requestUrl = originalRequest?.url ?? ''
 
     if (!originalRequest || error.response?.status !== 401 || originalRequest._retry) {
       return Promise.reject(error)
     }
 
-    if (originalRequest.url?.includes('/api/auth/refresh')) {
-      clearAuthSession()
+    if (authBypassUrls.some((url) => requestUrl.includes(url))) {
+      if (requestUrl.includes('/api/auth/refresh')) {
+        clearAuthSession()
+      }
+
       return Promise.reject(error)
     }
 
