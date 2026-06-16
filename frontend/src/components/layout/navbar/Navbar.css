@@ -44,6 +44,7 @@
   color: #5b4a41;
   font-size: 0.96rem;
   cursor: pointer;
+  text-decoration: none;
   transition: color 0.18s ease;
 }
 
@@ -51,6 +52,11 @@
 .navbar__link:focus-visible {
   color: #7d2f27;
   outline: none;
+}
+
+.navbar__link--active {
+  color: #7d2f27;
+  font-weight: 700;
 }
 
 .navbar__dot {

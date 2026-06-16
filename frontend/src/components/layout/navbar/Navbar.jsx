@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 import { useAuth } from '../../../features/auth'
 import { getDefaultRouteForUser } from '../../../lib/navigation'
 import './Navbar.css'
@@ -16,7 +16,7 @@ function Navbar() {
 
       {shouldShowClientNav ? (
         <nav className="navbar__center" aria-label="Glowna nawigacja">
-          <button type="button" className="navbar__link">Katalog sal</button>
+          <NavLink to="/" className={({ isActive }) => `navbar__link${isActive ? ' navbar__link--active' : ''}`}>Katalog sal</NavLink>
           <span className="navbar__dot" aria-hidden="true">|</span>
           <button type="button" className="navbar__link">SmartPlaner</button>
           <span className="navbar__dot" aria-hidden="true">|</span>
