@@ -17,6 +17,10 @@ spring:
 app:
   frontend:
     url: http://localhost:3000
+  geocoding:
+    nominatim-url: https://nominatim.openstreetmap.org/search
+    user-agent: lendo-test-suite
+    email: test@example.com
 cloudinary:
   cloud-name: test-cloud
   api-key: test-api-key
