@@ -150,6 +150,7 @@ function AdminPage() {
   const [error, setError] = useState('')
   const [activeRequests, setActiveRequests] = useState({})
   const [expandedVenues, setExpandedVenues] = useState({})
+  const [expandedPartners, setExpandedPartners] = useState({})
   const [venueComments, setVenueComments] = useState({})
 
   const loadPartners = useCallback(async (query) => {
@@ -228,8 +229,21 @@ function AdminPage() {
     }
   }, [loadAdminStats])
 
+  useEffect(() => {
+    if (!error) {
+      return undefined
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setError('')
+    }, 5000)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [error])
+
   const partnerStats = partnerData.summary
-  const venueStats = venueData.summary
   const partners = partnerData.items
   const venues = venueData.items
 
@@ -333,6 +347,13 @@ function AdminPage() {
     }))
   }
 
+  function togglePartnerDetails(userId) {
+    setExpandedPartners((current) => ({
+      ...current,
+      [userId]: !current[userId],
+    }))
+  }
+
   function handleVenueCommentChange(venueId, value) {
     setVenueComments((current) => ({
       ...current,
@@ -425,78 +446,90 @@ function AdminPage() {
           <p className="admin-dashboard__empty">Brak partnerow dla wybranych filtrow.</p>
         ) : (
           <>
-            <div className="admin-dashboard__table-wrap">
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Partner</th>
-                    <th>Firma</th>
-                    <th>Kontakt</th>
-                    <th>Status</th>
-                    <th>Utworzono</th>
-                    <th>Akcje</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {partners.map((partner) => {
-                    const requestKey = `partner:${partner.userId}`
-                    const deleteRequestKey = `partner-delete:${partner.userId}`
-                    const isSubmitting = Boolean(activeRequests[requestKey])
-                    const isDeleting = Boolean(activeRequests[deleteRequestKey])
+            <div className="admin-dashboard__partner-list">
+              {partners.map((partner) => {
+                const requestKey = `partner:${partner.userId}`
+                const deleteRequestKey = `partner-delete:${partner.userId}`
+                const isSubmitting = Boolean(activeRequests[requestKey])
+                const isDeleting = Boolean(activeRequests[deleteRequestKey])
+                const isExpanded = Boolean(expandedPartners[partner.userId])
 
-                    return (
-                      <tr key={partner.userId}>
-                        <td>
-                          <strong>{partner.firstName} {partner.lastName}</strong>
-                          <span>{partner.email}</span>
-                        </td>
-                        <td>
-                          <strong>{partner.companyName || '-'}</strong>
-                          <span>NIP: {partner.taxId || '-'}</span>
-                        </td>
-                        <td>
-                          <strong>{partner.contactEmail || '-'}</strong>
-                          <span>{partner.phoneNumber || '-'}</span>
-                        </td>
-                        <td>
-                          <span className={`admin-dashboard__status-badge ${partner.verified ? 'admin-dashboard__status-badge--approved' : 'admin-dashboard__status-badge--pending'}`}>
-                            {partner.verified ? 'Zweryfikowany' : 'Oczekuje'}
-                          </span>
-                        </td>
-                        <td>{formatDateTime(partner.createdAt)}</td>
-                        <td>
-                          <div className="admin-dashboard__actions">
-                            <button
-                              type="button"
-                              className="admin-dashboard__action admin-dashboard__action--approve"
-                              disabled={isSubmitting || isDeleting || partner.verified}
-                              onClick={() => handlePartnerVerification(partner.userId, true)}
-                            >
-                              Potwierdz
-                            </button>
-                            <button
-                              type="button"
-                              className="admin-dashboard__action admin-dashboard__action--reject"
-                              disabled={isSubmitting || isDeleting || !partner.verified}
-                              onClick={() => handlePartnerVerification(partner.userId, false)}
-                            >
-                              Cofnij
-                            </button>
-                            <button
-                              type="button"
-                              className="admin-dashboard__action admin-dashboard__action--reject"
-                              disabled={isSubmitting || isDeleting}
-                              onClick={() => handlePartnerDelete(partner.userId)}
-                            >
-                              {isDeleting ? 'Usuwanie...' : 'Usun partnera'}
-                            </button>
+                return (
+                  <article key={partner.userId} className="admin-dashboard__partner-card">
+                    <div className="admin-dashboard__partner-top">
+                      <div>
+                        <h3>{partner.companyName || `${partner.firstName} ${partner.lastName}`}</h3>
+                        <p>{partner.firstName} {partner.lastName}</p>
+                      </div>
+                      <span className={`admin-dashboard__status-badge ${partner.verified ? 'admin-dashboard__status-badge--approved' : 'admin-dashboard__status-badge--pending'}`}>
+                        {partner.verified ? 'Zweryfikowany' : 'Oczekuje'}
+                      </span>
+                    </div>
+
+                    <div className="admin-dashboard__actions">
+                      <button
+                        type="button"
+                        className="admin-dashboard__action admin-dashboard__action--approve"
+                        disabled={isSubmitting || isDeleting || partner.verified}
+                        onClick={() => handlePartnerVerification(partner.userId, true)}
+                      >
+                        Potwierdz
+                      </button>
+                      <button
+                        type="button"
+                        className="admin-dashboard__action admin-dashboard__action--reject"
+                        disabled={isSubmitting || isDeleting || !partner.verified}
+                        onClick={() => handlePartnerVerification(partner.userId, false)}
+                      >
+                        Cofnij
+                      </button>
+                      <button
+                        type="button"
+                        className="admin-dashboard__action admin-dashboard__action--reject"
+                        disabled={isSubmitting || isDeleting}
+                        onClick={() => handlePartnerDelete(partner.userId)}
+                      >
+                        {isDeleting ? 'Usuwanie...' : 'Usun partnera'}
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="admin-dashboard__details-toggle"
+                      onClick={() => togglePartnerDetails(partner.userId)}
+                    >
+                      {isExpanded ? 'Ukryj szczegoly partnera' : 'Pokaz szczegoly partnera'}
+                    </button>
+
+                    {isExpanded ? (
+                      <section className="admin-dashboard__details" aria-label="Szczegoly partnera">
+                        <dl className="admin-dashboard__details-grid">
+                          <div>
+                            <dt>Email konta</dt>
+                            <dd>{partner.email || '-'}</dd>
                           </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+                          <div>
+                            <dt>Email kontaktowy</dt>
+                            <dd>{partner.contactEmail || '-'}</dd>
+                          </div>
+                          <div>
+                            <dt>Telefon</dt>
+                            <dd>{partner.phoneNumber || '-'}</dd>
+                          </div>
+                          <div>
+                            <dt>NIP</dt>
+                            <dd>{partner.taxId || '-'}</dd>
+                          </div>
+                          <div>
+                            <dt>Utworzono</dt>
+                            <dd>{formatDateTime(partner.createdAt)}</dd>
+                          </div>
+                        </dl>
+                      </section>
+                    ) : null}
+                  </article>
+                )
+              })}
             </div>
 
             <PaginationControls
@@ -518,29 +551,6 @@ function AdminPage() {
             <h2>Review obiektow</h2>
             <p>Przegladaj zgloszenia, komentuj poprawki i podejmuj decyzje.</p>
           </div>
-        </div>
-
-        <div className="admin-dashboard__stats-grid">
-          <article className="admin-dashboard__stat-card">
-            <span>Wszystkie obiekty</span>
-            <strong>{venueStats.total}</strong>
-          </article>
-          <article className="admin-dashboard__stat-card">
-            <span>Oczekujace</span>
-            <strong>{venueStats.pending}</strong>
-          </article>
-          <article className="admin-dashboard__stat-card">
-            <span>Zaakceptowane</span>
-            <strong>{venueStats.approved}</strong>
-          </article>
-          <article className="admin-dashboard__stat-card">
-            <span>Do poprawy</span>
-            <strong>{venueStats.draft}</strong>
-          </article>
-          <article className="admin-dashboard__stat-card">
-            <span>Odrzucone</span>
-            <strong>{venueStats.rejected}</strong>
-          </article>
         </div>
 
         <div className="admin-dashboard__toolbar">

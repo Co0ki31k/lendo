@@ -235,6 +235,37 @@
   margin-top: 20px;
 }
 
+.admin-dashboard__partner-list {
+  display: grid;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.admin-dashboard__partner-card {
+  border: 1px solid rgba(100, 66, 45, 0.14);
+  border-radius: 14px;
+  background: rgba(255, 250, 244, 0.9);
+  box-shadow: 0 10px 24px rgba(55, 31, 19, 0.05);
+  padding: 20px;
+}
+
+.admin-dashboard__partner-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-dashboard__partner-top h3 {
+  margin: 0;
+  color: #241712;
+}
+
+.admin-dashboard__partner-top p {
+  margin: 8px 0 0;
+  color: #5b4a41;
+}
+
 .admin-table {
   width: 100%;
   border-collapse: collapse;
@@ -261,7 +292,7 @@
 
 .admin-dashboard__cards {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 16px;
   margin-top: 20px;
 }
@@ -546,6 +577,10 @@
   .admin-dashboard__details-grid,
   .admin-dashboard__toolbar {
     grid-template-columns: 1fr;
+  }
+
+  .admin-dashboard__partner-top {
+    flex-direction: column;
   }
 
   .admin-dashboard__submit,

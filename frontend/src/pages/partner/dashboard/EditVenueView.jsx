@@ -47,6 +47,34 @@ function EditVenueView({ selectedVenue, onVenueUpdated }) {
     }
   }, [selectedVenue.id])
 
+  useEffect(() => {
+    if (!error) {
+      return undefined
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setError('')
+    }, 5000)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [error])
+
+  useEffect(() => {
+    if (!saveMessage) {
+      return undefined
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setSaveMessage('')
+    }, 5000)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [saveMessage])
+
   function handleVenueChange(event) {
     const { name, value, type, checked } = event.target
     const nextValue = type === 'checkbox' ? checked : value

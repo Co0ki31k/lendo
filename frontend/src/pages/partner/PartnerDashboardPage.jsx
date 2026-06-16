@@ -105,9 +105,10 @@ function PartnerDashboardPage() {
       setProfile(profileResponse)
       setVenueData(venuesResponse)
       setSelectedVenueId((currentSelectedVenueId) => {
-        const nextActionableVenues = venuesResponse.items.filter((venue) => ['APPROVED', 'DRAFT'].includes(venue.status))
+        const nextAllVenues = venuesResponse.items
+        const nextActionableVenues = nextAllVenues.filter((venue) => ['APPROVED', 'DRAFT'].includes(venue.status))
 
-        if (currentSelectedVenueId && nextActionableVenues.some((venue) => venue.id === currentSelectedVenueId)) {
+        if (currentSelectedVenueId && nextAllVenues.some((venue) => venue.id === currentSelectedVenueId)) {
           return currentSelectedVenueId
         }
 
@@ -130,6 +131,34 @@ function PartnerDashboardPage() {
     }
   }, [loadDashboardData])
 
+  useEffect(() => {
+    if (!error) {
+      return undefined
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setError('')
+    }, 5000)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [error])
+
+  useEffect(() => {
+    if (!notice) {
+      return undefined
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setNotice('')
+    }, 5000)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [notice])
+
   const actionableVenues = useMemo(
     () => venueData.items.filter((venue) => ['APPROVED', 'DRAFT'].includes(venue.status)),
     [venueData.items],
@@ -141,8 +170,8 @@ function PartnerDashboardPage() {
   )
 
   const selectedVenue = useMemo(
-    () => actionableVenues.find((venue) => venue.id === selectedVenueId) ?? null,
-    [actionableVenues, selectedVenueId],
+    () => venueData.items.find((venue) => venue.id === selectedVenueId) ?? null,
+    [venueData.items, selectedVenueId],
   )
 
   const accountName = useMemo(() => buildAccountName(user), [user])
@@ -183,8 +212,9 @@ function PartnerDashboardPage() {
 
   function handleVenueUpdated(updatedVenue) {
     if (updatedVenue.deleted) {
-      const nextVenues = venueData.items.filter((venue) => venue.id !== updatedVenue.id)
-      const nextActionableVenue = nextVenues.find((venue) => ['APPROVED', 'DRAFT'].includes(venue.status))
+      const nextActionableVenue = venueData.items
+        .filter((venue) => venue.id !== updatedVenue.id)
+        .find((venue) => ['APPROVED', 'DRAFT'].includes(venue.status))
 
       setSelectedVenueId(nextActionableVenue?.id ?? null)
       setManagerView('select')
@@ -192,10 +222,6 @@ function PartnerDashboardPage() {
       void loadVenueList(venueQuery, { silent: true })
       return
     }
-
-    const nextVenues = venueData.items.map((venue) => (
-      venue.id === updatedVenue.id ? updatedVenue : venue
-    ))
 
     void loadVenueList(venueQuery, { silent: true })
 
@@ -213,10 +239,10 @@ function PartnerDashboardPage() {
       return
     }
 
-    const nextActionableVenue = nextVenues.find((venue) => ['APPROVED', 'DRAFT'].includes(venue.status) && venue.id !== updatedVenue.id)
-    setSelectedVenueId(nextActionableVenue?.id ?? null)
-    setManagerView('select')
-    setNotice('Obiekt zostal wyslany ponownie do review i nie jest juz aktywnym obiektem dashboardu.')
+    setSelectedVenueId(updatedVenue.id)
+    setManagerView('object')
+    setObjectView('edit')
+    setNotice('Zmiany zostaly zapisane. Obiekt oczekuje teraz na review admina.')
   }
 
   function handleVenueQueryChange(patch) {

@@ -159,10 +159,6 @@ public class PartnerVenueService {
             throw new RuntimeException("Obiekt jest juz zatwierdzony");
         }
 
-        if (venueImageRepository.findByVenueIdOrderByDisplayOrderAscIdAsc(venue.getId()).isEmpty()) {
-            throw new RuntimeException("Dodaj przynajmniej jedno zdjecie przed wyslaniem obiektu do akceptacji");
-        }
-
         venue.setStatus(VenueStatus.PENDING);
         venue.setVerified(false);
         venue.setAdminReviewComment(null);
