@@ -67,6 +67,7 @@ public class PartnerVenueService {
                         .noCorkageFee(request.noCorkageFee())
                         .civilWeddingGarden(request.civilWeddingGarden())
                         .verified(false)
+                        .adminReviewComment(null)
                         .status(VenueStatus.PENDING)
                         .build()
         );
@@ -134,6 +135,7 @@ public class PartnerVenueService {
         if (venue.getStatus() == VenueStatus.APPROVED) {
             venue.setStatus(VenueStatus.PENDING);
             venue.setVerified(false);
+            venue.setAdminReviewComment(null);
         }
 
         return VenueResponse.from(venue, address);
@@ -155,6 +157,7 @@ public class PartnerVenueService {
 
         venue.setStatus(VenueStatus.PENDING);
         venue.setVerified(false);
+        venue.setAdminReviewComment(null);
 
         return VenueResponse.from(venue, address);
     }

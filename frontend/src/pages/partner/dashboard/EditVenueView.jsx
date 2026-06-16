@@ -9,6 +9,7 @@ function EditVenueView({ selectedVenue, onVenueUpdated }) {
   const [error, setError] = useState('')
   const [saveMessage, setSaveMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isResubmitting, setIsResubmitting] = useState(false)
   const [venueFormValues, setVenueFormValues] = useState(createVenueFormValues())
 
   useEffect(() => {
@@ -70,13 +71,32 @@ function EditVenueView({ selectedVenue, onVenueUpdated }) {
       setSaveMessage(
         updatedVenue.status === 'APPROVED'
           ? 'Zmiany zostaly zapisane.'
-          : 'Zmiany zostaly zapisane. Obiekt wrocil do statusu oczekujacego na review admina.',
+          : updatedVenue.status === 'DRAFT'
+            ? 'Zmiany zostaly zapisane. Gdy skonczysz poprawki, wyslij obiekt ponownie do akceptacji.'
+            : 'Zmiany zostaly zapisane. Obiekt wrocil do statusu oczekujacego na review admina.',
       )
       onVenueUpdated(updatedVenue)
     } catch (requestError) {
       setError(requestError.response?.data?.message ?? 'Nie udalo sie zapisac zmian obiektu. Sprawdz, czy adres jest poprawny.')
     } finally {
       setIsSubmitting(false)
+    }
+  }
+
+  async function handleResubmit() {
+    setIsResubmitting(true)
+    setError('')
+    setSaveMessage('')
+
+    try {
+      const updatedVenue = await partnerApi.submitVenueForReview(selectedVenue.id)
+      setVenueFormValues(createVenueFormValues(updatedVenue))
+      setSaveMessage('Obiekt zostal wyslany ponownie do akceptacji admina.')
+      onVenueUpdated(updatedVenue)
+    } catch (requestError) {
+      setError(requestError.response?.data?.message ?? 'Nie udalo sie wyslac obiektu ponownie do akceptacji.')
+    } finally {
+      setIsResubmitting(false)
     }
   }
 
@@ -105,12 +125,22 @@ function EditVenueView({ selectedVenue, onVenueUpdated }) {
         <div>
           <span className="partner-dashboard__workspace-eyebrow">Obiekt</span>
           <h2>{selectedVenue.name} - Edycja</h2>
-          <p>Edytujesz zatwierdzony obiekt. Po zapisie jego status moze wrocic do oczekiwania na review.</p>
+          <p>
+            {selectedVenue.status === 'DRAFT'
+              ? 'Admin cofnal obiekt do poprawy. Po zmianach mozesz wyslac go ponownie do review.'
+              : 'Edytujesz zatwierdzony obiekt. Po zapisie jego status moze wrocic do oczekiwania na review.'}
+          </p>
         </div>
       </div>
 
       {error ? <p className="partner-dashboard__error">{error}</p> : null}
       {saveMessage ? <p className="partner-dashboard__notice">{saveMessage}</p> : null}
+      {selectedVenue.adminReviewComment ? (
+        <div className="partner-dashboard__feedback-panel">
+          <strong>Komentarz admina</strong>
+          <p>{selectedVenue.adminReviewComment}</p>
+        </div>
+      ) : null}
 
       <form id={editFormId} className="partner-dashboard__form" onSubmit={handleSubmit}>
         <VenueFormFields venueFormValues={venueFormValues} onVenueChange={handleVenueChange} />
@@ -121,10 +151,20 @@ function EditVenueView({ selectedVenue, onVenueUpdated }) {
           type="submit"
           form={editFormId}
           className="partner-dashboard__submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || isResubmitting}
         >
           {isSubmitting ? 'Zapisywanie...' : 'Zapisz zmiany'}
         </button>
+        {selectedVenue.status === 'DRAFT' ? (
+          <button
+            type="button"
+            className="partner-dashboard__secondary-action"
+            onClick={handleResubmit}
+            disabled={isSubmitting || isResubmitting}
+          >
+            {isResubmitting ? 'Wysylanie...' : 'Wyslij ponownie do akceptacji'}
+          </button>
+        ) : null}
       </div>
     </section>
   )

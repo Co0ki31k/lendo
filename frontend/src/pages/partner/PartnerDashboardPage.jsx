@@ -39,13 +39,13 @@ function PartnerDashboardPage() {
       setProfile(profileResponse)
       setVenues(venuesResponse)
       setSelectedVenueId((currentSelectedVenueId) => {
-        const nextApprovedVenues = venuesResponse.filter((venue) => venue.status === 'APPROVED')
+        const nextActionableVenues = venuesResponse.filter((venue) => ['APPROVED', 'DRAFT'].includes(venue.status))
 
-        if (currentSelectedVenueId && nextApprovedVenues.some((venue) => venue.id === currentSelectedVenueId)) {
+        if (currentSelectedVenueId && nextActionableVenues.some((venue) => venue.id === currentSelectedVenueId)) {
           return currentSelectedVenueId
         }
 
-        return nextApprovedVenues[0]?.id ?? null
+        return nextActionableVenues[0]?.id ?? null
       })
       setStatus('ready')
     } catch (requestError) {
@@ -64,19 +64,19 @@ function PartnerDashboardPage() {
     }
   }, [loadDashboardData])
 
-  const approvedVenues = useMemo(
-    () => venues.filter((venue) => venue.status === 'APPROVED'),
+  const actionableVenues = useMemo(
+    () => venues.filter((venue) => ['APPROVED', 'DRAFT'].includes(venue.status)),
     [venues],
   )
 
-  const approvedVenueIds = useMemo(
-    () => approvedVenues.map((venue) => venue.id),
-    [approvedVenues],
+  const actionableVenueIds = useMemo(
+    () => actionableVenues.map((venue) => venue.id),
+    [actionableVenues],
   )
 
   const selectedVenue = useMemo(
-    () => approvedVenues.find((venue) => venue.id === selectedVenueId) ?? null,
-    [approvedVenues, selectedVenueId],
+    () => actionableVenues.find((venue) => venue.id === selectedVenueId) ?? null,
+    [actionableVenues, selectedVenueId],
   )
 
   const accountName = useMemo(() => buildAccountName(user), [user])
@@ -128,10 +128,18 @@ function PartnerDashboardPage() {
       return
     }
 
-    const nextApprovedVenue = nextVenues.find((venue) => venue.status === 'APPROVED' && venue.id !== updatedVenue.id)
-    setSelectedVenueId(nextApprovedVenue?.id ?? null)
+    if (updatedVenue.status === 'DRAFT') {
+      setSelectedVenueId(updatedVenue.id)
+      setManagerView('object')
+      setObjectView('edit')
+      setNotice('Zmiany zostaly zapisane. Obiekt jest gotowy do ponownego wyslania po poprawkach.')
+      return
+    }
+
+    const nextActionableVenue = nextVenues.find((venue) => ['APPROVED', 'DRAFT'].includes(venue.status) && venue.id !== updatedVenue.id)
+    setSelectedVenueId(nextActionableVenue?.id ?? null)
     setManagerView('select')
-    setNotice('Zmiany zapisane. Obiekt wrocil do statusu oczekujacego i nie jest juz aktywnym obiektem dashboardu.')
+    setNotice('Obiekt zostal wyslany ponownie do review i nie jest juz aktywnym obiektem dashboardu.')
   }
 
   function renderWorkspace() {
@@ -154,7 +162,7 @@ function PartnerDashboardPage() {
       return (
         <SelectVenueView
           venues={venues}
-          approvedVenueIds={approvedVenueIds}
+          actionableVenueIds={actionableVenueIds}
           selectedVenueId={selectedVenueId}
           onVenueSelect={setSelectedVenueId}
           onRefresh={() => void loadDashboardData()}
@@ -209,7 +217,8 @@ function PartnerDashboardPage() {
         <div className="partner-dashboard__layout">
           <PartnerDashboardSidebar
             selectedVenue={selectedVenue}
-            hasApprovedVenue={Boolean(selectedVenue)}
+            hasSelectedVenue={Boolean(selectedVenue)}
+            hasApprovedVenue={selectedVenue?.status === 'APPROVED'}
             managerView={managerView}
             objectView={objectView}
             onManagerViewChange={setManagerView}

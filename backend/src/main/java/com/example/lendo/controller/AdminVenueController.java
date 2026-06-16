@@ -38,6 +38,6 @@ public class AdminVenueController {
             @PathVariable Long venueId,
             @Valid @RequestBody UpdateVenueStatusRequest request
     ) {
-        return ResponseEntity.ok(adminPartnerService.updateVenueStatus(venueId, request.status()));
+        return ResponseEntity.ok(adminPartnerService.updateVenueStatus(venueId, request.status(), request.comment()));
     }
 }

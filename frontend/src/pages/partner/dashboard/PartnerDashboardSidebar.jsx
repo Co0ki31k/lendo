@@ -1,5 +1,6 @@
 function PartnerDashboardSidebar({
   selectedVenue,
+  hasSelectedVenue,
   hasApprovedVenue,
   managerView,
   objectView,
@@ -65,16 +66,16 @@ function PartnerDashboardSidebar({
           <button
             type="button"
             className={`partner-dashboard__nav-button${managerView === 'object' && objectView === 'edit' ? ' partner-dashboard__nav-button--active' : ''}`}
-            onClick={() => hasApprovedVenue && onObjectViewChange('edit')}
-            disabled={!hasApprovedVenue}
+            onClick={() => hasSelectedVenue && onObjectViewChange('edit')}
+            disabled={!hasSelectedVenue}
           >
             Edycja
           </button>
           <button
             type="button"
             className={`partner-dashboard__nav-button${managerView === 'object' && objectView === 'images' ? ' partner-dashboard__nav-button--active' : ''}`}
-            onClick={() => hasApprovedVenue && onObjectViewChange('images')}
-            disabled={!hasApprovedVenue}
+            onClick={() => hasSelectedVenue && onObjectViewChange('images')}
+            disabled={!hasSelectedVenue}
           >
             Zdjecia
           </button>

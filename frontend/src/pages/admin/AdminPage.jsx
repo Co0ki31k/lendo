@@ -6,7 +6,7 @@ const VENUE_STATUS_LABELS = {
   PENDING: 'Oczekuje',
   APPROVED: 'Zaakceptowany',
   REJECTED: 'Odrzucony',
-  DRAFT: 'Oczekuje',
+  DRAFT: 'Do poprawy',
 }
 
 function formatDateTime(value) {
@@ -45,6 +45,7 @@ function AdminPage() {
   const [error, setError] = useState('')
   const [activeRequests, setActiveRequests] = useState({})
   const [expandedVenues, setExpandedVenues] = useState({})
+  const [venueComments, setVenueComments] = useState({})
 
   const fetchAdminData = useCallback(async ({ showLoader = true, clearError = true } = {}) => {
     if (showLoader) {
@@ -63,6 +64,9 @@ function AdminPage() {
 
       setPartners(partnersResponse)
       setVenues(venuesResponse)
+      setVenueComments(
+        Object.fromEntries(venuesResponse.map((venue) => [venue.id, venue.adminReviewComment ?? ''])),
+      )
     } catch (loadError) {
       setError(loadError.response?.data?.message ?? 'Nie udalo sie pobrac danych panelu admina.')
     } finally {
@@ -136,10 +140,14 @@ function AdminPage() {
     setActiveRequests((current) => ({ ...current, [requestKey]: true }))
 
     try {
-      const updatedVenue = await adminApi.updateVenueStatus(venueId, status)
+      const updatedVenue = await adminApi.updateVenueStatus(venueId, status, venueComments[venueId] ?? '')
       setVenues((current) => current.map((venue) => (
         venue.id === venueId ? updatedVenue : venue
       )))
+      setVenueComments((current) => ({
+        ...current,
+        [venueId]: updatedVenue.adminReviewComment ?? '',
+      }))
     } catch (requestError) {
       setError(requestError.response?.data?.message ?? 'Nie udalo sie zaktualizowac statusu obiektu.')
     } finally {
@@ -151,6 +159,13 @@ function AdminPage() {
     setExpandedVenues((current) => ({
       ...current,
       [venueId]: !current[venueId],
+    }))
+  }
+
+  function handleVenueCommentChange(venueId, value) {
+    setVenueComments((current) => ({
+      ...current,
+      [venueId]: value,
     }))
   }
 
@@ -371,6 +386,16 @@ function AdminPage() {
                         <h4>Opis obiektu</h4>
                         <p>{venue.description || 'Brak opisu.'}</p>
                       </div>
+                      <div className="admin-venue-card__description">
+                        <h4>Komentarz dla managera</h4>
+                        <textarea
+                          className="admin-venue-card__comment"
+                          value={venueComments[venue.id] ?? ''}
+                          onChange={(event) => handleVenueCommentChange(venue.id, event.target.value)}
+                          placeholder="Wpisz, co manager ma poprawic przed ponownym review."
+                          rows="4"
+                        />
+                      </div>
                     </section>
                   ) : null}
 
@@ -382,6 +407,14 @@ function AdminPage() {
                       onClick={() => handleVenueStatusUpdate(venue.id, 'APPROVED')}
                     >
                       Zaakceptuj
+                    </button>
+                    <button
+                      type="button"
+                      className={`admin-action admin-action--draft ${venue.status === 'DRAFT' ? 'admin-action--current' : ''}`}
+                      disabled={Boolean(activeRequests[`venue:${venue.id}:DRAFT`]) || !(venueComments[venue.id] ?? '').trim()}
+                      onClick={() => handleVenueStatusUpdate(venue.id, 'DRAFT')}
+                    >
+                      Cofnij do poprawy
                     </button>
                     <button
                       type="button"

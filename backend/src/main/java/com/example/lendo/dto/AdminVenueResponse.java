@@ -23,6 +23,7 @@ public record AdminVenueResponse(
         boolean civilWeddingGarden,
         String status,
         boolean verified,
+        String adminReviewComment,
         LocalDateTime createdAt,
         VenueResponse.Address address
 ) {
@@ -43,6 +44,7 @@ public record AdminVenueResponse(
                 venue.isCivilWeddingGarden(),
                 venue.getStatus().name(),
                 venue.isVerified(),
+                venue.getAdminReviewComment(),
                 venue.getCreatedAt(),
                 new VenueResponse.Address(
                         address.getStreet(),

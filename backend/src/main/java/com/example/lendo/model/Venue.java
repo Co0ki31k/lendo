@@ -84,6 +84,9 @@ public class Venue {
     @Builder.Default
     private boolean verified = false;
 
+    @Column(name = "admin_review_comment")
+    private String adminReviewComment;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     @Builder.Default

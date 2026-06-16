@@ -12,6 +12,7 @@ import com.example.lendo.repository.PartnerProfileRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.UUID;
@@ -47,7 +48,7 @@ public class AdminPartnerService {
     }
 
     @Transactional
-    public AdminVenueResponse updateVenueStatus(Long venueId, String rawStatus) {
+    public AdminVenueResponse updateVenueStatus(Long venueId, String rawStatus, String comment) {
         Venue venue = venueRepository.findById(venueId)
                 .orElseThrow(() -> new RuntimeException("Obiekt nie istnieje"));
 
@@ -60,6 +61,20 @@ public class AdminPartnerService {
 
         venue.setStatus(status);
         venue.setVerified(status == VenueStatus.APPROVED);
+
+        if (status == VenueStatus.DRAFT) {
+            if (!StringUtils.hasText(comment)) {
+                throw new RuntimeException("Dodaj komentarz dla managera przed cofnieciem obiektu do poprawy");
+            }
+
+            venue.setAdminReviewComment(comment.trim());
+        } else if (status == VenueStatus.APPROVED) {
+            venue.setAdminReviewComment(null);
+        } else if (StringUtils.hasText(comment)) {
+            venue.setAdminReviewComment(comment.trim());
+        } else {
+            venue.setAdminReviewComment(null);
+        }
 
         return toAdminVenueResponse(venue);
     }

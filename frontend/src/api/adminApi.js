@@ -15,7 +15,7 @@ export async function getVenues() {
   return response.data
 }
 
-export async function updateVenueStatus(venueId, status) {
-  const response = await api.patch(`/api/admin/venues/${venueId}/status`, { status })
+export async function updateVenueStatus(venueId, status, comment = '') {
+  const response = await api.patch(`/api/admin/venues/${venueId}/status`, { status, comment })
   return response.data
 }

@@ -15,7 +15,7 @@ export function formatVenueStatus(status) {
     PENDING: 'Oczekujacy',
     APPROVED: 'Zaakceptowany',
     REJECTED: 'Odrzucony',
-    DRAFT: 'Oczekujacy',
+    DRAFT: 'Do poprawy',
   }
 
   return labels[status] ?? status ?? '-'

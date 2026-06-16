@@ -1,6 +1,7 @@
 function StatsView({ venues }) {
   const approvedVenues = venues.filter((venue) => venue.status === 'APPROVED').length
-  const pendingVenues = venues.filter((venue) => ['PENDING', 'DRAFT'].includes(venue.status)).length
+  const pendingVenues = venues.filter((venue) => venue.status === 'PENDING').length
+  const draftVenues = venues.filter((venue) => venue.status === 'DRAFT').length
   const rejectedVenues = venues.filter((venue) => venue.status === 'REJECTED').length
 
   return (
@@ -25,6 +26,10 @@ function StatsView({ venues }) {
         <article className="partner-dashboard__stat-card">
           <span>Oczekujace</span>
           <strong>{pendingVenues}</strong>
+        </article>
+        <article className="partner-dashboard__stat-card">
+          <span>Do poprawy</span>
+          <strong>{draftVenues}</strong>
         </article>
         <article className="partner-dashboard__stat-card">
           <span>Odrzucone</span>

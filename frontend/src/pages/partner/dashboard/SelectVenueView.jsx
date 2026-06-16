@@ -2,7 +2,7 @@ import { formatMoney, formatVenueStatus } from './utils'
 
 function SelectVenueView({
   venues,
-  approvedVenueIds,
+  actionableVenueIds,
   selectedVenueId,
   onVenueSelect,
   onRefresh,
@@ -13,7 +13,7 @@ function SelectVenueView({
         <div>
           <span className="partner-dashboard__workspace-eyebrow">Wybor obiektu</span>
           <h2>Twoje obiekty</h2>
-          <p>Wybierac do pracy mozna tylko obiekty zatwierdzone przez administratora.</p>
+          <p>Obiekty zatwierdzone i cofnie­te do poprawy mozna wybrac do dalszej pracy.</p>
         </div>
         <button type="button" className="partner-dashboard__secondary-action" onClick={onRefresh}>
           Odswiez
@@ -25,15 +25,15 @@ function SelectVenueView({
       ) : (
         <div className="partner-dashboard__venue-list">
           {venues.map((venue) => {
-            const isApproved = approvedVenueIds.includes(venue.id)
+            const isActionable = actionableVenueIds.includes(venue.id)
 
             return (
               <button
                 key={venue.id}
                 type="button"
-                className={`partner-dashboard__venue-card-button${selectedVenueId === venue.id ? ' partner-dashboard__venue-card-button--active' : ''}${!isApproved ? ' partner-dashboard__venue-card-button--disabled' : ''}`}
-                onClick={() => isApproved && onVenueSelect(venue.id)}
-                disabled={!isApproved}
+                className={`partner-dashboard__venue-card-button${selectedVenueId === venue.id ? ' partner-dashboard__venue-card-button--active' : ''}${!isActionable ? ' partner-dashboard__venue-card-button--disabled' : ''}`}
+                onClick={() => isActionable && onVenueSelect(venue.id)}
+                disabled={!isActionable}
               >
                 <div className="partner-dashboard__venue-top">
                   <div>
@@ -56,7 +56,14 @@ function SelectVenueView({
                   </div>
                 </dl>
 
-                {!isApproved ? (
+                {venue.adminReviewComment ? (
+                  <div className="partner-dashboard__venue-feedback">
+                    <strong>Komentarz admina</strong>
+                    <span>{venue.adminReviewComment}</span>
+                  </div>
+                ) : null}
+
+                {!isActionable ? (
                   <p className="partner-dashboard__venue-note">
                     Ten obiekt nie jest jeszcze zatwierdzony, wiec nie moze byc aktywnym obiektem dashboardu.
                   </p>

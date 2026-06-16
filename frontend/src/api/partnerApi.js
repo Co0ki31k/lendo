@@ -30,6 +30,11 @@ export async function updateVenue(venueId, payload) {
   return response.data
 }
 
+export async function submitVenueForReview(venueId) {
+  const response = await api.patch(`/api/partner/venues/${venueId}/submit`)
+  return response.data
+}
+
 export async function getVenueImages(venueId) {
   const response = await api.get(`/api/partner/venues/${venueId}/images`)
   return response.data
