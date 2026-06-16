@@ -2,7 +2,11 @@ function CreateVenueView({
   venueFormValues,
   onVenueChange,
   onVenueSubmit,
+  onResolveCoordinates,
   isVenueSubmitting,
+  isGeocodingAddress,
+  coordinatePreview,
+  isAddressResolved,
 }) {
   return (
     <section className="partner-dashboard__workspace">
@@ -65,15 +69,29 @@ function CreateVenueView({
           <input name="postalCode" type="text" value={venueFormValues.postalCode} onChange={onVenueChange} required />
         </label>
 
-        <label className="partner-dashboard__field">
-          <span>Szerokosc geograficzna</span>
-          <input name="latitude" type="number" min="-90" max="90" step="0.000001" value={venueFormValues.latitude} onChange={onVenueChange} required />
-        </label>
-
-        <label className="partner-dashboard__field">
-          <span>Dlugosc geograficzna</span>
-          <input name="longitude" type="number" min="-180" max="180" step="0.000001" value={venueFormValues.longitude} onChange={onVenueChange} required />
-        </label>
+        <div className="partner-dashboard__field partner-dashboard__field--full">
+          <span>Wspolrzedne z adresu</span>
+          <div className="partner-dashboard__geocoding-row">
+            <button
+              type="button"
+              className="partner-dashboard__secondary-action"
+              onClick={onResolveCoordinates}
+              disabled={isGeocodingAddress}
+            >
+              {isGeocodingAddress ? 'Pobieranie wspolrzednych...' : 'Pobierz wspolrzedne z adresu'}
+            </button>
+            <div className="partner-dashboard__geocoding-result">
+              {coordinatePreview ? (
+                <>
+                  <strong>{coordinatePreview.latitude}, {coordinatePreview.longitude}</strong>
+                  <span>{coordinatePreview.displayName || 'Adres dopasowany przez Nominatim.'}</span>
+                </>
+              ) : (
+                <span>Najpierw uzupelnij adres, potem pobierz wspolrzedne.</span>
+              )}
+            </div>
+          </div>
+        </div>
 
         <label className="partner-dashboard__field partner-dashboard__field--full">
           <span>Opis</span>
@@ -97,8 +115,12 @@ function CreateVenueView({
           </label>
         </div>
 
-        <button type="submit" className="partner-dashboard__submit" disabled={isVenueSubmitting}>
-          {isVenueSubmitting ? 'Zapisywanie...' : 'Dodaj obiekt'}
+        <button
+          type="submit"
+          className="partner-dashboard__submit"
+          disabled={isVenueSubmitting || isGeocodingAddress || !isAddressResolved}
+        >
+          {isVenueSubmitting ? 'Zapisywanie...' : isAddressResolved ? 'Dodaj obiekt' : 'Najpierw pobierz wspolrzedne'}
         </button>
       </form>
     </section>

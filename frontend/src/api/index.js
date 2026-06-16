@@ -1,4 +1,5 @@
 export * as authApi from './authApi'
 export * as adminApi from './adminApi'
 export * as catalogApi from './catalogApi'
+export * as geocodingApi from './geocodingApi'
 export * as partnerApi from './partnerApi'
