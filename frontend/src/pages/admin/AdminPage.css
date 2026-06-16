@@ -294,15 +294,6 @@
   margin-left: auto;
 }
 
-.admin-dashboard__actions--user {
-  justify-content: flex-end;
-}
-
-.admin-dashboard__user-meta {
-  color: #5b4a41;
-  font-size: 0.9rem;
-}
-
 .admin-table {
   width: 100%;
   border-collapse: collapse;
@@ -634,10 +625,6 @@
     width: 100%;
     align-items: stretch;
     margin-left: 0;
-  }
-
-  .admin-dashboard__actions--user {
-    justify-content: flex-start;
   }
 
   .admin-dashboard__submit,

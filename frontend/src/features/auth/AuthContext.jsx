@@ -1,12 +1,54 @@
-import { createContext, useContext, useMemo, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { authApi } from '../../api'
-import { getAccessToken, getStoredUser, updateStoredUser } from '../../lib/tokenStorage'
+import { getAccessToken, getRefreshToken, getStoredUser, updateStoredUser } from '../../lib/tokenStorage'
 
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => getStoredUser())
-  const [isInitializing] = useState(false)
+  const [isInitializing, setIsInitializing] = useState(Boolean(getRefreshToken()))
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function initializeSession() {
+      const refreshToken = getRefreshToken()
+
+      if (!refreshToken) {
+        if (isMounted) {
+          setIsInitializing(false)
+        }
+        return
+      }
+
+      try {
+        const authResponse = await authApi.refreshAuth(refreshToken)
+
+        if (!isMounted) {
+          return
+        }
+
+        setUser(authResponse.user ?? authApi.getCurrentUser())
+      } catch {
+        if (!isMounted) {
+          return
+        }
+
+        authApi.logout()
+        setUser(null)
+      } finally {
+        if (isMounted) {
+          setIsInitializing(false)
+        }
+      }
+    }
+
+    void initializeSession()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const value = useMemo(() => ({
     user,

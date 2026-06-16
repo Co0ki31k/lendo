@@ -190,6 +190,7 @@ function AdminPage() {
   const [activeRequests, setActiveRequests] = useState({})
   const [expandedVenues, setExpandedVenues] = useState({})
   const [expandedPartners, setExpandedPartners] = useState({})
+  const [expandedUsers, setExpandedUsers] = useState({})
   const [venueComments, setVenueComments] = useState({})
   const [commentEditors, setCommentEditors] = useState({})
 
@@ -456,6 +457,13 @@ function AdminPage() {
 
   function togglePartnerDetails(userId) {
     setExpandedPartners((current) => ({
+      ...current,
+      [userId]: !current[userId],
+    }))
+  }
+
+  function toggleUserDetails(userId) {
+    setExpandedUsers((current) => ({
       ...current,
       [userId]: !current[userId],
     }))
@@ -896,20 +904,12 @@ function AdminPage() {
 
         <div className="admin-dashboard__stats-grid">
           <article className="admin-dashboard__stat-card">
-            <span>Wszyscy partnerzy</span>
-            <strong>{adminStats.partners.total}</strong>
-          </article>
-          <article className="admin-dashboard__stat-card">
             <span>Partnerzy zweryfikowani</span>
             <strong>{adminStats.partners.verified}</strong>
           </article>
           <article className="admin-dashboard__stat-card">
             <span>Partnerzy oczekujacy</span>
             <strong>{adminStats.partners.pending}</strong>
-          </article>
-          <article className="admin-dashboard__stat-card">
-            <span>Wszystkie obiekty</span>
-            <strong>{adminStats.venues.total}</strong>
           </article>
           <article className="admin-dashboard__stat-card">
             <span>Obiekty oczekujace</span>
@@ -920,20 +920,12 @@ function AdminPage() {
             <strong>{adminStats.venues.approved}</strong>
           </article>
           <article className="admin-dashboard__stat-card">
-            <span>Obiekty do poprawy</span>
-            <strong>{adminStats.venues.draft}</strong>
-          </article>
-          <article className="admin-dashboard__stat-card">
-            <span>Obiekty odrzucone</span>
-            <strong>{adminStats.venues.rejected}</strong>
-          </article>
-          <article className="admin-dashboard__stat-card">
-            <span>Wszystkie konta User/Admin</span>
-            <strong>{adminStats.users.total}</strong>
-          </article>
-          <article className="admin-dashboard__stat-card">
             <span>Konta User</span>
             <strong>{adminStats.users.users}</strong>
+          </article>
+          <article className="admin-dashboard__stat-card">
+            <span>Konta Manager</span>
+            <strong>{adminStats.partners.total}</strong>
           </article>
           <article className="admin-dashboard__stat-card">
             <span>Konta Admin</span>
@@ -1027,6 +1019,7 @@ function AdminPage() {
                 const isRoleUpdating = Boolean(activeRequests[`user-role:${account.id}`])
                 const isDeleting = Boolean(activeRequests[`user-delete:${account.id}`])
                 const nextRole = account.role === 'ADMIN' ? 'CLIENT' : 'ADMIN'
+                const isExpanded = Boolean(expandedUsers[account.id])
 
                 return (
                   <article key={account.id} className="admin-dashboard__user-card">
@@ -1040,13 +1033,41 @@ function AdminPage() {
                         <span className={`admin-dashboard__status-badge ${account.role === 'ADMIN' ? 'admin-dashboard__status-badge--approved' : 'admin-dashboard__status-badge--pending'}`}>
                           {USER_ROLE_LABELS[account.role] ?? account.role}
                         </span>
-                        <span className="admin-dashboard__user-meta">
-                          {account.phoneNumber || 'Brak telefonu'} | {formatDateTime(account.createdAt)}
-                        </span>
                       </div>
                     </div>
 
-                    <div className="admin-dashboard__actions admin-dashboard__actions--user">
+                    <button
+                      type="button"
+                      className="admin-dashboard__details-toggle"
+                      onClick={() => toggleUserDetails(account.id)}
+                    >
+                      {isExpanded ? 'Ukryj szczegoly konta' : 'Pokaz szczegoly konta'}
+                    </button>
+
+                    {isExpanded ? (
+                      <section className="admin-dashboard__details" aria-label="Szczegoly konta">
+                        <dl className="admin-dashboard__details-grid">
+                          <div>
+                            <dt>Rola</dt>
+                            <dd>{USER_ROLE_LABELS[account.role] ?? account.role}</dd>
+                          </div>
+                          <div>
+                            <dt>Telefon</dt>
+                            <dd>{account.phoneNumber || '-'}</dd>
+                          </div>
+                          <div>
+                            <dt>Status konta</dt>
+                            <dd>{account.active ? 'Aktywne' : 'Nieaktywne'}</dd>
+                          </div>
+                          <div>
+                            <dt>Utworzono</dt>
+                            <dd>{formatDateTime(account.createdAt)}</dd>
+                          </div>
+                        </dl>
+                      </section>
+                    ) : null}
+
+                    <div className="admin-dashboard__actions">
                       <button
                         type="button"
                         className="admin-dashboard__action admin-dashboard__action--approve"
