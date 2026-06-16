@@ -218,34 +218,27 @@ function CatalogPage() {
                 <section className="catalog-page__list">
                   {venues.map((venue) => (
                     <article key={venue.id} className="catalog-page__card">
-                      <button
-                        type="button"
-                        className={`catalog-page__favorite-button${venue.favorite ? ' catalog-page__favorite-button--active' : ''}`}
-                        aria-label={venue.favorite ? `Usun ${venue.name} z ulubionych` : `Dodaj ${venue.name} do ulubionych`}
-                        onClick={(event) => void handleFavoriteToggle(event, venue.id, venue.favorite)}
-                      >
-                        {venue.favorite ? '♥' : '♡'}
-                      </button>
+                      <div className="catalog-page__card-shell">
+                        <Link to={`/venues/${venue.id}`} className="catalog-page__card-link">
+                          <div className="catalog-page__card-image-wrap">
+                            {venue.primaryImageUrl ? (
+                              <img
+                                src={venue.primaryImageUrl}
+                                alt={venue.name}
+                                className="catalog-page__card-image"
+                              />
+                            ) : (
+                              <div className="catalog-page__card-image catalog-page__card-image--fallback">
+                                Brak zdjecia
+                              </div>
+                            )}
+                          </div>
 
-                      <Link to={`/venues/${venue.id}`} className="catalog-page__card-link">
-                        <div className="catalog-page__card-image-wrap">
-                          {venue.primaryImageUrl ? (
-                            <img
-                              src={venue.primaryImageUrl}
-                              alt={venue.name}
-                              className="catalog-page__card-image"
-                            />
-                          ) : (
-                            <div className="catalog-page__card-image catalog-page__card-image--fallback">
-                              Brak zdjecia
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="catalog-page__card-content">
-                          <h2>{venue.name}</h2>
-                          <p className="catalog-page__card-location">{venue.city}, {venue.voivodeship}</p>
-                        </div>
+                          <div className="catalog-page__card-content">
+                            <h2>{venue.name}</h2>
+                            <p className="catalog-page__card-location">{venue.city}, {venue.voivodeship}</p>
+                          </div>
+                        </Link>
 
                         <div className="catalog-page__card-side">
                           <div className="catalog-page__card-stat">
@@ -260,12 +253,19 @@ function CatalogPage() {
                               <strong>{venue.capacityMax ?? '-'}</strong>
                             </span>
                           </div>
+                          <button
+                            type="button"
+                            className={`catalog-page__favorite-button${venue.favorite ? ' catalog-page__favorite-button--active' : ''}`}
+                            aria-label={venue.favorite ? `Usun ${venue.name} z ulubionych` : `Dodaj ${venue.name} do ulubionych`}
+                            onClick={(event) => void handleFavoriteToggle(event, venue.id, venue.favorite)}
+                          >
+                            {venue.favorite ? '♥' : '♡'}
+                          </button>
+                          <button type="button" className="catalog-page__message-button">
+                            Napisz wiadomosc
+                          </button>
                         </div>
-                      </Link>
-
-                      <button type="button" className="catalog-page__message-button">
-                        Napisz wiadomosc
-                      </button>
+                      </div>
                     </article>
                   ))}
                 </section>
