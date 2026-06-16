@@ -36,18 +36,19 @@ export async function getVenueImages(venueId) {
 }
 
 export async function uploadVenueImage(venueId, { file, displayOrder, primaryImage }) {
-  const formData = new FormData()
-  formData.append('file', file)
+  const payload = {
+    file,
+  }
 
   if (displayOrder !== '' && displayOrder != null) {
-    formData.append('displayOrder', String(displayOrder))
+    payload.displayOrder = String(displayOrder)
   }
 
   if (primaryImage != null) {
-    formData.append('primaryImage', String(primaryImage))
+    payload.primaryImage = String(primaryImage)
   }
 
-  const response = await api.post(`/api/partner/venues/${venueId}/images/upload`, formData)
+  const response = await api.postForm(`/api/partner/venues/${venueId}/images/upload`, payload)
 
   return response.data
 }
