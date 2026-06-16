@@ -73,3 +73,11 @@ export function clearAuthSession() {
   window.localStorage.removeItem(REFRESH_TOKEN_KEY)
   window.localStorage.removeItem(USER_KEY)
 }
+
+export function updateStoredUser(nextUser) {
+  if (!isBrowser() || !nextUser) {
+    return
+  }
+
+  window.localStorage.setItem(USER_KEY, JSON.stringify(nextUser))
+}

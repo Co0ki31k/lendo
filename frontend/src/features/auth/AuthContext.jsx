@@ -1,6 +1,6 @@
 import { createContext, useContext, useMemo, useState } from 'react'
 import { authApi } from '../../api'
-import { getAccessToken, getStoredUser } from '../../lib/tokenStorage'
+import { getAccessToken, getStoredUser, updateStoredUser } from '../../lib/tokenStorage'
 
 const AuthContext = createContext(null)
 
@@ -33,6 +33,21 @@ export function AuthProvider({ children }) {
     logout() {
       authApi.logout()
       setUser(null)
+    },
+    updateCurrentUser(patch) {
+      setUser((currentUser) => {
+        if (!currentUser) {
+          return currentUser
+        }
+
+        const nextUser = {
+          ...currentUser,
+          ...patch,
+        }
+
+        updateStoredUser(nextUser)
+        return nextUser
+      })
     },
     syncStoredUser() {
       setUser(getStoredUser())
