@@ -10,8 +10,8 @@ export async function upsertPartnerProfile(payload) {
   return response.data
 }
 
-export async function getOwnVenues() {
-  const response = await api.get('/api/partner/venues')
+export async function getOwnVenues(params = {}) {
+  const response = await api.get('/api/partner/venues', { params })
   return response.data
 }
 

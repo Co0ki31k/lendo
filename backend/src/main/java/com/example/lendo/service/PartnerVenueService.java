@@ -1,6 +1,8 @@
 package com.example.lendo.service;
 
 import com.example.lendo.dto.CreateVenueRequest;
+import com.example.lendo.dto.PageMetadata;
+import com.example.lendo.dto.PartnerVenueListResponse;
 import com.example.lendo.dto.SetPrimaryVenueImageRequest;
 import com.example.lendo.dto.UpdateVenueRequest;
 import com.example.lendo.dto.UpdateVenueImageOrderRequest;
@@ -18,7 +20,13 @@ import com.example.lendo.repository.VenueImageRepository;
 import com.example.lendo.repository.VenueRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -278,15 +286,52 @@ public class PartnerVenueService {
     }
 
     @Transactional
-    public List<VenueResponse> getOwnVenues(User user) {
+    public PartnerVenueListResponse getOwnVenues(
+            User user,
+            int page,
+            int size,
+            String search,
+            String status,
+            String sortBy,
+            String sortDir
+    ) {
         requirePartnerProfile(user);
-        return venueRepository.findAllByManagerIdOrderByCreatedAtDesc(user.getId()).stream()
-                .map(venue -> VenueResponse.from(
-                        venue,
-                        venueAddressRepository.findById(venue.getId())
-                                .orElseThrow(() -> new IllegalStateException("Venue address is missing for venue " + venue.getId()))
-                ))
-                .toList();
+
+        Specification<Venue> specification = buildManagerVenueSpecification(user, search, status);
+        Pageable pageable = PageRequest.of(
+                normalizePage(page),
+                normalizeSize(size),
+                buildSort(sortBy, sortDir)
+        );
+
+        Page<Venue> venuePage = venueRepository.findAll(specification, pageable);
+
+        long total = venueRepository.count(specification);
+        long pendingCount = venueRepository.count(specification.and(hasStatus(VenueStatus.PENDING)));
+        long approvedCount = venueRepository.count(specification.and(hasStatus(VenueStatus.APPROVED)));
+        long draftCount = venueRepository.count(specification.and(hasStatus(VenueStatus.DRAFT)));
+        long rejectedCount = venueRepository.count(specification.and(hasStatus(VenueStatus.REJECTED)));
+
+        return new PartnerVenueListResponse(
+                venuePage.getContent().stream()
+                        .map(venue -> VenueResponse.from(
+                                venue,
+                                venue.getAddress() != null
+                                        ? venue.getAddress()
+                                        : venueAddressRepository.findById(venue.getId())
+                                        .orElseThrow(() -> new IllegalStateException("Venue address is missing for venue " + venue.getId()))
+                        ))
+                        .toList(),
+                new PageMetadata(
+                        venuePage.getNumber(),
+                        venuePage.getSize(),
+                        venuePage.getTotalElements(),
+                        venuePage.getTotalPages(),
+                        venuePage.hasNext(),
+                        venuePage.hasPrevious()
+                ),
+                new PartnerVenueListResponse.Summary(total, pendingCount, approvedCount, draftCount, rejectedCount)
+        );
     }
 
     private void requirePartnerProfile(User user) {
@@ -431,5 +476,61 @@ public class PartnerVenueService {
         if (contentType == null || !contentType.startsWith("image/")) {
             throw new RuntimeException("Przesylany plik musi byc obrazkiem");
         }
+    }
+
+    private Specification<Venue> buildManagerVenueSpecification(User user, String search, String status) {
+        Specification<Venue> specification = (root, query, criteriaBuilder) ->
+                criteriaBuilder.equal(root.get("manager").get("id"), user.getId());
+
+        if (StringUtils.hasText(status)) {
+            specification = specification.and(hasStatus(parseVenueStatus(status)));
+        }
+
+        if (StringUtils.hasText(search)) {
+            String normalizedSearch = "%" + search.trim().toLowerCase() + "%";
+            specification = specification.and((root, query, criteriaBuilder) -> {
+                var address = root.join("address");
+                return criteriaBuilder.or(
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), normalizedSearch),
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("style")), normalizedSearch),
+                        criteriaBuilder.like(criteriaBuilder.lower(address.get("city")), normalizedSearch),
+                        criteriaBuilder.like(criteriaBuilder.lower(address.get("street")), normalizedSearch),
+                        criteriaBuilder.like(criteriaBuilder.lower(address.get("voivodeship")), normalizedSearch)
+                );
+            });
+        }
+
+        return specification;
+    }
+
+    private Specification<Venue> hasStatus(VenueStatus status) {
+        return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("status"), status);
+    }
+
+    private VenueStatus parseVenueStatus(String rawStatus) {
+        try {
+            return VenueStatus.valueOf(rawStatus.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new RuntimeException("Nieobslugiwany status obiektu");
+        }
+    }
+
+    private Sort buildSort(String sortBy, String sortDir) {
+        String normalizedSortBy = StringUtils.hasText(sortBy) ? sortBy.trim() : "createdAt";
+
+        if (!List.of("createdAt", "name", "status", "basePricePerGuest").contains(normalizedSortBy)) {
+            normalizedSortBy = "createdAt";
+        }
+
+        Sort.Direction direction = "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        return Sort.by(direction, normalizedSortBy);
+    }
+
+    private int normalizePage(int page) {
+        return Math.max(page, 0);
+    }
+
+    private int normalizeSize(int size) {
+        return Math.max(1, Math.min(size, 50));
     }
 }

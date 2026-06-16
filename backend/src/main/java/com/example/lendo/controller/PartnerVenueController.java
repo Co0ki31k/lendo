@@ -1,6 +1,7 @@
 package com.example.lendo.controller;
 
 import com.example.lendo.dto.CreateVenueRequest;
+import com.example.lendo.dto.PartnerVenueListResponse;
 import com.example.lendo.dto.SetPrimaryVenueImageRequest;
 import com.example.lendo.dto.UpdateVenueRequest;
 import com.example.lendo.dto.UpdateVenueImageOrderRequest;
@@ -131,7 +132,15 @@ public class PartnerVenueController {
 
     @GetMapping
     @Operation(summary = "List current partner venues")
-    public ResponseEntity<List<VenueResponse>> getOwnVenues(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(partnerVenueService.getOwnVenues(user));
+    public ResponseEntity<PartnerVenueListResponse> getOwnVenues(
+            @AuthenticationPrincipal User user,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "8") int size,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir
+    ) {
+        return ResponseEntity.ok(partnerVenueService.getOwnVenues(user, page, size, search, status, sortBy, sortDir));
     }
 }

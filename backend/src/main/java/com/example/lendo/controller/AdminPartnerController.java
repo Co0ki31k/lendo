@@ -1,6 +1,7 @@
 package com.example.lendo.controller;
 
 import com.example.lendo.dto.AdminPartnerProfileResponse;
+import com.example.lendo.dto.AdminPartnerListResponse;
 import com.example.lendo.dto.PartnerVerificationRequest;
 import com.example.lendo.service.AdminPartnerService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -14,9 +15,9 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -29,8 +30,15 @@ public class AdminPartnerController {
 
     @GetMapping
     @Operation(summary = "List all partner profiles")
-    public ResponseEntity<List<AdminPartnerProfileResponse>> getAllPartnerProfiles() {
-        return ResponseEntity.ok(adminPartnerService.getAllPartnerProfiles());
+    public ResponseEntity<AdminPartnerListResponse> getAllPartnerProfiles(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Boolean verified,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir
+    ) {
+        return ResponseEntity.ok(adminPartnerService.getAllPartnerProfiles(page, size, search, verified, sortBy, sortDir));
     }
 
     @PatchMapping("/{userId}/verification")

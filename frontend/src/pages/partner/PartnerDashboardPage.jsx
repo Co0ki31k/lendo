@@ -13,10 +13,49 @@ import { buildAccountName } from './dashboard/utils.js'
 import { buildVenuePayload } from './dashboard/venueForm.js'
 import './PartnerDashboardPage.css'
 
+const INITIAL_VENUE_LIST_QUERY = {
+  page: 0,
+  size: 8,
+  search: '',
+  status: 'all',
+  sortBy: 'createdAt',
+  sortDir: 'desc',
+}
+
+const EMPTY_VENUE_PAGE = {
+  items: [],
+  page: {
+    page: 0,
+    size: 8,
+    totalItems: 0,
+    totalPages: 0,
+    hasNext: false,
+    hasPrevious: false,
+  },
+  summary: {
+    total: 0,
+    pending: 0,
+    approved: 0,
+    draft: 0,
+    rejected: 0,
+  },
+}
+
+function buildVenueListParams(query) {
+  return {
+    page: query.page,
+    size: query.size,
+    sortBy: query.sortBy,
+    sortDir: query.sortDir,
+    ...(query.search.trim() ? { search: query.search.trim() } : {}),
+    ...(query.status !== 'all' ? { status: query.status } : {}),
+  }
+}
+
 function PartnerDashboardPage() {
   const { user } = useAuth()
   const [profile, setProfile] = useState(null)
-  const [venues, setVenues] = useState([])
+  const [venueData, setVenueData] = useState(EMPTY_VENUE_PAGE)
   const [selectedVenueId, setSelectedVenueId] = useState(null)
   const [venueFormValues, setVenueFormValues] = useState(INITIAL_VENUE_FORM_VALUES)
   const [status, setStatus] = useState('loading')
@@ -25,6 +64,7 @@ function PartnerDashboardPage() {
   const [isVenueSubmitting, setIsVenueSubmitting] = useState(false)
   const [managerView, setManagerView] = useState('stats')
   const [objectView, setObjectView] = useState('calendar')
+  const [venueQuery, setVenueQuery] = useState(INITIAL_VENUE_LIST_QUERY)
 
   const loadDashboardData = useCallback(async () => {
     setStatus('loading')
@@ -34,12 +74,12 @@ function PartnerDashboardPage() {
     try {
       const [profileResponse, venuesResponse] = await Promise.all([
         partnerApi.getPartnerProfile(),
-        partnerApi.getOwnVenues(),
+        partnerApi.getOwnVenues(buildVenueListParams(venueQuery)),
       ])
       setProfile(profileResponse)
-      setVenues(venuesResponse)
+      setVenueData(venuesResponse)
       setSelectedVenueId((currentSelectedVenueId) => {
-        const nextActionableVenues = venuesResponse.filter((venue) => ['APPROVED', 'DRAFT'].includes(venue.status))
+        const nextActionableVenues = venuesResponse.items.filter((venue) => ['APPROVED', 'DRAFT'].includes(venue.status))
 
         if (currentSelectedVenueId && nextActionableVenues.some((venue) => venue.id === currentSelectedVenueId)) {
           return currentSelectedVenueId
@@ -52,7 +92,7 @@ function PartnerDashboardPage() {
       setError(requestError.response?.data?.message ?? 'Nie udalo sie pobrac dashboardu managera.')
       setStatus('error')
     }
-  }, [])
+  }, [venueQuery])
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -65,8 +105,8 @@ function PartnerDashboardPage() {
   }, [loadDashboardData])
 
   const actionableVenues = useMemo(
-    () => venues.filter((venue) => ['APPROVED', 'DRAFT'].includes(venue.status)),
-    [venues],
+    () => venueData.items.filter((venue) => ['APPROVED', 'DRAFT'].includes(venue.status)),
+    [venueData.items],
   )
 
   const actionableVenueIds = useMemo(
@@ -100,7 +140,6 @@ function PartnerDashboardPage() {
 
     try {
       const createdVenue = await partnerApi.createVenue(buildVenuePayload(venueFormValues))
-      setVenues((currentVenues) => [createdVenue, ...currentVenues])
       if (createdVenue.status === 'APPROVED') {
         setSelectedVenueId(createdVenue.id)
       } else {
@@ -108,6 +147,7 @@ function PartnerDashboardPage() {
       }
       setVenueFormValues(INITIAL_VENUE_FORM_VALUES)
       setManagerView('select')
+      void loadDashboardData()
     } catch (requestError) {
       setError(requestError.response?.data?.message ?? 'Nie udalo sie dodac obiektu. Sprawdz, czy adres jest poprawny.')
     } finally {
@@ -116,11 +156,11 @@ function PartnerDashboardPage() {
   }
 
   function handleVenueUpdated(updatedVenue) {
-    const nextVenues = venues.map((venue) => (
+    const nextVenues = venueData.items.map((venue) => (
       venue.id === updatedVenue.id ? updatedVenue : venue
     ))
 
-    setVenues(nextVenues)
+    void loadDashboardData()
 
     if (updatedVenue.status === 'APPROVED') {
       setSelectedVenueId(updatedVenue.id)
@@ -142,9 +182,17 @@ function PartnerDashboardPage() {
     setNotice('Obiekt zostal wyslany ponownie do review i nie jest juz aktywnym obiektem dashboardu.')
   }
 
+  function handleVenueQueryChange(patch) {
+    setError('')
+    setVenueQuery((current) => ({
+      ...current,
+      ...patch,
+    }))
+  }
+
   function renderWorkspace() {
     if (managerView === 'stats') {
-      return <StatsView venues={venues} />
+      return <StatsView summary={venueData.summary} />
     }
 
     if (managerView === 'create') {
@@ -161,10 +209,13 @@ function PartnerDashboardPage() {
     if (managerView === 'select') {
       return (
         <SelectVenueView
-          venues={venues}
+          venues={venueData.items}
           actionableVenueIds={actionableVenueIds}
           selectedVenueId={selectedVenueId}
+          venueQuery={venueQuery}
+          pageMeta={venueData.page}
           onVenueSelect={setSelectedVenueId}
+          onVenueQueryChange={handleVenueQueryChange}
           onRefresh={() => void loadDashboardData()}
         />
       )

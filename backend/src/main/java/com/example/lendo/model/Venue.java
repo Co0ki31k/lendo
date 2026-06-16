@@ -10,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -96,4 +97,7 @@ public class Venue {
     @OrderBy("displayOrder ASC, id ASC")
     @Builder.Default
     private Set<VenueImage> images = new HashSet<>();
+
+    @OneToOne(mappedBy = "venue", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private VenueAddress address;
 }

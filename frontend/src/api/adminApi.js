@@ -1,7 +1,7 @@
 import api from '../lib/api'
 
-export async function getPartners() {
-  const response = await api.get('/api/admin/partners')
+export async function getPartners(params = {}) {
+  const response = await api.get('/api/admin/partners', { params })
   return response.data
 }
 
@@ -10,8 +10,8 @@ export async function updatePartnerVerification(userId, verified) {
   return response.data
 }
 
-export async function getVenues() {
-  const response = await api.get('/api/admin/venues')
+export async function getVenues(params = {}) {
+  const response = await api.get('/api/admin/venues', { params })
   return response.data
 }
 
