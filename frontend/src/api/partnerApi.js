@@ -64,13 +64,6 @@ export async function deleteVenueImage(venueId, imageId) {
   await api.delete(`/api/partner/venues/${venueId}/images/${imageId}`)
 }
 
-export async function setPrimaryVenueImage(venueId, imageId) {
-  const response = await api.patch(`/api/partner/venues/${venueId}/images/${imageId}/primary`, {
-    primaryImage: true,
-  })
-  return response.data
-}
-
 export async function updateVenueImageOrder(venueId, items) {
   const response = await api.patch(`/api/partner/venues/${venueId}/images/order`, {
     items,

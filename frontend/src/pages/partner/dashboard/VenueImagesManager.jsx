@@ -6,8 +6,6 @@ function VenueImagesManager({ venueId, selectedVenue = null }) {
   const [status, setStatus] = useState('loading')
   const [error, setError] = useState('')
   const [uploadFiles, setUploadFiles] = useState([])
-  const [displayOrder, setDisplayOrder] = useState('')
-  const [primaryImage, setPrimaryImage] = useState(false)
   const [activeRequest, setActiveRequest] = useState('')
   const [isDragActive, setIsDragActive] = useState(false)
 
@@ -93,30 +91,21 @@ function VenueImagesManager({ venueId, selectedVenue = null }) {
     setError('')
 
     try {
-      const startingDisplayOrder = displayOrder === '' ? null : Number(displayOrder)
       const createdImages = []
 
-      for (const [index, file] of uploadFiles.entries()) {
+      for (const file of uploadFiles) {
         const createdImage = await partnerApi.uploadVenueImage(venueId, {
           file,
-          displayOrder: startingDisplayOrder == null ? '' : startingDisplayOrder + index,
-          primaryImage: primaryImage && index === 0,
+          displayOrder: '',
+          primaryImage: images.length === 0,
         })
 
         createdImages.push(createdImage)
       }
 
-      const createdPrimaryImageId = createdImages.find((image) => image.primaryImage)?.id
       const nextImages = [...images, ...createdImages].sort((left, right) => (left.displayOrder ?? 0) - (right.displayOrder ?? 0))
-
-      setImages(
-        createdPrimaryImageId
-          ? nextImages.map((image) => ({ ...image, primaryImage: image.id === createdPrimaryImageId }))
-          : nextImages,
-      )
+      setImages(nextImages)
       setUploadFiles([])
-      setDisplayOrder('')
-      setPrimaryImage(false)
       formElement.reset()
     } catch (requestError) {
       setError(requestError.response?.data?.message ?? 'Nie udalo sie przeslac zdjec.')
@@ -134,23 +123,6 @@ function VenueImagesManager({ venueId, selectedVenue = null }) {
       setImages((currentImages) => currentImages.filter((image) => image.id !== imageId))
     } catch (requestError) {
       setError(requestError.response?.data?.message ?? 'Nie udalo sie usunac zdjecia.')
-    } finally {
-      setActiveRequest('')
-    }
-  }
-
-  async function handleSetPrimary(imageId) {
-    setActiveRequest(`primary:${imageId}`)
-    setError('')
-
-    try {
-      await partnerApi.setPrimaryVenueImage(venueId, imageId)
-      setImages((currentImages) => currentImages.map((image) => ({
-        ...image,
-        primaryImage: image.id === imageId,
-      })))
-    } catch (requestError) {
-      setError(requestError.response?.data?.message ?? 'Nie udalo sie ustawic zdjecia glownego.')
     } finally {
       setActiveRequest('')
     }
@@ -244,16 +216,6 @@ function VenueImagesManager({ venueId, selectedVenue = null }) {
           ) : null}
         </div>
 
-        <label className="partner-dashboard__field">
-          <span>Kolejnosc wyswietlania</span>
-          <input type="number" min="0" value={displayOrder} onChange={(event) => setDisplayOrder(event.target.value)} placeholder="Auto" />
-        </label>
-
-        <label className="partner-dashboard__toggle partner-dashboard__field--full">
-          <input type="checkbox" checked={primaryImage} onChange={(event) => setPrimaryImage(event.target.checked)} />
-          <span>Ustaw pierwsze z dodawanych zdjec jako glowne</span>
-        </label>
-
         <button type="submit" className="partner-dashboard__submit" disabled={activeRequest === 'upload' || uploadFiles.length === 0}>
           {activeRequest === 'upload' ? 'Przesylanie...' : 'Dodaj zdjecia'}
         </button>
@@ -270,8 +232,8 @@ function VenueImagesManager({ venueId, selectedVenue = null }) {
               <img src={image.imageUrl} alt={`Zdjecie obiektu ${index + 1}`} className="partner-dashboard__image-preview" />
 
               <div className="partner-dashboard__image-meta">
-                <span className={`partner-dashboard__status-badge ${image.primaryImage ? 'partner-dashboard__status-badge--approved' : ''}`}>
-                  {image.primaryImage ? 'Glowne' : `Pozycja ${image.displayOrder}`}
+                <span className={`partner-dashboard__status-badge ${index === 0 ? 'partner-dashboard__status-badge--approved' : ''}`}>
+                  {index === 0 ? 'Glowne' : `Pozycja ${image.displayOrder}`}
                 </span>
               </div>
 
@@ -291,14 +253,6 @@ function VenueImagesManager({ venueId, selectedVenue = null }) {
                   disabled={index === images.length - 1 || activeRequest === `order:${image.id}`}
                 >
                   W dol
-                </button>
-                <button
-                  type="button"
-                  className="partner-dashboard__secondary-action"
-                  onClick={() => handleSetPrimary(image.id)}
-                  disabled={image.primaryImage || activeRequest === `primary:${image.id}`}
-                >
-                  Ustaw glowne
                 </button>
                 <button
                   type="button"

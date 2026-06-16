@@ -198,15 +198,12 @@ public class PartnerVenueService {
         VenueImage image = venueImageRepository.findByIdAndVenueId(imageId, venue.getId())
                 .orElseThrow(() -> new RuntimeException("Zdjecie nie istnieje"));
 
-        boolean wasPrimary = image.isPrimaryImage();
         String cloudinaryPublicId = image.getCloudinaryPublicId();
 
         venueImageRepository.delete(image);
 
         List<VenueImage> remainingImages = venueImageRepository.findByVenueIdOrderByDisplayOrderAscIdAsc(venue.getId());
-        if (wasPrimary && !remainingImages.isEmpty()) {
-            remainingImages.getFirst().setPrimaryImage(true);
-        }
+        syncPrimaryImageWithFirstPosition(remainingImages);
 
         cloudinaryVenueImageService.deleteVenueImage(cloudinaryPublicId);
     }
@@ -227,10 +224,13 @@ public class PartnerVenueService {
         }
 
         List<VenueImage> existingImages = venueImageRepository.findByVenueIdOrderByDisplayOrderAscIdAsc(venue.getId());
-        clearPrimaryImageFlag(existingImages);
-        image.setPrimaryImage(true);
+        moveImageToFirstPosition(existingImages, imageId);
+        syncPrimaryImageWithFirstPosition(existingImages);
 
-        return VenueImageResponse.from(image);
+        return VenueImageResponse.from(
+                venueImageRepository.findByIdAndVenueId(imageId, venue.getId())
+                        .orElseThrow(() -> new RuntimeException("Zdjecie nie istnieje"))
+        );
     }
 
     @Transactional
@@ -268,6 +268,9 @@ public class PartnerVenueService {
             VenueImage image = imagesById.get(item.imageId());
             image.setDisplayOrder(item.displayOrder());
         }
+
+        List<VenueImage> reorderedImages = venueImageRepository.findByVenueIdOrderByDisplayOrderAscIdAsc(venue.getId());
+        syncPrimaryImageWithFirstPosition(reorderedImages);
 
         return venueImageRepository.findByVenueIdOrderByDisplayOrderAscIdAsc(venue.getId()).stream()
                 .map(VenueImageResponse::from)
@@ -348,7 +351,8 @@ public class PartnerVenueService {
         int displayOrder = resolveDisplayOrder(existingImages, requestedDisplayOrder);
 
         if (shouldBePrimary) {
-            clearPrimaryImageFlag(existingImages);
+            shiftDisplayOrdersForNewPrimary(existingImages);
+            displayOrder = 0;
         }
 
         VenueImage image = venueImageRepository.save(
@@ -360,6 +364,8 @@ public class PartnerVenueService {
                         .primaryImage(shouldBePrimary)
                         .build()
         );
+
+        syncPrimaryImageWithFirstPosition(venueImageRepository.findByVenueIdOrderByDisplayOrderAscIdAsc(venue.getId()));
 
         return VenueImageResponse.from(image);
     }
@@ -382,6 +388,36 @@ public class PartnerVenueService {
         for (VenueImage existingImage : existingImages) {
             if (existingImage.isPrimaryImage()) {
                 existingImage.setPrimaryImage(false);
+            }
+        }
+    }
+
+    private void syncPrimaryImageWithFirstPosition(List<VenueImage> images) {
+        clearPrimaryImageFlag(images);
+
+        if (!images.isEmpty()) {
+            images.getFirst().setPrimaryImage(true);
+        }
+    }
+
+    private void shiftDisplayOrdersForNewPrimary(List<VenueImage> existingImages) {
+        for (VenueImage existingImage : existingImages) {
+            existingImage.setDisplayOrder(existingImage.getDisplayOrder() + 1);
+        }
+    }
+
+    private void moveImageToFirstPosition(List<VenueImage> existingImages, Long imageId) {
+        int targetOrder = existingImages.stream()
+                .filter(image -> Objects.equals(image.getId(), imageId))
+                .map(VenueImage::getDisplayOrder)
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Zdjecie nie istnieje"));
+
+        for (VenueImage existingImage : existingImages) {
+            if (Objects.equals(existingImage.getId(), imageId)) {
+                existingImage.setDisplayOrder(0);
+            } else if (existingImage.getDisplayOrder() < targetOrder) {
+                existingImage.setDisplayOrder(existingImage.getDisplayOrder() + 1);
             }
         }
     }
