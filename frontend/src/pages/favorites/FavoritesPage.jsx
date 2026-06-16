@@ -97,32 +97,36 @@ function FavoritesPage() {
                   ♥
                 </button>
 
-                <Link to={`/venues/${favorite.venueId}`} className="favorites-page__card-link">
-                  <div className="favorites-page__image-wrap">
-                    {favorite.primaryImageUrl ? (
-                      <img
-                        src={favorite.primaryImageUrl}
-                        alt={favorite.venueName}
-                        className="favorites-page__image"
-                      />
-                    ) : (
-                      <div className="favorites-page__image favorites-page__image--fallback">Brak zdjecia</div>
-                    )}
-                  </div>
+                <div className="favorites-page__card-shell">
+                  <Link to={`/venues/${favorite.venueId}`} className="favorites-page__card-link">
+                    <div className="favorites-page__image-wrap">
+                      {favorite.primaryImageUrl ? (
+                        <img
+                          src={favorite.primaryImageUrl}
+                          alt={favorite.venueName}
+                          className="favorites-page__image"
+                        />
+                      ) : (
+                        <div className="favorites-page__image favorites-page__image--fallback">Brak zdjecia</div>
+                      )}
+                    </div>
 
-                  <div className="favorites-page__content">
-                    <h2>{favorite.venueName}</h2>
-                    <p>{favorite.city}, {favorite.voivodeship}</p>
-                  </div>
-                </Link>
+                    <div className="favorites-page__content">
+                      <h2>{favorite.venueName}</h2>
+                      <p>{favorite.city}, {favorite.voivodeship}</p>
+                    </div>
+                  </Link>
 
-                <button
-                  type="button"
-                  className="favorites-page__message-button"
-                  onClick={() => navigate(`/venues/${favorite.venueId}`, { state: { focus: 'contact' } })}
-                >
-                  Napisz wiadomosc
-                </button>
+                  <div className="favorites-page__card-side">
+                    <button
+                      type="button"
+                      className="favorites-page__message-button"
+                      onClick={() => navigate(`/venues/${favorite.venueId}`, { state: { focus: 'contact' } })}
+                    >
+                      Napisz wiadomosc
+                    </button>
+                  </div>
+                </div>
               </article>
             ))}
           </section>

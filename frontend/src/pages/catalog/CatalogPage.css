@@ -61,7 +61,6 @@
   margin: 0 auto 20px;
   padding: 14px 16px;
   border: 1px solid rgba(125, 47, 39, 0.14);
-  border-top: 4px solid #8d3a2d;
   border-radius: 12px;
   background: rgba(255, 252, 247, 0.96);
   color: #5b4a41;
@@ -245,13 +244,18 @@
 
 .catalog-page__card-side {
   display: grid;
-  grid-template-rows: 1fr auto auto;
+  grid-template-rows: auto 1fr 1fr auto;
   gap: 16px;
-  justify-items: center;
+  justify-items: end;
   align-content: stretch;
   padding: 22px;
   border-left: 1px solid rgba(100, 66, 45, 0.14);
   background: rgba(255, 248, 241, 0.8);
+}
+
+.catalog-page__card-side .catalog-page__favorite-button {
+  justify-self: end;
+  align-self: start;
 }
 
 .catalog-page__card-stat-line {
@@ -268,9 +272,8 @@
   border-radius: 999px;
   background: rgba(141, 58, 45, 0.1);
   color: #7d2f27;
-  font-size: 0.78rem;
+  font-size: 1.02rem;
   font-weight: 700;
-  text-transform: uppercase;
 }
 
 .catalog-page__card-stat strong {
@@ -284,6 +287,7 @@
 
 .catalog-page__message-button {
   width: 100%;
+  align-self: end;
 }
 
 .catalog-page__pagination {

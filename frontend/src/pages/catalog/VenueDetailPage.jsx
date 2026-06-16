@@ -19,6 +19,8 @@ const venueMarkerIcon = L.icon({
   shadowSize: [41, 41],
 })
 
+const galleryThumbSlots = 6
+
 function formatPrice(value) {
   if (value == null) {
     return '-'
@@ -95,6 +97,11 @@ function VenueDetailPage() {
 
   const activeImage = useMemo(() => venue?.images?.[activeImageIndex] ?? null, [venue, activeImageIndex])
   const imageCount = venue?.images?.length ?? 0
+  const galleryThumbItems = useMemo(() => {
+    const images = venue?.images ?? []
+
+    return Array.from({ length: Math.max(galleryThumbSlots, images.length) }, (_, index) => images[index] ?? null)
+  }, [venue])
   const isClient = user?.role === 'CLIENT'
   const coordinates = useMemo(() => {
     const latitude = Number(venue?.address?.latitude)
@@ -186,7 +193,13 @@ function VenueDetailPage() {
   }
 
   if (status === 'loading') {
-    return <main className="venue-detail"><p className="venue-detail__empty">Ladowanie szczegolow sali...</p></main>
+    return (
+      <main className="venue-detail">
+        <div className="venue-detail__loading" role="status" aria-live="polite">
+          Ladowanie szczegolow sali...
+        </div>
+      </main>
+    )
   }
 
   if (status === 'error') {
@@ -253,26 +266,32 @@ function VenueDetailPage() {
             ) : null}
           </div>
 
-          {imageCount > 1 ? (
-            <>
-              <div className="venue-detail__slider-status">
-                Zdjecie {activeImageIndex + 1} z {imageCount}
-              </div>
+          <div className="venue-detail__slider-status">
+            {imageCount > 0 ? `Zdjecie ${activeImageIndex + 1} z ${imageCount}` : 'Brak zdjec do wyswietlenia'}
+          </div>
 
-              <div className="venue-detail__thumbs">
-                {venue.images.map((image, index) => (
-                  <button
-                    key={image.id}
-                    type="button"
-                    className={`venue-detail__thumb${index === activeImageIndex ? ' venue-detail__thumb--active' : ''}`}
-                    onClick={() => setActiveImageIndex(index)}
-                  >
-                    <img src={image.imageUrl} alt={`${venue.name} ${index + 1}`} />
-                  </button>
-                ))}
-              </div>
-            </>
-          ) : null}
+          <div className="venue-detail__thumbs">
+            {galleryThumbItems.map((image, index) => (
+              image ? (
+                <button
+                  key={image.id}
+                  type="button"
+                  className={`venue-detail__thumb${index === activeImageIndex ? ' venue-detail__thumb--active' : ''}`}
+                  onClick={() => setActiveImageIndex(index)}
+                >
+                  <img src={image.imageUrl} alt={`${venue.name} ${index + 1}`} />
+                </button>
+              ) : (
+                <div
+                  key={`placeholder-${index}`}
+                  className="venue-detail__thumb venue-detail__thumb--placeholder"
+                  aria-hidden="true"
+                >
+                  <span>Brak</span>
+                </div>
+              )
+            ))}
+          </div>
         </section>
 
         <section className="venue-detail__content">
@@ -323,6 +342,11 @@ function VenueDetailPage() {
             </div>
 
             {inquiryMessage ? <p className="venue-detail__success">{inquiryMessage}</p> : null}
+            {isSubmittingInquiry ? (
+              <div className="venue-detail__loading venue-detail__loading--inline" role="status" aria-live="polite">
+                Wysylanie wiadomosci...
+              </div>
+            ) : null}
 
             <form className="venue-detail__contact-form" onSubmit={handleInquirySubmit}>
               <label className="venue-detail__field">
