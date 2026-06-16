@@ -117,7 +117,7 @@ function CatalogPage() {
           <aside className="catalog-page__filters">
             <div className="catalog-page__filters-header">
               <span className="catalog-page__eyebrow">Filtry</span>
-              <h2>Zawęź katalog</h2>
+              <h2>Zawęż katalog</h2>
             </div>
 
             <form className="catalog-page__filters-form" onSubmit={handleApplyFilters}>
@@ -158,7 +158,11 @@ function CatalogPage() {
                 <button type="submit" className="catalog-page__filter-button">
                   Filtruj
                 </button>
-                <button type="button" className="catalog-page__filter-button catalog-page__filter-button--secondary" onClick={handleClearFilters}>
+                <button
+                  type="button"
+                  className="catalog-page__filter-button catalog-page__filter-button--secondary"
+                  onClick={handleClearFilters}
+                >
                   Wyczyść
                 </button>
               </div>
@@ -171,10 +175,6 @@ function CatalogPage() {
                 <section className="catalog-page__list">
                   {venues.map((venue) => (
                     <article key={venue.id} className="catalog-page__card">
-                      <button type="button" className="catalog-page__favorite-button" aria-label={`Polub ${venue.name}`}>
-                        ♡
-                      </button>
-
                       <Link to={`/venues/${venue.id}`} className="catalog-page__card-link">
                         <div className="catalog-page__card-image-wrap">
                           {venue.primaryImageUrl ? (
@@ -197,12 +197,16 @@ function CatalogPage() {
 
                         <div className="catalog-page__card-side">
                           <div className="catalog-page__card-stat">
-                            <span>Cena od goscia</span>
-                            <strong>{formatPrice(venue.basePricePerGuest)}</strong>
+                            <span className="catalog-page__card-stat-line">
+                              <span className="catalog-page__card-stat-icon" aria-hidden="true">zl</span>
+                              <strong>{formatPrice(venue.basePricePerGuest)}</strong>
+                            </span>
                           </div>
                           <div className="catalog-page__card-stat">
-                            <span>Maks liczba gosci</span>
-                            <strong>{venue.capacityMax ?? '-'}</strong>
+                            <span className="catalog-page__card-stat-line">
+                              <span className="catalog-page__card-stat-icon" aria-hidden="true">os</span>
+                              <strong>{venue.capacityMax ?? '-'}</strong>
+                            </span>
                           </div>
                         </div>
                       </Link>

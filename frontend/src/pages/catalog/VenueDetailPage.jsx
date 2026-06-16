@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import L from 'leaflet'
 import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
 import markerIcon from 'leaflet/dist/images/marker-icon.png'
 import markerShadow from 'leaflet/dist/images/marker-shadow.png'
@@ -73,6 +73,7 @@ function VenueDetailPage() {
   }, [venueId])
 
   const activeImage = useMemo(() => venue?.images?.[activeImageIndex] ?? null, [venue, activeImageIndex])
+  const imageCount = venue?.images?.length ?? 0
   const coordinates = useMemo(() => {
     const latitude = Number(venue?.address?.latitude)
     const longitude = Number(venue?.address?.longitude)
@@ -84,6 +85,26 @@ function VenueDetailPage() {
     return [latitude, longitude]
   }, [venue])
 
+  function handleImageStep(direction) {
+    if (!imageCount) {
+      return
+    }
+
+    setActiveImageIndex((current) => {
+      const nextIndex = current + direction
+
+      if (nextIndex < 0) {
+        return imageCount - 1
+      }
+
+      if (nextIndex >= imageCount) {
+        return 0
+      }
+
+      return nextIndex
+    })
+  }
+
   if (status === 'loading') {
     return <main className="venue-detail"><p className="venue-detail__empty">Ladowanie szczegolow sali...</p></main>
   }
@@ -94,6 +115,12 @@ function VenueDetailPage() {
 
   return (
     <main className="venue-detail">
+      <div className="venue-detail__topbar">
+        <Link to="/" className="venue-detail__back-link">
+          Wroc do katalogu
+        </Link>
+      </div>
+
       <section className="venue-detail__panel">
         <header className="venue-detail__header">
           <div>
@@ -101,32 +128,66 @@ function VenueDetailPage() {
             <h1>{venue.name}</h1>
             <p>{venue.address.city}, {venue.address.street}, {venue.address.voivodeship}</p>
           </div>
+
+          <button type="button" className="venue-detail__favorite-button">
+            Polubione
+          </button>
         </header>
 
         <section className="venue-detail__gallery">
-          {activeImage ? (
-            <img
-              src={activeImage.imageUrl}
-              alt={venue.name}
-              className="venue-detail__hero-image"
-            />
-          ) : (
-            <div className="venue-detail__hero-image venue-detail__hero-image--fallback">Brak zdjec</div>
-          )}
+          <div className="venue-detail__slider-shell">
+            {imageCount > 1 ? (
+              <button
+                type="button"
+                className="venue-detail__slider-button"
+                onClick={() => handleImageStep(-1)}
+                aria-label="Poprzednie zdjecie"
+              >
+                ‹
+              </button>
+            ) : null}
 
-          {venue.images?.length ? (
-            <div className="venue-detail__thumbs">
-              {venue.images.map((image, index) => (
-                <button
-                  key={image.id}
-                  type="button"
-                  className={`venue-detail__thumb${index === activeImageIndex ? ' venue-detail__thumb--active' : ''}`}
-                  onClick={() => setActiveImageIndex(index)}
-                >
-                  <img src={image.imageUrl} alt={`${venue.name} ${index + 1}`} />
-                </button>
-              ))}
-            </div>
+            {activeImage ? (
+              <img
+                src={activeImage.imageUrl}
+                alt={venue.name}
+                className="venue-detail__hero-image"
+              />
+            ) : (
+              <div className="venue-detail__hero-image venue-detail__hero-image--fallback">Brak zdjec</div>
+            )}
+
+            {imageCount > 1 ? (
+              <button
+                type="button"
+                className="venue-detail__slider-button"
+                onClick={() => handleImageStep(1)}
+                aria-label="Nastepne zdjecie"
+              >
+                ›
+              </button>
+            ) : null}
+          </div>
+
+          {imageCount > 1 ? (
+            <>
+              <div className="venue-detail__slider-status">
+                Zdjecie {activeImageIndex + 1} z {imageCount}
+              </div>
+
+              <div className="venue-detail__thumbs">
+                {venue.images.map((image, index) => (
+                  <button
+                    key={image.id}
+                    type="button"
+                    className={`venue-detail__thumb${index === activeImageIndex ? ' venue-detail__thumb--active' : ''}`}
+                    onClick={() => setActiveImageIndex(index)}
+                  >
+                    <img src={image.imageUrl} alt={`${venue.name} ${index + 1}`} />
+                  </button>
+                ))}
+              </div>
+            </>
           ) : null}
         </section>
 
@@ -149,7 +210,7 @@ function VenueDetailPage() {
               <strong>{venue.hasAccommodation ? `Tak (${venue.accommodationPlaces ?? 0} miejsc)` : 'Nie'}</strong>
             </article>
             <article>
-              <span>Opata korkowa</span>
+              <span>Oplata korkowa</span>
               <strong>{venue.noCorkageFee ? 'Brak' : 'Obowiazuje'}</strong>
             </article>
             <article>
