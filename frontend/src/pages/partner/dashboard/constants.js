@@ -1,0 +1,18 @@
+export const INITIAL_VENUE_FORM_VALUES = {
+  name: '',
+  description: '',
+  style: '',
+  capacityMin: '80',
+  capacityMax: '120',
+  hasAccommodation: false,
+  accommodationPlaces: '0',
+  basePricePerGuest: '0',
+  noCorkageFee: false,
+  civilWeddingGarden: false,
+  street: '',
+  city: '',
+  postalCode: '',
+  voivodeship: '',
+  latitude: '',
+  longitude: '',
+}

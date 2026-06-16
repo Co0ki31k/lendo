@@ -1,0 +1,75 @@
+function PartnerDashboardSidebar({
+  selectedVenue,
+  managerView,
+  objectView,
+  onManagerViewChange,
+  onObjectViewChange,
+}) {
+  return (
+    <aside className="partner-dashboard__sidebar">
+      <section className="partner-dashboard__sidebar-section">
+        <span className="partner-dashboard__sidebar-label">Aktualny obiekt</span>
+        <strong className="partner-dashboard__sidebar-title">{selectedVenue?.name || 'Brak wybranego obiektu'}</strong>
+        <span className="partner-dashboard__sidebar-meta">
+          {selectedVenue ? `${selectedVenue.address?.city || '-'}, ${selectedVenue.address?.street || '-'}` : 'Wybierz obiekt z listy lub utworz nowy.'}
+        </span>
+      </section>
+
+      <section className="partner-dashboard__sidebar-section">
+        <span className="partner-dashboard__sidebar-label">Ogolne</span>
+        <div className="partner-dashboard__nav-group">
+          <button
+            type="button"
+            className={`partner-dashboard__nav-button${managerView === 'stats' ? ' partner-dashboard__nav-button--active' : ''}`}
+            onClick={() => onManagerViewChange('stats')}
+          >
+            Statystyki
+          </button>
+          <button
+            type="button"
+            className={`partner-dashboard__nav-button${managerView === 'create' ? ' partner-dashboard__nav-button--active' : ''}`}
+            onClick={() => onManagerViewChange('create')}
+          >
+            Utworz nowy obiekt
+          </button>
+          <button
+            type="button"
+            className={`partner-dashboard__nav-button${managerView === 'select' ? ' partner-dashboard__nav-button--active' : ''}`}
+            onClick={() => onManagerViewChange('select')}
+          >
+            Wybor obiektu
+          </button>
+        </div>
+      </section>
+
+      <section className="partner-dashboard__sidebar-section">
+        <span className="partner-dashboard__sidebar-label">Wybrany obiekt</span>
+        <div className="partner-dashboard__nav-group">
+          <button
+            type="button"
+            className={`partner-dashboard__nav-button${managerView === 'object' && objectView === 'calendar' ? ' partner-dashboard__nav-button--active' : ''}`}
+            onClick={() => onObjectViewChange('calendar')}
+          >
+            Kalendarz
+          </button>
+          <button
+            type="button"
+            className={`partner-dashboard__nav-button${managerView === 'object' && objectView === 'messages' ? ' partner-dashboard__nav-button--active' : ''}`}
+            onClick={() => onObjectViewChange('messages')}
+          >
+            Wiadomosci
+          </button>
+          <button
+            type="button"
+            className={`partner-dashboard__nav-button${managerView === 'object' && objectView === 'edit' ? ' partner-dashboard__nav-button--active' : ''}`}
+            onClick={() => onObjectViewChange('edit')}
+          >
+            Edycja
+          </button>
+        </div>
+      </section>
+    </aside>
+  )
+}
+
+export default PartnerDashboardSidebar
