@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Navigate } from 'react-router-dom'
-import { geocodingApi, partnerApi } from '../../api'
+import { partnerApi } from '../../api'
 import { useAuth } from '../../features/auth'
 import CreateVenueView from './dashboard/CreateVenueView.jsx'
 import ObjectWorkspaceView from './dashboard/ObjectWorkspaceView.jsx'
@@ -23,8 +23,6 @@ function PartnerDashboardPage() {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [isVenueSubmitting, setIsVenueSubmitting] = useState(false)
-  const [isGeocodingAddress, setIsGeocodingAddress] = useState(false)
-  const [coordinatePreview, setCoordinatePreview] = useState(null)
   const [managerView, setManagerView] = useState('stats')
   const [objectView, setObjectView] = useState('calendar')
 
@@ -87,67 +85,14 @@ function PartnerDashboardPage() {
     const { name, value, type, checked } = event.target
     const nextValue = type === 'checkbox' ? checked : value
 
-    setVenueFormValues((currentValues) => {
-      const nextValues = {
-        ...currentValues,
-        [name]: nextValue,
-      }
-
-      if (['street', 'city', 'postalCode', 'voivodeship'].includes(name)) {
-        nextValues.latitude = ''
-        nextValues.longitude = ''
-      }
-
-      return nextValues
-    })
-
-    if (['street', 'city', 'postalCode', 'voivodeship'].includes(name)) {
-      setCoordinatePreview(null)
-    }
-  }
-
-  async function handleResolveCoordinates() {
-    const addressFields = ['street', 'city', 'postalCode', 'voivodeship']
-    const hasCompleteAddress = addressFields.every((fieldName) => venueFormValues[fieldName]?.trim())
-
-    if (!hasCompleteAddress) {
-      setError('Uzupelnij ulice, miasto, kod pocztowy i wojewodztwo przed pobraniem wspolrzednych.')
-      return
-    }
-
-    setIsGeocodingAddress(true)
-    setError('')
-    setNotice('')
-
-    try {
-      const match = await geocodingApi.getCoordinatesFromAddress({
-        street: venueFormValues.street.trim(),
-        city: venueFormValues.city.trim(),
-        postalCode: venueFormValues.postalCode.trim(),
-        voivodeship: venueFormValues.voivodeship.trim(),
-      })
-
-      setVenueFormValues((currentValues) => ({
-        ...currentValues,
-        latitude: String(match.latitude),
-        longitude: String(match.longitude),
-      }))
-      setCoordinatePreview(match)
-    } catch (requestError) {
-      setCoordinatePreview(null)
-      setError(requestError.response?.data?.message ?? requestError.message ?? 'Nie udalo sie pobrac wspolrzednych.')
-    } finally {
-      setIsGeocodingAddress(false)
-    }
+    setVenueFormValues((currentValues) => ({
+      ...currentValues,
+      [name]: nextValue,
+    }))
   }
 
   async function handleVenueSubmit(event) {
     event.preventDefault()
-
-    if (!venueFormValues.latitude || !venueFormValues.longitude) {
-      setError('Najpierw pobierz wspolrzedne z adresu.')
-      return
-    }
 
     setIsVenueSubmitting(true)
     setError('')
@@ -162,10 +107,9 @@ function PartnerDashboardPage() {
         setNotice('Obiekt zostal utworzony i oczekuje teraz na review admina.')
       }
       setVenueFormValues(INITIAL_VENUE_FORM_VALUES)
-      setCoordinatePreview(null)
       setManagerView('select')
     } catch (requestError) {
-      setError(requestError.response?.data?.message ?? 'Nie udalo sie dodac obiektu.')
+      setError(requestError.response?.data?.message ?? 'Nie udalo sie dodac obiektu. Sprawdz, czy adres jest poprawny.')
     } finally {
       setIsVenueSubmitting(false)
     }
@@ -201,11 +145,7 @@ function PartnerDashboardPage() {
           venueFormValues={venueFormValues}
           onVenueChange={handleVenueChange}
           onVenueSubmit={handleVenueSubmit}
-          onResolveCoordinates={handleResolveCoordinates}
           isVenueSubmitting={isVenueSubmitting}
-          isGeocodingAddress={isGeocodingAddress}
-          coordinatePreview={coordinatePreview}
-          isAddressResolved={Boolean(venueFormValues.latitude && venueFormValues.longitude)}
         />
       )
     }

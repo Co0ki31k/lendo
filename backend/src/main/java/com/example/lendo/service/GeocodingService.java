@@ -1,7 +1,5 @@
 package com.example.lendo.service;
 
-import com.example.lendo.dto.GeocodeAddressRequest;
-import com.example.lendo.dto.GeocodeAddressResponse;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,6 +13,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -36,19 +35,19 @@ public class GeocodingService {
                 .build();
     }
 
-    public GeocodeAddressResponse geocodeAddress(GeocodeAddressRequest request) {
+    public Coordinates geocodeAddress(String street, String city, String postalCode, String voivodeship) {
         URI uri = UriComponentsBuilder.fromUriString(nominatimSearchUrl)
-                .queryParam("street", request.street())
-                .queryParam("city", request.city())
-                .queryParam("state", request.voivodeship())
-                .queryParam("postalcode", request.postalCode())
+                .queryParam("street", street)
+                .queryParam("city", city)
+                .queryParam("state", voivodeship)
+                .queryParam("postalcode", postalCode)
                 .queryParam("country", "Poland")
                 .queryParam("countrycodes", "pl")
                 .queryParam("format", "jsonv2")
                 .queryParam("limit", 1)
                 .queryParam("addressdetails", 1)
                 .queryParam("accept-language", "pl")
-                .queryParamIfPresent("email", StringUtils.hasText(contactEmail) ? java.util.Optional.of(contactEmail) : java.util.Optional.empty())
+                .queryParamIfPresent("email", StringUtils.hasText(contactEmail) ? Optional.of(contactEmail) : Optional.empty())
                 .build(true)
                 .toUri();
 
@@ -64,15 +63,20 @@ public class GeocodingService {
         NominatimSearchItem bestMatch = results.getFirst();
 
         try {
-            return new GeocodeAddressResponse(
+            return new Coordinates(
                     new BigDecimal(bestMatch.lat()),
-                    new BigDecimal(bestMatch.lon()),
-                    bestMatch.displayName()
+                    new BigDecimal(bestMatch.lon())
             );
         } catch (NumberFormatException exception) {
-            log.warn("Nominatim zwrocil nieprawidlowe wspolrzedne dla adresu {}", request, exception);
+            log.warn("Nominatim zwrocil nieprawidlowe wspolrzedne dla adresu {}, {}, {}, {}", street, city, postalCode, voivodeship, exception);
             throw new RuntimeException("Nie udalo sie odczytac wspolrzednych dla podanego adresu");
         }
+    }
+
+    public record Coordinates(
+            BigDecimal latitude,
+            BigDecimal longitude
+    ) {
     }
 
     private record NominatimSearchItem(

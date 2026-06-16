@@ -13,6 +13,4 @@ export const INITIAL_VENUE_FORM_VALUES = {
   city: '',
   postalCode: '',
   voivodeship: '',
-  latitude: '',
-  longitude: '',
 }

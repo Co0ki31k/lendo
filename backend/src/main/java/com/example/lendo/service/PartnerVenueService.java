@@ -35,6 +35,7 @@ public class PartnerVenueService {
     private final VenueImageRepository venueImageRepository;
     private final PartnerProfileRepository partnerProfileRepository;
     private final CloudinaryVenueImageService cloudinaryVenueImageService;
+    private final GeocodingService geocodingService;
 
     @Transactional
     public VenueResponse createVenue(User user, CreateVenueRequest request) {
@@ -44,6 +45,12 @@ public class PartnerVenueService {
                 request.capacityMax(),
                 request.hasAccommodation(),
                 request.accommodationPlaces()
+        );
+        GeocodingService.Coordinates coordinates = geocodingService.geocodeAddress(
+                request.street(),
+                request.city(),
+                request.postalCode(),
+                request.voivodeship()
         );
 
         Venue venue = venueRepository.save(
@@ -71,8 +78,8 @@ public class PartnerVenueService {
                         .city(request.city())
                         .postalCode(request.postalCode())
                         .voivodeship(request.voivodeship())
-                        .latitude(request.latitude())
-                        .longitude(request.longitude())
+                        .latitude(coordinates.latitude())
+                        .longitude(coordinates.longitude())
                         .build()
         );
 
@@ -99,6 +106,12 @@ public class PartnerVenueService {
                 request.hasAccommodation(),
                 request.accommodationPlaces()
         );
+        GeocodingService.Coordinates coordinates = geocodingService.geocodeAddress(
+                request.street(),
+                request.city(),
+                request.postalCode(),
+                request.voivodeship()
+        );
 
         venue.setName(request.name());
         venue.setDescription(request.description());
@@ -115,8 +128,8 @@ public class PartnerVenueService {
         address.setCity(request.city());
         address.setPostalCode(request.postalCode());
         address.setVoivodeship(request.voivodeship());
-        address.setLatitude(request.latitude());
-        address.setLongitude(request.longitude());
+        address.setLatitude(coordinates.latitude());
+        address.setLongitude(coordinates.longitude());
 
         if (venue.getStatus() == VenueStatus.APPROVED) {
             venue.setStatus(VenueStatus.PENDING);

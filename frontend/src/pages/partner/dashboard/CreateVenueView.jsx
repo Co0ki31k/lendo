@@ -4,11 +4,7 @@ function CreateVenueView({
   venueFormValues,
   onVenueChange,
   onVenueSubmit,
-  onResolveCoordinates,
   isVenueSubmitting,
-  isGeocodingAddress,
-  coordinatePreview,
-  isAddressResolved,
 }) {
   return (
     <section className="partner-dashboard__workspace">
@@ -21,20 +17,14 @@ function CreateVenueView({
       </div>
 
       <form className="partner-dashboard__form" onSubmit={onVenueSubmit}>
-        <VenueFormFields
-          venueFormValues={venueFormValues}
-          onVenueChange={onVenueChange}
-          onResolveCoordinates={onResolveCoordinates}
-          isGeocodingAddress={isGeocodingAddress}
-          coordinatePreview={coordinatePreview}
-        />
+        <VenueFormFields venueFormValues={venueFormValues} onVenueChange={onVenueChange} />
 
         <button
           type="submit"
           className="partner-dashboard__submit"
-          disabled={isVenueSubmitting || isGeocodingAddress || !isAddressResolved}
+          disabled={isVenueSubmitting}
         >
-          {isVenueSubmitting ? 'Zapisywanie...' : isAddressResolved ? 'Dodaj obiekt' : 'Najpierw pobierz wspolrzedne'}
+          {isVenueSubmitting ? 'Zapisywanie...' : 'Dodaj obiekt'}
         </button>
       </form>
     </section>

@@ -1,6 +1,5 @@
 package com.example.lendo.dto;
 
-import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -59,16 +58,6 @@ public record UpdateVenueRequest(
 
         @NotBlank(message = "Wojewodztwo jest wymagane")
         @Size(max = 50, message = "Wojewodztwo moze miec maksymalnie 50 znakow")
-        String voivodeship,
-
-        @NotNull(message = "Szerokosc geograficzna jest wymagana")
-        @DecimalMin(value = "-90.0", message = "Szerokosc geograficzna jest poza zakresem")
-        @DecimalMax(value = "90.0", message = "Szerokosc geograficzna jest poza zakresem")
-        BigDecimal latitude,
-
-        @NotNull(message = "Dlugosc geograficzna jest wymagana")
-        @DecimalMin(value = "-180.0", message = "Dlugosc geograficzna jest poza zakresem")
-        @DecimalMax(value = "180.0", message = "Dlugosc geograficzna jest poza zakresem")
-        BigDecimal longitude
+        String voivodeship
 ) {
 }

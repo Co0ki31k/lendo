@@ -14,8 +14,6 @@ export function createVenueFormValues(source = {}) {
     city: source.city ?? source.address?.city ?? '',
     postalCode: source.postalCode ?? source.address?.postalCode ?? '',
     voivodeship: source.voivodeship ?? source.address?.voivodeship ?? '',
-    latitude: source.latitude != null ? String(source.latitude) : source.address?.latitude != null ? String(source.address.latitude) : '',
-    longitude: source.longitude != null ? String(source.longitude) : source.address?.longitude != null ? String(source.address.longitude) : '',
   }
 }
 
@@ -26,7 +24,5 @@ export function buildVenuePayload(values) {
     capacityMax: Number(values.capacityMax),
     accommodationPlaces: Number(values.accommodationPlaces),
     basePricePerGuest: Number(values.basePricePerGuest),
-    latitude: Number(values.latitude),
-    longitude: Number(values.longitude),
   }
 }

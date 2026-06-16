@@ -332,34 +332,6 @@
   resize: vertical;
 }
 
-.partner-dashboard__geocoding-row {
-  display: grid;
-  gap: 12px;
-}
-
-.partner-dashboard__geocoding-result {
-  min-height: 52px;
-  padding: 14px 16px;
-  border: 1px solid rgba(100, 66, 45, 0.12);
-  border-radius: 8px;
-  background: rgba(255, 253, 249, 0.9);
-}
-
-.partner-dashboard__geocoding-result strong,
-.partner-dashboard__geocoding-result span {
-  display: block;
-}
-
-.partner-dashboard__geocoding-result strong {
-  color: #241712;
-}
-
-.partner-dashboard__geocoding-result span {
-  margin-top: 6px;
-  color: #5b4a41;
-  line-height: 1.5;
-}
-
 .partner-dashboard__toggles {
   display: flex;
   flex-wrap: wrap;

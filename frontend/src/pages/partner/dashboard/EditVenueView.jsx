@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { geocodingApi, partnerApi } from '../../../api'
+import { partnerApi } from '../../../api'
 import VenueFormFields from './VenueFormFields.jsx'
 import { buildVenuePayload, createVenueFormValues } from './venueForm.js'
 
@@ -9,8 +9,6 @@ function EditVenueView({ selectedVenue, onVenueUpdated }) {
   const [error, setError] = useState('')
   const [saveMessage, setSaveMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isGeocodingAddress, setIsGeocodingAddress] = useState(false)
-  const [coordinatePreview, setCoordinatePreview] = useState(null)
   const [venueFormValues, setVenueFormValues] = useState(createVenueFormValues())
 
   useEffect(() => {
@@ -29,15 +27,6 @@ function EditVenueView({ selectedVenue, onVenueUpdated }) {
         }
 
         setVenueFormValues(createVenueFormValues(venue))
-        setCoordinatePreview(
-          venue.address?.latitude != null && venue.address?.longitude != null
-            ? {
-                latitude: venue.address.latitude,
-                longitude: venue.address.longitude,
-                displayName: `${venue.address.city || '-'}, ${venue.address.street || '-'}`,
-              }
-            : null,
-        )
         setStatus('ready')
       } catch (requestError) {
         if (!isMounted) {
@@ -61,66 +50,15 @@ function EditVenueView({ selectedVenue, onVenueUpdated }) {
     const nextValue = type === 'checkbox' ? checked : value
 
     setVenueFormValues((currentValues) => {
-      const nextValues = {
+      return {
         ...currentValues,
         [name]: nextValue,
       }
-
-      if (['street', 'city', 'postalCode', 'voivodeship'].includes(name)) {
-        nextValues.latitude = ''
-        nextValues.longitude = ''
-      }
-
-      return nextValues
     })
-
-    if (['street', 'city', 'postalCode', 'voivodeship'].includes(name)) {
-      setCoordinatePreview(null)
-    }
-  }
-
-  async function handleResolveCoordinates() {
-    const addressFields = ['street', 'city', 'postalCode', 'voivodeship']
-    const hasCompleteAddress = addressFields.every((fieldName) => venueFormValues[fieldName]?.trim())
-
-    if (!hasCompleteAddress) {
-      setError('Uzupelnij ulice, miasto, kod pocztowy i wojewodztwo przed pobraniem wspolrzednych.')
-      return
-    }
-
-    setIsGeocodingAddress(true)
-    setError('')
-    setSaveMessage('')
-
-    try {
-      const match = await geocodingApi.getCoordinatesFromAddress({
-        street: venueFormValues.street.trim(),
-        city: venueFormValues.city.trim(),
-        postalCode: venueFormValues.postalCode.trim(),
-        voivodeship: venueFormValues.voivodeship.trim(),
-      })
-
-      setVenueFormValues((currentValues) => ({
-        ...currentValues,
-        latitude: String(match.latitude),
-        longitude: String(match.longitude),
-      }))
-      setCoordinatePreview(match)
-    } catch (requestError) {
-      setCoordinatePreview(null)
-      setError(requestError.response?.data?.message ?? requestError.message ?? 'Nie udalo sie pobrac wspolrzednych.')
-    } finally {
-      setIsGeocodingAddress(false)
-    }
   }
 
   async function handleSubmit(event) {
     event.preventDefault()
-
-    if (!venueFormValues.latitude || !venueFormValues.longitude) {
-      setError('Najpierw pobierz wspolrzedne z adresu.')
-      return
-    }
 
     setIsSubmitting(true)
     setError('')
@@ -129,15 +67,6 @@ function EditVenueView({ selectedVenue, onVenueUpdated }) {
     try {
       const updatedVenue = await partnerApi.updateVenue(selectedVenue.id, buildVenuePayload(venueFormValues))
       setVenueFormValues(createVenueFormValues(updatedVenue))
-      setCoordinatePreview(
-        updatedVenue.address?.latitude != null && updatedVenue.address?.longitude != null
-          ? {
-              latitude: updatedVenue.address.latitude,
-              longitude: updatedVenue.address.longitude,
-              displayName: `${updatedVenue.address.city || '-'}, ${updatedVenue.address.street || '-'}`,
-            }
-          : null,
-      )
       setSaveMessage(
         updatedVenue.status === 'APPROVED'
           ? 'Zmiany zostaly zapisane.'
@@ -145,7 +74,7 @@ function EditVenueView({ selectedVenue, onVenueUpdated }) {
       )
       onVenueUpdated(updatedVenue)
     } catch (requestError) {
-      setError(requestError.response?.data?.message ?? 'Nie udalo sie zapisac zmian obiektu.')
+      setError(requestError.response?.data?.message ?? 'Nie udalo sie zapisac zmian obiektu. Sprawdz, czy adres jest poprawny.')
     } finally {
       setIsSubmitting(false)
     }
@@ -184,13 +113,7 @@ function EditVenueView({ selectedVenue, onVenueUpdated }) {
       {saveMessage ? <p className="partner-dashboard__notice">{saveMessage}</p> : null}
 
       <form id={editFormId} className="partner-dashboard__form" onSubmit={handleSubmit}>
-        <VenueFormFields
-          venueFormValues={venueFormValues}
-          onVenueChange={handleVenueChange}
-          onResolveCoordinates={handleResolveCoordinates}
-          isGeocodingAddress={isGeocodingAddress}
-          coordinatePreview={coordinatePreview}
-        />
+        <VenueFormFields venueFormValues={venueFormValues} onVenueChange={handleVenueChange} />
       </form>
 
       <div className="partner-dashboard__edit-actions">
@@ -198,7 +121,7 @@ function EditVenueView({ selectedVenue, onVenueUpdated }) {
           type="submit"
           form={editFormId}
           className="partner-dashboard__submit"
-          disabled={isSubmitting || isGeocodingAddress || !venueFormValues.latitude || !venueFormValues.longitude}
+          disabled={isSubmitting}
         >
           {isSubmitting ? 'Zapisywanie...' : 'Zapisz zmiany'}
         </button>

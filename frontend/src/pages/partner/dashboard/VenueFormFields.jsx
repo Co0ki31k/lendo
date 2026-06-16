@@ -1,9 +1,6 @@
 function VenueFormFields({
   venueFormValues,
   onVenueChange,
-  onResolveCoordinates,
-  isGeocodingAddress,
-  coordinatePreview,
 }) {
   return (
     <>
@@ -56,30 +53,6 @@ function VenueFormFields({
         <span>Kod pocztowy</span>
         <input name="postalCode" type="text" value={venueFormValues.postalCode} onChange={onVenueChange} required />
       </label>
-
-      <div className="partner-dashboard__field partner-dashboard__field--full">
-        <span>Wspolrzedne z adresu</span>
-        <div className="partner-dashboard__geocoding-row">
-          <button
-            type="button"
-            className="partner-dashboard__secondary-action"
-            onClick={onResolveCoordinates}
-            disabled={isGeocodingAddress}
-          >
-            {isGeocodingAddress ? 'Pobieranie wspolrzednych...' : 'Pobierz wspolrzedne z adresu'}
-          </button>
-          <div className="partner-dashboard__geocoding-result">
-            {coordinatePreview ? (
-              <>
-                <strong>{coordinatePreview.latitude}, {coordinatePreview.longitude}</strong>
-                <span>{coordinatePreview.displayName || 'Adres dopasowany przez Nominatim.'}</span>
-              </>
-            ) : (
-              <span>Najpierw uzupelnij adres, potem pobierz wspolrzedne.</span>
-            )}
-          </div>
-        </div>
-      </div>
 
       <label className="partner-dashboard__field partner-dashboard__field--full">
         <span>Opis</span>
