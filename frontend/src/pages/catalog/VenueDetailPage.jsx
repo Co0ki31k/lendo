@@ -95,13 +95,14 @@ function VenueDetailPage() {
     navigate(location.pathname, { replace: true, state: null })
   }, [location.pathname, location.state, navigate, status])
 
-  const activeImage = useMemo(() => venue?.images?.[activeImageIndex] ?? null, [venue, activeImageIndex])
-  const imageCount = venue?.images?.length ?? 0
-  const galleryThumbItems = useMemo(() => {
+  const gallerySliderItems = useMemo(() => {
     const images = venue?.images ?? []
 
     return Array.from({ length: Math.max(minimumSliderSlots, images.length) }, (_, index) => images[index] ?? null)
   }, [venue])
+  const realImageCount = venue?.images?.length ?? 0
+  const imageCount = gallerySliderItems.length
+  const activeImage = useMemo(() => gallerySliderItems[activeImageIndex] ?? null, [gallerySliderItems, activeImageIndex])
   const isClient = user?.role === 'CLIENT'
   const coordinates = useMemo(() => {
     const latitude = Number(venue?.address?.latitude)
@@ -267,7 +268,7 @@ function VenueDetailPage() {
               ) : null}
 
               <div className="venue-detail__slider-slots">
-                {galleryThumbItems.map((image, index) => (
+                {gallerySliderItems.map((image, index) => (
                   image ? (
                     <button
                       key={image.id}
@@ -292,7 +293,9 @@ function VenueDetailPage() {
           </div>
 
           <div className="venue-detail__slider-status">
-            {imageCount > 0 ? `Zdjecie ${activeImageIndex + 1} z ${imageCount}` : 'Brak zdjec do wyswietlenia'}
+            {realImageCount > 0
+              ? `Zdjecie ${activeImageIndex + 1} z ${imageCount}`
+              : 'Brak zdjec z API. Slider uzupelniono placeholderami.'}
           </div>
         </section>
 
