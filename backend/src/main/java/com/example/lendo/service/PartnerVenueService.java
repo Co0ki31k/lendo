@@ -373,6 +373,10 @@ public class PartnerVenueService {
         return venue;
     }
 
+    public Venue resolveManagedVenueForMessages(User user, Long venueId) {
+        return resolveManagedVenue(user, venueId);
+    }
+
     private void validateVenuePayload(
             Integer capacityMin,
             Integer capacityMax,

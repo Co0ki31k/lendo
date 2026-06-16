@@ -261,7 +261,11 @@ function CatalogPage() {
                           >
                             {venue.favorite ? '♥' : '♡'}
                           </button>
-                          <button type="button" className="catalog-page__message-button">
+                          <button
+                            type="button"
+                            className="catalog-page__message-button"
+                            onClick={() => navigate(`/venues/${venue.id}`, { state: { focus: 'contact' } })}
+                          >
                             Napisz wiadomosc
                           </button>
                         </div>

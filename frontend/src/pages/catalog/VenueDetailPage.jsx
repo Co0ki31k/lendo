@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import L from 'leaflet'
 import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
@@ -34,12 +34,20 @@ function formatPrice(value) {
 function VenueDetailPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const contactSectionRef = useRef(null)
   const { isAuthenticated, user } = useAuth()
   const { venueId } = useParams()
   const [venue, setVenue] = useState(null)
   const [status, setStatus] = useState('loading')
   const [error, setError] = useState('')
   const [activeImageIndex, setActiveImageIndex] = useState(0)
+  const [inquiryForm, setInquiryForm] = useState({
+    contactEmail: '',
+    contactPhone: '',
+    messageText: '',
+  })
+  const [isSubmittingInquiry, setIsSubmittingInquiry] = useState(false)
+  const [inquiryMessage, setInquiryMessage] = useState('')
 
   useEffect(() => {
     let isMounted = true
@@ -76,6 +84,15 @@ function VenueDetailPage() {
     }
   }, [venueId])
 
+  useEffect(() => {
+    if (status !== 'ready' || location.state?.focus !== 'contact') {
+      return
+    }
+
+    contactSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    navigate(location.pathname, { replace: true, state: null })
+  }, [location.pathname, location.state, navigate, status])
+
   const activeImage = useMemo(() => venue?.images?.[activeImageIndex] ?? null, [venue, activeImageIndex])
   const imageCount = venue?.images?.length ?? 0
   const isClient = user?.role === 'CLIENT'
@@ -110,6 +127,13 @@ function VenueDetailPage() {
     })
   }
 
+  function handleInquiryFieldChange(field, value) {
+    setInquiryForm((current) => ({
+      ...current,
+      [field]: value,
+    }))
+  }
+
   async function handleFavoriteToggle() {
     if (!venue) {
       return
@@ -138,6 +162,26 @@ function VenueDetailPage() {
       ))
     } catch (requestError) {
       setError(requestError.response?.data?.message ?? 'Nie udalo sie zaktualizowac ulubionych.')
+    }
+  }
+
+  async function handleInquirySubmit(event) {
+    event.preventDefault()
+    setError('')
+    setInquiryMessage('')
+    setIsSubmittingInquiry(true)
+
+    try {
+      await catalogApi.createVenueInquiry(venueId, inquiryForm)
+      setInquiryMessage('Wiadomosc zostala wyslana do obiektu.')
+      setInquiryForm((current) => ({
+        ...current,
+        messageText: '',
+      }))
+    } catch (requestError) {
+      setError(requestError.response?.data?.message ?? 'Nie udalo sie wyslac wiadomosci do obiektu.')
+    } finally {
+      setIsSubmittingInquiry(false)
     }
   }
 
@@ -170,7 +214,7 @@ function VenueDetailPage() {
             className={`venue-detail__favorite-button${venue.favorite ? ' venue-detail__favorite-button--active' : ''}`}
             onClick={() => void handleFavoriteToggle()}
           >
-            {venue.favorite ? '♥ Polubione' : '♡ Polub'}
+            {venue.favorite ? 'Polubione' : 'Polub'}
           </button>
         </header>
 
@@ -183,7 +227,7 @@ function VenueDetailPage() {
                 onClick={() => handleImageStep(-1)}
                 aria-label="Poprzednie zdjecie"
               >
-                ‹
+                {'<'}
               </button>
             ) : null}
 
@@ -204,7 +248,7 @@ function VenueDetailPage() {
                 onClick={() => handleImageStep(1)}
                 aria-label="Nastepne zdjecie"
               >
-                ›
+                {'>'}
               </button>
             ) : null}
           </div>
@@ -270,6 +314,55 @@ function VenueDetailPage() {
           <section className="venue-detail__description">
             <h2>Opis obiektu</h2>
             <p>{venue.description || 'Brak opisu.'}</p>
+          </section>
+
+          <section ref={contactSectionRef} className="venue-detail__contact-section">
+            <div className="venue-detail__section-heading">
+              <h2>Napisz do obiektu</h2>
+              <p>Wyslij kontakt i tresc wiadomosci. Zapytanie zostanie zapisane dla tego obiektu.</p>
+            </div>
+
+            {inquiryMessage ? <p className="venue-detail__success">{inquiryMessage}</p> : null}
+
+            <form className="venue-detail__contact-form" onSubmit={handleInquirySubmit}>
+              <label className="venue-detail__field">
+                <span>Email</span>
+                <input
+                  type="email"
+                  value={inquiryForm.contactEmail}
+                  onChange={(event) => handleInquiryFieldChange('contactEmail', event.target.value)}
+                  placeholder="anna@przyklad.pl"
+                  required
+                />
+              </label>
+
+              <label className="venue-detail__field">
+                <span>Numer telefonu</span>
+                <input
+                  type="text"
+                  value={inquiryForm.contactPhone}
+                  onChange={(event) => handleInquiryFieldChange('contactPhone', event.target.value)}
+                  placeholder="+48 500 000 000"
+                />
+              </label>
+
+              <label className="venue-detail__field venue-detail__field--full">
+                <span>Tresc wiadomosci</span>
+                <textarea
+                  value={inquiryForm.messageText}
+                  onChange={(event) => handleInquiryFieldChange('messageText', event.target.value)}
+                  placeholder="Napisz kilka zdan o terminie, liczbie gosci i oczekiwaniach."
+                  rows={6}
+                  required
+                />
+              </label>
+
+              <div className="venue-detail__contact-actions">
+                <button type="submit" className="venue-detail__submit-button" disabled={isSubmittingInquiry}>
+                  {isSubmittingInquiry ? 'Trwa wysylanie...' : 'Wyslij wiadomosc'}
+                </button>
+              </div>
+            </form>
           </section>
 
           {coordinates ? (

@@ -6,9 +6,11 @@ import com.example.lendo.dto.SetPrimaryVenueImageRequest;
 import com.example.lendo.dto.UpdateVenueRequest;
 import com.example.lendo.dto.UpdateVenueImageOrderRequest;
 import com.example.lendo.dto.VenueImageResponse;
+import com.example.lendo.dto.VenueInquiryResponse;
 import com.example.lendo.dto.VenueResponse;
 import com.example.lendo.model.User;
 import com.example.lendo.service.PartnerVenueService;
+import com.example.lendo.service.VenueInquiryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -38,6 +40,7 @@ import java.util.List;
 @Tag(name = "Partner Venues", description = "Partner venue management APIs")
 public class PartnerVenueController {
     private final PartnerVenueService partnerVenueService;
+    private final VenueInquiryService venueInquiryService;
 
     @PostMapping
     @Operation(summary = "Create a venue for current partner")
@@ -106,6 +109,15 @@ public class PartnerVenueController {
             @PathVariable Long venueId
     ) {
         return ResponseEntity.ok(partnerVenueService.getVenueImages(user, venueId));
+    }
+
+    @GetMapping("/{venueId}/inquiries")
+    @Operation(summary = "List contact inquiries for current partner venue")
+    public ResponseEntity<List<VenueInquiryResponse>> getVenueInquiries(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long venueId
+    ) {
+        return ResponseEntity.ok(venueInquiryService.getVenueInquiries(user, venueId));
     }
 
     @DeleteMapping("/{venueId}/images/{imageId}")

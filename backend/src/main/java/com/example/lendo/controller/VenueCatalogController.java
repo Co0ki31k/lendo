@@ -4,7 +4,10 @@ import com.example.lendo.dto.VenueCalendarResponse;
 import com.example.lendo.dto.VenueCatalogDetailResponse;
 import com.example.lendo.dto.VenueCatalogFilter;
 import com.example.lendo.dto.VenueCatalogListItemResponse;
+import com.example.lendo.dto.CreateVenueInquiryRequest;
+import com.example.lendo.dto.VenueInquiryResponse;
 import com.example.lendo.model.User;
+import com.example.lendo.service.VenueInquiryService;
 import com.example.lendo.service.VenueCalendarCatalogService;
 import com.example.lendo.service.VenueCatalogService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,9 +22,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestBody;
+import jakarta.validation.Valid;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -33,6 +39,7 @@ import java.time.LocalDate;
 public class VenueCatalogController {
     private final VenueCatalogService venueCatalogService;
     private final VenueCalendarCatalogService venueCalendarCatalogService;
+    private final VenueInquiryService venueInquiryService;
 
     @GetMapping
     @Operation(summary = "List approved venues with pagination and filters")
@@ -76,5 +83,14 @@ public class VenueCatalogController {
             @RequestParam(required = false) LocalDate to
     ) {
         return ResponseEntity.ok(venueCalendarCatalogService.getApprovedVenueCalendar(venueId, from, to));
+    }
+
+    @PostMapping("/{venueId}/inquiries")
+    @Operation(summary = "Send contact inquiry to approved venue")
+    public ResponseEntity<VenueInquiryResponse> createVenueInquiry(
+            @PathVariable Long venueId,
+            @Valid @RequestBody CreateVenueInquiryRequest request
+    ) {
+        return ResponseEntity.ok(venueInquiryService.createInquiry(venueId, request));
     }
 }

@@ -14,3 +14,8 @@ export async function getVenueCalendar(venueId, params = {}) {
   const response = await api.get(`/api/catalog/venues/${venueId}/calendar`, { params })
   return response.data
 }
+
+export async function createVenueInquiry(venueId, payload) {
+  const response = await api.post(`/api/catalog/venues/${venueId}/inquiries`, payload)
+  return response.data
+}

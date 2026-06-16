@@ -115,7 +115,7 @@ function FavoritesPage() {
                 <button
                   type="button"
                   className="favorites-page__message-button"
-                  onClick={() => navigate(`/venues/${favorite.venueId}`)}
+                  onClick={() => navigate(`/venues/${favorite.venueId}`, { state: { focus: 'contact' } })}
                 >
                   Napisz wiadomosc
                 </button>
