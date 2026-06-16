@@ -100,7 +100,6 @@ function VenueDetailPage() {
 
     return Array.from({ length: Math.max(minimumSliderSlots, images.length) }, (_, index) => images[index] ?? null)
   }, [venue])
-  const realImageCount = venue?.images?.length ?? 0
   const imageCount = gallerySliderItems.length
   const activeImage = useMemo(() => gallerySliderItems[activeImageIndex] ?? null, [gallerySliderItems, activeImageIndex])
   const isClient = user?.role === 'CLIENT'
@@ -267,35 +266,7 @@ function VenueDetailPage() {
                 </button>
               ) : null}
 
-              <div className="venue-detail__slider-slots">
-                {gallerySliderItems.map((image, index) => (
-                  image ? (
-                    <button
-                      key={image.id}
-                      type="button"
-                      className={`venue-detail__thumb${index === activeImageIndex ? ' venue-detail__thumb--active' : ''}`}
-                      onClick={() => setActiveImageIndex(index)}
-                    >
-                      <img src={image.imageUrl} alt={`${venue.name} ${index + 1}`} />
-                    </button>
-                  ) : (
-                    <div
-                      key={`placeholder-${index}`}
-                      className="venue-detail__thumb venue-detail__thumb--placeholder"
-                      aria-hidden="true"
-                    >
-                      <span>Brak</span>
-                    </div>
-                  )
-                ))}
-              </div>
             </div>
-          </div>
-
-          <div className="venue-detail__slider-status">
-            {realImageCount > 0
-              ? `Zdjecie ${activeImageIndex + 1} z ${imageCount}`
-              : 'Brak zdjec z API. Slider uzupelniono placeholderami.'}
           </div>
         </section>
 
