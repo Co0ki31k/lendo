@@ -245,10 +245,10 @@
 
 .catalog-page__card-side {
   display: grid;
-  grid-template-rows: auto auto auto auto;
+  grid-template-rows: auto 1fr auto auto auto;
   gap: 16px;
   justify-items: start;
-  align-content: start;
+  align-content: stretch;
   padding: 22px;
   border-left: 1px solid rgba(100, 66, 45, 0.14);
   background: rgba(255, 248, 241, 0.8);
@@ -257,6 +257,10 @@
 .catalog-page__card-side .catalog-page__favorite-button {
   justify-self: end;
   align-self: start;
+}
+
+.catalog-page__card-side .catalog-page__card-stat:first-of-type {
+  margin-top: auto;
 }
 
 .catalog-page__card-stat-line {
