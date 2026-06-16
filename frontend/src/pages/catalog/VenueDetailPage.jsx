@@ -101,7 +101,6 @@ function VenueDetailPage() {
     return Array.from({ length: Math.max(minimumSliderSlots, images.length) }, (_, index) => images[index] ?? null)
   }, [venue])
   const imageCount = gallerySliderItems.length
-  const activeImage = useMemo(() => gallerySliderItems[activeImageIndex] ?? null, [gallerySliderItems, activeImageIndex])
   const isClient = user?.role === 'CLIENT'
   const coordinates = useMemo(() => {
     const latitude = Number(venue?.address?.latitude)
@@ -245,15 +244,32 @@ function VenueDetailPage() {
                 </button>
               ) : null}
 
-              {activeImage ? (
-                <img
-                  src={activeImage.imageUrl}
-                  alt={venue.name}
-                  className="venue-detail__hero-image"
-                />
-              ) : (
-                <div className="venue-detail__hero-image venue-detail__hero-image--fallback">Brak zdjec</div>
-              )}
+              <div className="venue-detail__slider-viewport">
+                <div
+                  className="venue-detail__slider-track"
+                  style={{ '--active-index': activeImageIndex }}
+                >
+                  {gallerySliderItems.map((image, index) => (
+                    <button
+                      key={image?.id ?? `placeholder-${index}`}
+                      type="button"
+                      className={`venue-detail__slide${index === activeImageIndex ? ' venue-detail__slide--active' : ''}`}
+                      onClick={() => setActiveImageIndex(index)}
+                      aria-label={image ? `Pokaz zdjecie ${index + 1}` : `Placeholder ${index + 1}`}
+                    >
+                      {image ? (
+                        <img
+                          src={image.imageUrl}
+                          alt={`${venue.name} ${index + 1}`}
+                          className="venue-detail__hero-image"
+                        />
+                      ) : (
+                        <div className="venue-detail__hero-image venue-detail__hero-image--fallback">Brak zdjecia</div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               {imageCount > 1 ? (
                 <button

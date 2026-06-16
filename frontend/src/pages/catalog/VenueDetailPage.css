@@ -126,6 +126,38 @@
   align-items: center;
 }
 
+.venue-detail__slider-viewport {
+  min-width: 0;
+  overflow: hidden;
+  --active-index: 0;
+  --slide-width: 68%;
+  --slide-gap: 16px;
+}
+
+.venue-detail__slider-track {
+  display: flex;
+  gap: var(--slide-gap);
+  align-items: center;
+  transform: translateX(calc(50% - (var(--active-index) * (var(--slide-width) + var(--slide-gap))) - (var(--slide-width) / 2)));
+  transition: transform 0.28s ease;
+}
+
+.venue-detail__slide {
+  flex: 0 0 var(--slide-width);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  opacity: 0.5;
+  transform: scale(0.9);
+  transition: transform 0.28s ease, opacity 0.28s ease;
+  cursor: pointer;
+}
+
+.venue-detail__slide--active {
+  opacity: 1;
+  transform: scale(1);
+}
+
 .venue-detail__slider-button {
   position: relative;
   width: 44px;
@@ -152,14 +184,14 @@
   width: 100%;
   height: 360px;
   border-radius: 18px;
-  object-fit: contain;
+  object-fit: cover;
   background: rgba(100, 66, 45, 0.08);
 }
 
 .venue-detail__hero-image--fallback {
   display: grid;
   place-items: center;
-  min-height: 260px;
+  min-height: 360px;
   color: #7d2f27;
   font-weight: 600;
 }
@@ -315,8 +347,21 @@
     width: 100%;
   }
 
+  .venue-detail__slider-track {
+    gap: var(--slide-gap);
+  }
+
+  .venue-detail__slider-viewport {
+    --slide-width: 82%;
+    --slide-gap: 12px;
+  }
+
   .venue-detail__hero-image {
     height: 260px;
+  }
+
+  .venue-detail__hero-image--fallback {
+    min-height: 260px;
   }
 
   .venue-detail__slider-main {
