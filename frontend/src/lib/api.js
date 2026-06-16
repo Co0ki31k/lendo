@@ -7,9 +7,12 @@ import {
 } from './tokenStorage'
 
 const baseURL = import.meta.env.VITE_API_URL ?? 'http://localhost:10000'
+const rawTimeout = Number(import.meta.env.VITE_API_TIMEOUT_MS ?? 15000)
+const timeout = Number.isFinite(rawTimeout) && rawTimeout > 0 ? rawTimeout : 15000
 
 const api = axios.create({
   baseURL,
+  timeout,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -18,6 +21,7 @@ const api = axios.create({
 
 const refreshClient = axios.create({
   baseURL,
+  timeout,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
