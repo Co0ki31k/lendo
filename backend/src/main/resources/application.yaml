@@ -36,6 +36,10 @@ springdoc:
 app:
   frontend:
     url: ${FRONTEND_URL}
+  geocoding:
+    nominatim-url: https://nominatim.openstreetmap.org/search
+    user-agent: ${NOMINATIM_USER_AGENT:Lendo/1.0 (+https://lendo-frontend.vercel.app)}
+    email: ${NOMINATIM_EMAIL:}
 cloudinary:
   cloud-name: ${CLOUDINARY_CLOUD_NAME}
   api-key: ${CLOUDINARY_API_KEY}
