@@ -9,6 +9,7 @@ function VenueImagesManager({ venueId, selectedVenue = null }) {
   const [displayOrder, setDisplayOrder] = useState('')
   const [primaryImage, setPrimaryImage] = useState(false)
   const [activeRequest, setActiveRequest] = useState('')
+  const [isDragActive, setIsDragActive] = useState(false)
 
   useEffect(() => {
     let isMounted = true
@@ -42,6 +43,42 @@ function VenueImagesManager({ venueId, selectedVenue = null }) {
       isMounted = false
     }
   }, [venueId])
+
+  function mergeFiles(nextFiles) {
+    if (!nextFiles.length) {
+      return
+    }
+
+    setUploadFiles((currentFiles) => {
+      const existingKeys = new Set(currentFiles.map((file) => `${file.name}:${file.size}:${file.lastModified}`))
+      const deduplicatedFiles = nextFiles.filter((file) => !existingKeys.has(`${file.name}:${file.size}:${file.lastModified}`))
+      return [...currentFiles, ...deduplicatedFiles]
+    })
+  }
+
+  function handleFileInputChange(event) {
+    mergeFiles(Array.from(event.target.files ?? []))
+  }
+
+  function handleDragOver(event) {
+    event.preventDefault()
+    setIsDragActive(true)
+  }
+
+  function handleDragLeave(event) {
+    event.preventDefault()
+    setIsDragActive(false)
+  }
+
+  function handleDrop(event) {
+    event.preventDefault()
+    setIsDragActive(false)
+    mergeFiles(Array.from(event.dataTransfer.files ?? []).filter((file) => file.type.startsWith('image/')))
+  }
+
+  function handleRemovePendingFile(fileToRemove) {
+    setUploadFiles((currentFiles) => currentFiles.filter((file) => file !== fileToRemove))
+  }
 
   async function handleUpload(event) {
     event.preventDefault()
@@ -168,16 +205,44 @@ function VenueImagesManager({ venueId, selectedVenue = null }) {
       {error ? <p className="partner-dashboard__error">{error}</p> : null}
 
       <form className="partner-dashboard__image-upload" onSubmit={handleUpload}>
-        <label className="partner-dashboard__field partner-dashboard__field--full">
+        <div className="partner-dashboard__field partner-dashboard__field--full">
           <span>Pliki obrazkow</span>
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={(event) => setUploadFiles(Array.from(event.target.files ?? []))}
-            required
-          />
-        </label>
+          <label
+            className={`partner-dashboard__dropzone${isDragActive ? ' partner-dashboard__dropzone--active' : ''}`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              className="partner-dashboard__file-input"
+              onChange={handleFileInputChange}
+            />
+            <strong>Przeciagnij zdjecia tutaj</strong>
+            <span>albo kliknij, aby wybrac pliki z urzadzenia</span>
+          </label>
+          {uploadFiles.length > 0 ? (
+            <div className="partner-dashboard__pending-files">
+              {uploadFiles.map((file) => (
+                <div key={`${file.name}-${file.lastModified}`} className="partner-dashboard__pending-file">
+                  <div>
+                    <strong>{file.name}</strong>
+                    <span>{Math.max(1, Math.round(file.size / 1024))} KB</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="partner-dashboard__pending-file-remove"
+                    onClick={() => handleRemovePendingFile(file)}
+                  >
+                    Usun
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
 
         <label className="partner-dashboard__field">
           <span>Kolejnosc wyswietlania</span>
@@ -189,7 +254,7 @@ function VenueImagesManager({ venueId, selectedVenue = null }) {
           <span>Ustaw pierwsze z dodawanych zdjec jako glowne</span>
         </label>
 
-        <button type="submit" className="partner-dashboard__submit" disabled={activeRequest === 'upload'}>
+        <button type="submit" className="partner-dashboard__submit" disabled={activeRequest === 'upload' || uploadFiles.length === 0}>
           {activeRequest === 'upload' ? 'Przesylanie...' : 'Dodaj zdjecia'}
         </button>
       </form>

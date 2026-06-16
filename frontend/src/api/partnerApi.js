@@ -48,7 +48,9 @@ export async function uploadVenueImage(venueId, { file, displayOrder, primaryIma
     payload.primaryImage = String(primaryImage)
   }
 
-  const response = await api.postForm(`/api/partner/venues/${venueId}/images/upload`, payload)
+  const response = await api.postForm(`/api/partner/venues/${venueId}/images/upload`, payload, {
+    timeout: 120000,
+  })
 
   return response.data
 }
