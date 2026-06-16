@@ -64,6 +64,10 @@ async function refreshAccessToken() {
 api.interceptors.request.use((config) => {
   const accessToken = getAccessToken()
 
+  if (config.data instanceof FormData && config.headers) {
+    delete config.headers['Content-Type']
+  }
+
   if (isJwtToken(accessToken)) {
     config.headers.Authorization = `Bearer ${accessToken}`
   } else if (config.headers.Authorization) {

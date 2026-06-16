@@ -5,6 +5,7 @@ import VenueImagesManager from './VenueImagesManager.jsx'
 import { buildVenuePayload, createVenueFormValues } from './venueForm.js'
 
 function EditVenueView({ selectedVenue, onVenueUpdated }) {
+  const editFormId = `venue-edit-form-${selectedVenue.id}`
   const [status, setStatus] = useState('loading')
   const [error, setError] = useState('')
   const [saveMessage, setSaveMessage] = useState('')
@@ -183,7 +184,7 @@ function EditVenueView({ selectedVenue, onVenueUpdated }) {
       {error ? <p className="partner-dashboard__error">{error}</p> : null}
       {saveMessage ? <p className="partner-dashboard__notice">{saveMessage}</p> : null}
 
-      <form className="partner-dashboard__form" onSubmit={handleSubmit}>
+      <form id={editFormId} className="partner-dashboard__form" onSubmit={handleSubmit}>
         <VenueFormFields
           venueFormValues={venueFormValues}
           onVenueChange={handleVenueChange}
@@ -191,17 +192,20 @@ function EditVenueView({ selectedVenue, onVenueUpdated }) {
           isGeocodingAddress={isGeocodingAddress}
           coordinatePreview={coordinatePreview}
         />
+      </form>
 
+      <VenueImagesManager venueId={selectedVenue.id} />
+
+      <div className="partner-dashboard__edit-actions">
         <button
           type="submit"
+          form={editFormId}
           className="partner-dashboard__submit"
           disabled={isSubmitting || isGeocodingAddress || !venueFormValues.latitude || !venueFormValues.longitude}
         >
           {isSubmitting ? 'Zapisywanie...' : 'Zapisz zmiany'}
         </button>
-      </form>
-
-      <VenueImagesManager venueId={selectedVenue.id} />
+      </div>
     </section>
   )
 }

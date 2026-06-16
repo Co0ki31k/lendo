@@ -399,6 +399,12 @@
   border-top: 1px solid rgba(100, 66, 45, 0.1);
 }
 
+.partner-dashboard__edit-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 24px;
+}
+
 .partner-dashboard__image-upload {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
