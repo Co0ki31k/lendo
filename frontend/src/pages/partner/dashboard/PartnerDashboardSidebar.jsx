@@ -70,6 +70,14 @@ function PartnerDashboardSidebar({
           >
             Edycja
           </button>
+          <button
+            type="button"
+            className={`partner-dashboard__nav-button${managerView === 'object' && objectView === 'images' ? ' partner-dashboard__nav-button--active' : ''}`}
+            onClick={() => hasApprovedVenue && onObjectViewChange('images')}
+            disabled={!hasApprovedVenue}
+          >
+            Zdjecia
+          </button>
         </div>
       </section>
     </aside>

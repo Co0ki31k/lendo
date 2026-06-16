@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { geocodingApi, partnerApi } from '../../../api'
 import VenueFormFields from './VenueFormFields.jsx'
-import VenueImagesManager from './VenueImagesManager.jsx'
 import { buildVenuePayload, createVenueFormValues } from './venueForm.js'
 
 function EditVenueView({ selectedVenue, onVenueUpdated }) {
@@ -193,8 +192,6 @@ function EditVenueView({ selectedVenue, onVenueUpdated }) {
           coordinatePreview={coordinatePreview}
         />
       </form>
-
-      <VenueImagesManager venueId={selectedVenue.id} />
 
       <div className="partner-dashboard__edit-actions">
         <button

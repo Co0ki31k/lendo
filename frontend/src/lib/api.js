@@ -14,18 +14,12 @@ const api = axios.create({
   baseURL,
   timeout,
   withCredentials: true,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 })
 
 const refreshClient = axios.create({
   baseURL,
   timeout,
   withCredentials: true,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 })
 
 let refreshPromise = null
@@ -63,10 +57,6 @@ async function refreshAccessToken() {
 
 api.interceptors.request.use((config) => {
   const accessToken = getAccessToken()
-
-  if (config.data instanceof FormData && config.headers) {
-    delete config.headers['Content-Type']
-  }
 
   if (isJwtToken(accessToken)) {
     config.headers.Authorization = `Bearer ${accessToken}`

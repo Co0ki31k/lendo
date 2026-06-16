@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { partnerApi } from '../../../api'
 
-function VenueImagesManager({ venueId }) {
+function VenueImagesManager({ venueId, selectedVenue = null }) {
   const [images, setImages] = useState([])
   const [status, setStatus] = useState('loading')
   const [error, setError] = useState('')
@@ -136,13 +136,19 @@ function VenueImagesManager({ venueId }) {
     }
   }
 
-  return (
-    <section className="partner-dashboard__images-section">
+  const content = (
+    <>
       <div className="partner-dashboard__workspace-header">
         <div>
-          <span className="partner-dashboard__workspace-eyebrow">Media</span>
-          <h3 className="partner-dashboard__section-title">Zdjecia obiektu</h3>
-          <p>Dodawaj, usuwaj i ustawiaj kolejnosc galerii dla wybranego obiektu.</p>
+          <span className="partner-dashboard__workspace-eyebrow">{selectedVenue ? 'Obiekt' : 'Media'}</span>
+          <h3 className="partner-dashboard__section-title">
+            {selectedVenue ? `${selectedVenue.name} - Zdjecia` : 'Zdjecia obiektu'}
+          </h3>
+          <p>
+            {selectedVenue
+              ? 'Zarzadzaj galeria wybranego, zatwierdzonego obiektu.'
+              : 'Dodawaj, usuwaj i ustawiaj kolejnosc galerii dla wybranego obiektu.'}
+          </p>
         </div>
       </div>
 
@@ -223,8 +229,14 @@ function VenueImagesManager({ venueId }) {
           ))}
         </div>
       )}
-    </section>
+    </>
   )
+
+  if (selectedVenue) {
+    return <section className="partner-dashboard__workspace">{content}</section>
+  }
+
+  return <section className="partner-dashboard__images-section">{content}</section>
 }
 
 export default VenueImagesManager

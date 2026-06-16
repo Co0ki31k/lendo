@@ -1,4 +1,5 @@
 import EditVenueView from './EditVenueView.jsx'
+import VenueImagesView from './VenueImagesView.jsx'
 
 function ObjectWorkspaceView({ selectedVenue, objectView, onVenueUpdated }) {
   if (!selectedVenue) {
@@ -14,12 +15,18 @@ function ObjectWorkspaceView({ selectedVenue, objectView, onVenueUpdated }) {
 
   const objectViewTitle = objectView === 'calendar'
     ? 'Kalendarz'
-      : objectView === 'messages'
+    : objectView === 'messages'
       ? 'Wiadomosci'
+      : objectView === 'images'
+        ? 'Zdjecia'
       : 'Edycja'
 
   if (objectView === 'edit') {
     return <EditVenueView selectedVenue={selectedVenue} onVenueUpdated={onVenueUpdated} />
+  }
+
+  if (objectView === 'images') {
+    return <VenueImagesView selectedVenue={selectedVenue} />
   }
 
   return (
@@ -30,7 +37,7 @@ function ObjectWorkspaceView({ selectedVenue, objectView, onVenueUpdated }) {
           <h2>{selectedVenue.name} - {objectViewTitle}</h2>
           <p>
             Aktualnie wybrany obiekt: {selectedVenue.address?.city || '-'}, {selectedVenue.address?.street || '-'}.
-            Widoki kalendarza, wiadomosci i edycji przygotowujemy jako osobne moduly.
+            Widoki kalendarza i wiadomosci przygotowujemy jako osobne moduly.
           </p>
         </div>
       </div>
