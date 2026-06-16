@@ -366,6 +366,10 @@
   background: rgba(197, 141, 41, 0.1);
 }
 
+.admin-dashboard__comment-section {
+  margin-top: 16px;
+}
+
 .admin-dashboard__feedback-panel strong {
   display: block;
   color: #7b5310;

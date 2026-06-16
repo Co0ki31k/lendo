@@ -768,36 +768,38 @@ function AdminPage() {
                       </div>
                     </dl>
 
-                    {!isVenueDraft ? (
+                    <div className="admin-dashboard__comment-section">
+                      {!isVenueDraft ? (
+                        <button
+                          type="button"
+                          className={`admin-dashboard__secondary-action${isCommentEditorActive ? ' admin-dashboard__secondary-action--active' : ''}`}
+                          onClick={() => toggleCommentEditor(venue.id)}
+                        >
+                          {isCommentEditorActive ? 'Ukryj komentarz do poprawy' : 'Dodaj komentarz do poprawy'}
+                        </button>
+                      ) : null}
+
+                      {isCommentEditorActive || isVenueDraft ? (
+                        <div className="admin-dashboard__feedback-panel">
+                          <strong>Komentarz dla managera</strong>
+                          <textarea
+                            className="admin-dashboard__comment"
+                            value={comment}
+                            onChange={(event) => handleVenueCommentChange(venue.id, event.target.value)}
+                            placeholder="Wpisz, co manager ma poprawic przed ponownym review."
+                            rows="4"
+                          />
+                        </div>
+                      ) : null}
+
                       <button
                         type="button"
-                        className={`admin-dashboard__secondary-action${isCommentEditorActive ? ' admin-dashboard__secondary-action--active' : ''}`}
-                        onClick={() => toggleCommentEditor(venue.id)}
+                        className="admin-dashboard__details-toggle"
+                        onClick={() => toggleVenueDetails(venue.id)}
                       >
-                        {isCommentEditorActive ? 'Ukryj komentarz do poprawy' : 'Dodaj komentarz do poprawy'}
+                        {isExpanded ? 'Ukryj szczegoly zgloszenia' : 'Pokaz szczegoly zgloszenia'}
                       </button>
-                    ) : null}
-
-                    {isCommentEditorActive || isVenueDraft ? (
-                      <div className="admin-dashboard__feedback-panel">
-                        <strong>Komentarz dla managera</strong>
-                        <textarea
-                          className="admin-dashboard__comment"
-                          value={comment}
-                          onChange={(event) => handleVenueCommentChange(venue.id, event.target.value)}
-                          placeholder="Wpisz, co manager ma poprawic przed ponownym review."
-                          rows="4"
-                        />
-                      </div>
-                    ) : null}
-
-                    <button
-                      type="button"
-                      className="admin-dashboard__details-toggle"
-                      onClick={() => toggleVenueDetails(venue.id)}
-                    >
-                      {isExpanded ? 'Ukryj szczegoly zgloszenia' : 'Pokaz szczegoly zgloszenia'}
-                    </button>
+                    </div>
 
                     {isExpanded ? (
                       <section className="admin-dashboard__details" aria-label="Szczegoly zgloszenia">

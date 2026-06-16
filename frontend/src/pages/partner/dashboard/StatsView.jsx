@@ -31,14 +31,6 @@ function StatsView({ summary }) {
           <strong>{summary.rejected}</strong>
         </article>
       </div>
-
-      <div className="partner-dashboard__placeholder-panel">
-        <strong>Aktualny focus</strong>
-        <span>
-          Konto partnera jest zatwierdzone. Kolejne kroki to rozbudowa kalendarza, wiadomosci,
-          metryk sprzedazowych i operacyjnych.
-        </span>
-      </div>
     </section>
   )
 }

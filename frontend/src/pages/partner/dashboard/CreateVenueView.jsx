@@ -12,7 +12,7 @@ function CreateVenueView({
         <div>
           <span className="partner-dashboard__workspace-eyebrow">Nowy obiekt</span>
           <h2>Utworz nowy obiekt</h2>
-          <p>Podstawowe dane obiektu. Zdjecia i wysylke do akceptacji podepniemy w kolejnym kroku.</p>
+          <p>Uzupelnij podstawowe dane nowego obiektu.</p>
         </div>
       </div>
 
