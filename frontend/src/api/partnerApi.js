@@ -44,6 +44,11 @@ export async function getVenueImages(venueId) {
   return response.data
 }
 
+export async function getVenueInquiries(venueId) {
+  const response = await api.get(`/api/partner/venues/${venueId}/inquiries`)
+  return response.data
+}
+
 export async function uploadVenueImage(venueId, { file, displayOrder, primaryImage }) {
   const payload = {
     file,

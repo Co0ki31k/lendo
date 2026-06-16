@@ -59,6 +59,18 @@
   color: #7a1d1d;
 }
 
+.favorites-page__loading {
+  width: min(1360px, 100%);
+  margin: 0 auto 20px;
+  padding: 14px 16px;
+  border: 1px solid rgba(125, 47, 39, 0.14);
+  border-top: 4px solid #8d3a2d;
+  border-radius: 12px;
+  background: rgba(255, 252, 247, 0.96);
+  color: #5b4a41;
+  box-shadow: 0 10px 24px rgba(55, 31, 19, 0.06);
+}
+
 .favorites-page__list {
   display: grid;
   gap: 18px;

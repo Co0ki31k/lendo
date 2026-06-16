@@ -1,4 +1,5 @@
 import EditVenueView from './EditVenueView.jsx'
+import VenueMessagesView from './VenueMessagesView.jsx'
 import VenueImagesView from './VenueImagesView.jsx'
 
 function ObjectWorkspaceView({ selectedVenue, objectView, onVenueUpdated }) {
@@ -25,6 +26,10 @@ function ObjectWorkspaceView({ selectedVenue, objectView, onVenueUpdated }) {
     return <EditVenueView selectedVenue={selectedVenue} onVenueUpdated={onVenueUpdated} />
   }
 
+  if (objectView === 'messages') {
+    return <VenueMessagesView selectedVenue={selectedVenue} />
+  }
+
   if (objectView === 'images') {
     return <VenueImagesView selectedVenue={selectedVenue} />
   }
@@ -37,7 +42,7 @@ function ObjectWorkspaceView({ selectedVenue, objectView, onVenueUpdated }) {
           <h2>{selectedVenue.name} - {objectViewTitle}</h2>
           <p>
             Aktualnie wybrany obiekt: {selectedVenue.address?.city || '-'}, {selectedVenue.address?.street || '-'}.
-            Widoki kalendarza i wiadomosci przygotowujemy jako osobne moduly.
+            Widoki kalendarza, wiadomosci i zdjec sa osobnymi modulami dashboardu.
           </p>
         </div>
       </div>

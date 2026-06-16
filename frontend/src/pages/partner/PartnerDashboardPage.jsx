@@ -175,6 +175,7 @@ function PartnerDashboardPage() {
   )
 
   const accountName = useMemo(() => buildAccountName(user), [user])
+  const hasApprovedSelectedVenue = selectedVenue?.status === 'APPROVED'
 
   function handleVenueChange(event) {
     const { name, value, type, checked } = event.target
@@ -332,7 +333,7 @@ function PartnerDashboardPage() {
           <PartnerDashboardSidebar
             selectedVenue={selectedVenue}
             hasSelectedVenue={Boolean(selectedVenue)}
-            hasApprovedVenue={selectedVenue?.status === 'APPROVED'}
+            hasApprovedVenue={hasApprovedSelectedVenue}
             managerView={managerView}
             objectView={objectView}
             onManagerViewChange={setManagerView}

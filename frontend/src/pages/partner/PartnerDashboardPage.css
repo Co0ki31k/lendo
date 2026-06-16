@@ -309,6 +309,44 @@
   background: rgba(197, 141, 41, 0.1);
 }
 
+.partner-dashboard__messages-list {
+  display: grid;
+  gap: 16px;
+  margin-top: 22px;
+}
+
+.partner-dashboard__message-card {
+  display: grid;
+  gap: 10px;
+  padding: 20px;
+  border: 1px solid rgba(100, 66, 45, 0.14);
+  border-radius: 18px;
+  background: rgba(255, 250, 244, 0.9);
+}
+
+.partner-dashboard__message-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+
+.partner-dashboard__message-meta strong {
+  color: #241712;
+}
+
+.partner-dashboard__message-meta span,
+.partner-dashboard__message-date {
+  color: #5b4a41;
+}
+
+.partner-dashboard__message-text {
+  margin: 0;
+  line-height: 1.7;
+  color: #241712;
+  white-space: pre-wrap;
+}
+
 .partner-dashboard__venue-feedback strong,
 .partner-dashboard__venue-feedback span,
 .partner-dashboard__feedback-panel strong,

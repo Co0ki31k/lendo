@@ -7,7 +7,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -41,8 +40,7 @@ public class VenueInquiry {
     @Column(name = "contact_phone", length = 30)
     private String contactPhone;
 
-    @Lob
-    @Column(name = "message_text", nullable = false)
+    @Column(name = "message_text", nullable = false, columnDefinition = "TEXT")
     private String messageText;
 
     @CreationTimestamp

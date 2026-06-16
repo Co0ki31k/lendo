@@ -152,7 +152,11 @@ function CatalogPage() {
         </div>
       </section>
 
-      {status === 'loading' ? <p className="catalog-page__empty">Ladowanie katalogu...</p> : null}
+      {status === 'loading' ? (
+        <div className="catalog-page__loading" role="status" aria-live="polite">
+          Ladowanie katalogu...
+        </div>
+      ) : null}
       {status === 'error' ? <p className="catalog-page__error">{error}</p> : null}
 
       {status === 'ready' ? (

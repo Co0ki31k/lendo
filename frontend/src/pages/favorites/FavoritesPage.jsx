@@ -75,7 +75,11 @@ function FavoritesPage() {
         <p>Lista ulubionych sal z szybkim przejsciem do szczegolow i mozliwoscia usuniecia z listy.</p>
       </section>
 
-      {status === 'loading' ? <p className="favorites-page__empty">Ladowanie ulubionych...</p> : null}
+      {status === 'loading' ? (
+        <div className="favorites-page__loading" role="status" aria-live="polite">
+          Ladowanie ulubionych...
+        </div>
+      ) : null}
       {status === 'error' ? <p className="favorites-page__error">{error}</p> : null}
 
       {status === 'ready' ? (
