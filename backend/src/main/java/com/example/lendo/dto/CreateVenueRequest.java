@@ -13,7 +13,7 @@ public record CreateVenueRequest(
         @Size(max = 150, message = "Nazwa obiektu moze miec maksymalnie 150 znakow")
         String name,
 
-        @Size(max = 5000, message = "Opis moze miec maksymalnie 5000 znakow")
+        @Size(max = 50000, message = "Opis moze miec maksymalnie 50000 znakow")
         String description,
 
         @NotBlank(message = "Styl obiektu jest wymagany")

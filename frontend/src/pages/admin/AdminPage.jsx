@@ -152,6 +152,7 @@ function AdminPage() {
   const [expandedVenues, setExpandedVenues] = useState({})
   const [expandedPartners, setExpandedPartners] = useState({})
   const [venueComments, setVenueComments] = useState({})
+  const [commentEditors, setCommentEditors] = useState({})
 
   const loadPartners = useCallback(async (query) => {
     setIsLoadingPartners(true)
@@ -318,6 +319,10 @@ function AdminPage() {
         ...current,
         [venueId]: updatedVenue.adminReviewComment ?? '',
       }))
+      setCommentEditors((current) => ({
+        ...current,
+        [venueId]: false,
+      }))
       await Promise.all([loadVenues(venueQuery), loadAdminStats()])
     } catch (requestError) {
       setError(requestError.response?.data?.message ?? 'Nie udalo sie zaktualizowac statusu obiektu.')
@@ -358,6 +363,13 @@ function AdminPage() {
     setVenueComments((current) => ({
       ...current,
       [venueId]: value,
+    }))
+  }
+
+  function toggleCommentEditor(venueId) {
+    setCommentEditors((current) => ({
+      ...current,
+      [venueId]: !current[venueId],
     }))
   }
 
@@ -457,40 +469,44 @@ function AdminPage() {
                 return (
                   <article key={partner.userId} className="admin-dashboard__partner-card">
                     <div className="admin-dashboard__partner-top">
-                      <div>
+                      <div className="admin-dashboard__partner-summary">
                         <h3>{partner.companyName || `${partner.firstName} ${partner.lastName}`}</h3>
                         <p>{partner.firstName} {partner.lastName}</p>
+                        <span className="admin-dashboard__partner-tax-id">NIP: {partner.taxId || '-'}</span>
                       </div>
-                      <span className={`admin-dashboard__status-badge ${partner.verified ? 'admin-dashboard__status-badge--approved' : 'admin-dashboard__status-badge--pending'}`}>
-                        {partner.verified ? 'Zweryfikowany' : 'Oczekuje'}
-                      </span>
-                    </div>
 
-                    <div className="admin-dashboard__actions">
-                      <button
-                        type="button"
-                        className="admin-dashboard__action admin-dashboard__action--approve"
-                        disabled={isSubmitting || isDeleting || partner.verified}
-                        onClick={() => handlePartnerVerification(partner.userId, true)}
-                      >
-                        Potwierdz
-                      </button>
-                      <button
-                        type="button"
-                        className="admin-dashboard__action admin-dashboard__action--reject"
-                        disabled={isSubmitting || isDeleting || !partner.verified}
-                        onClick={() => handlePartnerVerification(partner.userId, false)}
-                      >
-                        Cofnij
-                      </button>
-                      <button
-                        type="button"
-                        className="admin-dashboard__action admin-dashboard__action--reject"
-                        disabled={isSubmitting || isDeleting}
-                        onClick={() => handlePartnerDelete(partner.userId)}
-                      >
-                        {isDeleting ? 'Usuwanie...' : 'Usun partnera'}
-                      </button>
+                      <div className="admin-dashboard__partner-side">
+                        <span className={`admin-dashboard__status-badge ${partner.verified ? 'admin-dashboard__status-badge--approved' : 'admin-dashboard__status-badge--pending'}`}>
+                          {partner.verified ? 'Zweryfikowany' : 'Oczekuje'}
+                        </span>
+
+                        <div className="admin-dashboard__actions admin-dashboard__actions--partner">
+                          <button
+                            type="button"
+                            className="admin-dashboard__action admin-dashboard__action--approve"
+                            disabled={isSubmitting || isDeleting || partner.verified}
+                            onClick={() => handlePartnerVerification(partner.userId, true)}
+                          >
+                            Potwierdz
+                          </button>
+                          <button
+                            type="button"
+                            className="admin-dashboard__action admin-dashboard__action--reject"
+                            disabled={isSubmitting || isDeleting || !partner.verified}
+                            onClick={() => handlePartnerVerification(partner.userId, false)}
+                          >
+                            Cofnij
+                          </button>
+                          <button
+                            type="button"
+                            className="admin-dashboard__action admin-dashboard__action--reject"
+                            disabled={isSubmitting || isDeleting}
+                            onClick={() => handlePartnerDelete(partner.userId)}
+                          >
+                            {isDeleting ? 'Usuwanie...' : 'Usun partnera'}
+                          </button>
+                        </div>
+                      </div>
                     </div>
 
                     <button
@@ -610,6 +626,9 @@ function AdminPage() {
                 const isExpanded = Boolean(expandedVenues[venue.id])
                 const comment = venueComments[venue.id] ?? ''
                 const isDeletingVenue = Boolean(activeRequests[`venue-delete:${venue.id}`])
+                const isCommentEditorActive = Boolean(commentEditors[venue.id])
+                const isVenueDraft = venue.status === 'DRAFT'
+                const lockActionsForComment = isCommentEditorActive && !isVenueDraft
 
                 return (
                   <article key={venue.id} className="admin-dashboard__venue-card">
@@ -642,16 +661,28 @@ function AdminPage() {
                       </div>
                     </dl>
 
-                    <div className="admin-dashboard__feedback-panel">
-                      <strong>Komentarz dla managera</strong>
-                      <textarea
-                        className="admin-dashboard__comment"
-                        value={comment}
-                        onChange={(event) => handleVenueCommentChange(venue.id, event.target.value)}
-                        placeholder="Wpisz, co manager ma poprawic przed ponownym review."
-                        rows="4"
-                      />
-                    </div>
+                    {!isVenueDraft ? (
+                      <button
+                        type="button"
+                        className={`admin-dashboard__secondary-action${isCommentEditorActive ? ' admin-dashboard__secondary-action--active' : ''}`}
+                        onClick={() => toggleCommentEditor(venue.id)}
+                      >
+                        {isCommentEditorActive ? 'Ukryj komentarz do poprawy' : 'Dodaj komentarz do poprawy'}
+                      </button>
+                    ) : null}
+
+                    {isCommentEditorActive || isVenueDraft ? (
+                      <div className="admin-dashboard__feedback-panel">
+                        <strong>Komentarz dla managera</strong>
+                        <textarea
+                          className="admin-dashboard__comment"
+                          value={comment}
+                          onChange={(event) => handleVenueCommentChange(venue.id, event.target.value)}
+                          placeholder="Wpisz, co manager ma poprawic przed ponownym review."
+                          rows="4"
+                        />
+                      </div>
+                    ) : null}
 
                     <button
                       type="button"
@@ -708,7 +739,7 @@ function AdminPage() {
                       <button
                         type="button"
                         className={`admin-dashboard__action admin-dashboard__action--approve ${venue.status === 'APPROVED' ? 'admin-dashboard__action--current' : ''}`}
-                        disabled={isDeletingVenue || Boolean(activeRequests[`venue:${venue.id}:APPROVED`]) || venue.status === 'APPROVED' || venue.status === 'DRAFT'}
+                        disabled={isDeletingVenue || Boolean(activeRequests[`venue:${venue.id}:APPROVED`]) || venue.status === 'APPROVED' || venue.status === 'DRAFT' || lockActionsForComment}
                         onClick={() => handleVenueStatusUpdate(venue.id, 'APPROVED')}
                       >
                         Zaakceptuj
@@ -724,7 +755,7 @@ function AdminPage() {
                       <button
                         type="button"
                         className={`admin-dashboard__action admin-dashboard__action--reject ${venue.status === 'REJECTED' ? 'admin-dashboard__action--current' : ''}`}
-                        disabled={isDeletingVenue || Boolean(activeRequests[`venue:${venue.id}:REJECTED`]) || venue.status === 'REJECTED' || venue.status === 'DRAFT'}
+                        disabled={isDeletingVenue || Boolean(activeRequests[`venue:${venue.id}:REJECTED`]) || venue.status === 'REJECTED' || venue.status === 'DRAFT' || lockActionsForComment}
                         onClick={() => handleVenueStatusUpdate(venue.id, 'REJECTED')}
                       >
                         Odrzuc
@@ -732,7 +763,7 @@ function AdminPage() {
                       <button
                         type="button"
                         className="admin-dashboard__action admin-dashboard__action--reject"
-                        disabled={isDeletingVenue}
+                        disabled={isDeletingVenue || lockActionsForComment}
                         onClick={() => handleVenueDelete(venue.id)}
                       >
                         {isDeletingVenue ? 'Usuwanie...' : 'Usun obiekt'}

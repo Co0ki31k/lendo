@@ -256,6 +256,10 @@
   gap: 12px;
 }
 
+.admin-dashboard__partner-summary {
+  min-width: 0;
+}
+
 .admin-dashboard__partner-top h3 {
   margin: 0;
   color: #241712;
@@ -264,6 +268,26 @@
 .admin-dashboard__partner-top p {
   margin: 8px 0 0;
   color: #5b4a41;
+}
+
+.admin-dashboard__partner-tax-id {
+  display: inline-block;
+  margin-top: 10px;
+  color: #7d2f27;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.admin-dashboard__partner-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.admin-dashboard__actions--partner {
+  justify-content: flex-end;
 }
 
 .admin-table {
@@ -346,6 +370,12 @@
 .admin-dashboard__comment {
   margin-top: 10px;
   resize: vertical;
+}
+
+.admin-dashboard__secondary-action--active {
+  border-color: rgba(197, 141, 41, 0.26);
+  background: rgba(197, 141, 41, 0.12);
+  color: #7b5310;
 }
 
 .admin-dashboard__details-toggle {
@@ -581,6 +611,16 @@
 
   .admin-dashboard__partner-top {
     flex-direction: column;
+  }
+
+  .admin-dashboard__partner-side {
+    width: 100%;
+    align-items: stretch;
+    margin-left: 0;
+  }
+
+  .admin-dashboard__actions--partner {
+    justify-content: flex-start;
   }
 
   .admin-dashboard__submit,
