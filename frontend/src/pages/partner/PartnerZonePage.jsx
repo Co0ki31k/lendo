@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Navigate } from 'react-router-dom'
 import { partnerApi } from '../../api'
 import { useAuth } from '../../features/auth'
 import './PartnerZonePage.css'
@@ -63,8 +64,8 @@ function PartnerZonePage() {
   const intro = useMemo(() => {
     if (isVerified) {
       return {
-        title: 'Dashboard managera',
-        text: 'Konto partnera zostalo zatwierdzone. Tutaj bedzie panel do zarzadzania obiektami.',
+        title: 'Przekierowanie do dashboardu managera',
+        text: 'Konto partnera zostalo zatwierdzone. Przenosze do panelu zarzadzania obiektami.',
       }
     }
 
@@ -134,26 +135,7 @@ function PartnerZonePage() {
   }
 
   if (isVerified) {
-    return (
-      <main className="partner-zone">
-        <section className="partner-zone__panel">
-          <span className="partner-zone__eyebrow">Strefa partnera</span>
-          <h1 className="partner-zone__title">{intro.title}</h1>
-          <p className="partner-zone__text">{intro.text}</p>
-
-          <div className="partner-zone__dashboard-placeholder">
-            <div>
-              <strong>Obiekty</strong>
-              <span>Lista i statusy obiektow pojawia sie tutaj.</span>
-            </div>
-            <div>
-              <strong>Zarzadzanie publikacja</strong>
-              <span>Modul dodawania i edycji obiektow podepniemy w kolejnym kroku.</span>
-            </div>
-          </div>
-        </section>
-      </main>
-    )
+    return <Navigate to="/partner/dashboard" replace />
   }
 
   if (isPending) {
