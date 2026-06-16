@@ -2,7 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { adminApi } from '../../api'
 import './AdminPage.css'
 
-const VENUE_STATUS_OPTIONS = ['PENDING', 'APPROVED', 'REJECTED', 'DRAFT']
+const VENUE_STATUS_LABELS = {
+  PENDING: 'Oczekuje',
+  APPROVED: 'Zaakceptowany',
+  REJECTED: 'Odrzucony',
+  DRAFT: 'Szkic',
+}
 
 function formatDateTime(value) {
   if (!value) {
@@ -21,12 +26,25 @@ function formatDateTime(value) {
   }).format(date)
 }
 
+function formatPrice(value) {
+  if (value == null) {
+    return '-'
+  }
+
+  return new Intl.NumberFormat('pl-PL', {
+    style: 'currency',
+    currency: 'PLN',
+    maximumFractionDigits: 0,
+  }).format(Number(value))
+}
+
 function AdminPage() {
   const [partners, setPartners] = useState([])
   const [venues, setVenues] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [activeRequests, setActiveRequests] = useState({})
+  const [expandedVenues, setExpandedVenues] = useState({})
 
   const fetchAdminData = useCallback(async ({ showLoader = true, clearError = true } = {}) => {
     if (showLoader) {
@@ -78,6 +96,25 @@ function AdminPage() {
     approved: venues.filter((venue) => venue.status === 'APPROVED').length,
   }), [venues])
 
+  const sortedVenues = useMemo(() => {
+    const statusPriority = {
+      PENDING: 0,
+      REJECTED: 1,
+      APPROVED: 2,
+      DRAFT: 3,
+    }
+
+    return [...venues].sort((left, right) => {
+      const priorityDifference = (statusPriority[left.status] ?? 99) - (statusPriority[right.status] ?? 99)
+
+      if (priorityDifference !== 0) {
+        return priorityDifference
+      }
+
+      return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()
+    })
+  }, [venues])
+
   async function handlePartnerVerification(userId, verified) {
     const requestKey = `partner:${userId}`
     setActiveRequests((current) => ({ ...current, [requestKey]: true }))
@@ -108,6 +145,13 @@ function AdminPage() {
     } finally {
       setActiveRequests((current) => ({ ...current, [requestKey]: false }))
     }
+  }
+
+  function toggleVenueDetails(venueId) {
+    setExpandedVenues((current) => ({
+      ...current,
+      [venueId]: !current[venueId],
+    }))
   }
 
   return (
@@ -141,7 +185,7 @@ function AdminPage() {
         <article className="admin-page__stat">
           <span className="admin-page__stat-label">Obiekty</span>
           <strong className="admin-page__stat-value">{venueStats.total}</strong>
-          <span className="admin-page__stat-meta">Pending: {venueStats.pending}</span>
+          <span className="admin-page__stat-meta">Oczekujace: {venueStats.pending}</span>
         </article>
         <article className="admin-page__stat">
           <span className="admin-page__stat-label">Zaakceptowane</span>
@@ -233,67 +277,124 @@ function AdminPage() {
         <div className="admin-page__section-header">
           <div>
             <h2>Obiekty</h2>
-            <p>Review sal z szybka zmiana statusu i podgladem managera.</p>
+            <p>Przeglad sal z priorytetem dla obiektow oczekujacych na decyzje.</p>
           </div>
         </div>
 
         {isLoading ? (
           <p className="admin-page__empty">Ladowanie obiektow...</p>
-        ) : venues.length === 0 ? (
+        ) : sortedVenues.length === 0 ? (
           <p className="admin-page__empty">Brak obiektow do review.</p>
         ) : (
           <div className="admin-page__cards">
-            {venues.map((venue) => (
-              <article key={venue.id} className="admin-venue-card">
-                <div className="admin-venue-card__top">
-                  <div>
-                    <h3>{venue.name}</h3>
-                    <p>{venue.address?.city || '-'}, {venue.address?.street || '-'}</p>
-                  </div>
-                  <span className={`admin-badge admin-badge--${venue.status.toLowerCase()}`}>
-                    {venue.status}
-                  </span>
-                </div>
+            {sortedVenues.map((venue) => {
+              const isExpanded = Boolean(expandedVenues[venue.id])
 
-                <dl className="admin-venue-card__meta">
-                  <div>
-                    <dt>Manager</dt>
-                    <dd>{venue.managerEmail}</dd>
+              return (
+                <article key={venue.id} className="admin-venue-card">
+                  <div className="admin-venue-card__top">
+                    <div>
+                      <h3>{venue.name}</h3>
+                      <p>{venue.address?.city || '-'}, {venue.address?.street || '-'}</p>
+                    </div>
+                    <span className={`admin-badge admin-badge--${venue.status.toLowerCase()}`}>
+                      {VENUE_STATUS_LABELS[venue.status] ?? venue.status}
+                    </span>
                   </div>
-                  <div>
-                    <dt>Zweryfikowany</dt>
-                    <dd>{venue.verified ? 'Tak' : 'Nie'}</dd>
-                  </div>
-                  <div>
-                    <dt>Dodano</dt>
-                    <dd>{formatDateTime(venue.createdAt)}</dd>
-                  </div>
-                  <div>
-                    <dt>Wojewodztwo</dt>
-                    <dd>{venue.address?.voivodeship || '-'}</dd>
-                  </div>
-                </dl>
 
-                <div className="admin-venue-card__actions">
-                  {VENUE_STATUS_OPTIONS.map((status) => {
-                    const requestKey = `venue:${venue.id}:${status}`
-                    const isSubmitting = Boolean(activeRequests[requestKey])
+                  <dl className="admin-venue-card__meta">
+                    <div>
+                      <dt>Manager</dt>
+                      <dd>{venue.managerEmail}</dd>
+                    </div>
+                    <div>
+                      <dt>Zweryfikowany</dt>
+                      <dd>{venue.verified ? 'Tak' : 'Nie'}</dd>
+                    </div>
+                    <div>
+                      <dt>Dodano</dt>
+                      <dd>{formatDateTime(venue.createdAt)}</dd>
+                    </div>
+                    <div>
+                      <dt>Wojewodztwo</dt>
+                      <dd>{venue.address?.voivodeship || '-'}</dd>
+                    </div>
+                  </dl>
 
-                    return (
-                      <button
-                        key={status}
-                        type="button"
-                        className={`admin-action ${venue.status === status ? 'admin-action--current' : ''}`}
-                        disabled={isSubmitting || venue.status === status}
-                        onClick={() => handleVenueStatusUpdate(venue.id, status)}
-                      >
-                        {status}
-                      </button>
-                    )
-                  })}
-                </div>
-              </article>
-            ))}
+                  <button
+                    type="button"
+                    className="admin-venue-card__details-toggle"
+                    onClick={() => toggleVenueDetails(venue.id)}
+                  >
+                    {isExpanded ? 'Ukryj szczegoly zgloszenia' : 'Pokaz szczegoly zgloszenia'}
+                  </button>
+
+                  {isExpanded ? (
+                    <section className="admin-venue-card__details" aria-label="Szczegoly zgloszenia">
+                      <dl className="admin-venue-card__details-grid">
+                        <div>
+                          <dt>Styl</dt>
+                          <dd>{venue.style || '-'}</dd>
+                        </div>
+                        <div>
+                          <dt>Pojemnosc</dt>
+                          <dd>{venue.capacityMin ?? '-'} - {venue.capacityMax ?? '-'}</dd>
+                        </div>
+                        <div>
+                          <dt>Noclegi</dt>
+                          <dd>{venue.hasAccommodation ? `Tak (${venue.accommodationPlaces ?? 0} miejsc)` : 'Nie'}</dd>
+                        </div>
+                        <div>
+                          <dt>Cena od osoby</dt>
+                          <dd>{formatPrice(venue.basePricePerGuest)}</dd>
+                        </div>
+                        <div>
+                          <dt>Opata korkowa</dt>
+                          <dd>{venue.noCorkageFee ? 'Brak' : 'Obowiazuje'}</dd>
+                        </div>
+                        <div>
+                          <dt>Slub cywilny w ogrodzie</dt>
+                          <dd>{venue.civilWeddingGarden ? 'Tak' : 'Nie'}</dd>
+                        </div>
+                        <div>
+                          <dt>Kod pocztowy</dt>
+                          <dd>{venue.address?.postalCode || '-'}</dd>
+                        </div>
+                        <div>
+                          <dt>Wspolrzedne</dt>
+                          <dd>
+                            {venue.address?.latitude ?? '-'}, {venue.address?.longitude ?? '-'}
+                          </dd>
+                        </div>
+                      </dl>
+                      <div className="admin-venue-card__description">
+                        <h4>Opis obiektu</h4>
+                        <p>{venue.description || 'Brak opisu.'}</p>
+                      </div>
+                    </section>
+                  ) : null}
+
+                  <div className="admin-venue-card__actions">
+                    <button
+                      type="button"
+                      className={`admin-action admin-action--approve ${venue.status === 'APPROVED' ? 'admin-action--current' : ''}`}
+                      disabled={Boolean(activeRequests[`venue:${venue.id}:APPROVED`]) || venue.status === 'APPROVED'}
+                      onClick={() => handleVenueStatusUpdate(venue.id, 'APPROVED')}
+                    >
+                      Zaakceptuj
+                    </button>
+                    <button
+                      type="button"
+                      className={`admin-action admin-action--reject ${venue.status === 'REJECTED' ? 'admin-action--current' : ''}`}
+                      disabled={Boolean(activeRequests[`venue:${venue.id}:REJECTED`]) || venue.status === 'REJECTED'}
+                      onClick={() => handleVenueStatusUpdate(venue.id, 'REJECTED')}
+                    >
+                      Odrzuc
+                    </button>
+                  </div>
+                </article>
+              )
+            })}
           </div>
         )}
       </section>

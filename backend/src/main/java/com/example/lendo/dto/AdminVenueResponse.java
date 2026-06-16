@@ -1,5 +1,6 @@
 package com.example.lendo.dto;
 
+import java.math.BigDecimal;
 import com.example.lendo.model.Venue;
 import com.example.lendo.model.VenueAddress;
 
@@ -11,6 +12,15 @@ public record AdminVenueResponse(
         UUID managerId,
         String managerEmail,
         String name,
+        String description,
+        String style,
+        Integer capacityMin,
+        Integer capacityMax,
+        boolean hasAccommodation,
+        Integer accommodationPlaces,
+        BigDecimal basePricePerGuest,
+        boolean noCorkageFee,
+        boolean civilWeddingGarden,
         String status,
         boolean verified,
         LocalDateTime createdAt,
@@ -22,6 +32,15 @@ public record AdminVenueResponse(
                 venue.getManager().getId(),
                 venue.getManager().getEmail(),
                 venue.getName(),
+                venue.getDescription(),
+                venue.getStyle(),
+                venue.getCapacityMin(),
+                venue.getCapacityMax(),
+                venue.isHasAccommodation(),
+                venue.getAccommodationPlaces(),
+                venue.getBasePricePerGuest(),
+                venue.isNoCorkageFee(),
+                venue.isCivilWeddingGarden(),
                 venue.getStatus().name(),
                 venue.isVerified(),
                 venue.getCreatedAt(),
