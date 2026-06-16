@@ -1,4 +1,4 @@
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../features/auth'
 import { getDefaultRouteForUser } from '../../lib/navigation'
 import './AuthPage.css'
@@ -17,18 +17,20 @@ function AuthFormPage({
   alternateActionPath,
 }) {
   const navigate = useNavigate()
+  const location = useLocation()
   const { isAuthenticated, startGoogleOAuthLogin, user } = useAuth()
   const defaultRoute = getDefaultRouteForUser(user)
+  const returnPath = location.state?.from
 
   if (isAuthenticated) {
-    return <Navigate to={defaultRoute} replace />
+    return <Navigate to={returnPath || defaultRoute} replace />
   }
 
   async function onSubmit(event) {
     const result = await form.handleSubmit(event)
 
     if (result.success) {
-      navigate(getDefaultRouteForUser(result.data?.user), { replace: true })
+      navigate(returnPath || getDefaultRouteForUser(result.data?.user), { replace: true })
     }
   }
 

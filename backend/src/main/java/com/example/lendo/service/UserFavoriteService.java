@@ -95,6 +95,7 @@ public class UserFavoriteService {
         return UserFavoriteResponse.from(
                 favorite,
                 address != null ? address.getCity() : null,
+                address != null ? address.getVoivodeship() : null,
                 primaryImage != null ? primaryImage.getImageUrl() : null
         );
     }

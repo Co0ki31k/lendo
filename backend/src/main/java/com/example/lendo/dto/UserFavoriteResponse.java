@@ -9,15 +9,22 @@ public record UserFavoriteResponse(
         Long venueId,
         String venueName,
         String city,
+        String voivodeship,
         String primaryImageUrl,
         LocalDateTime addedAt
 ) {
-    public static UserFavoriteResponse from(UserFavorite favorite, String city, String primaryImageUrl) {
+    public static UserFavoriteResponse from(
+            UserFavorite favorite,
+            String city,
+            String voivodeship,
+            String primaryImageUrl
+    ) {
         return new UserFavoriteResponse(
                 favorite.getId(),
                 favorite.getVenue().getId(),
                 favorite.getVenue().getName(),
                 city,
+                voivodeship,
                 primaryImageUrl,
                 favorite.getAddedAt()
         );

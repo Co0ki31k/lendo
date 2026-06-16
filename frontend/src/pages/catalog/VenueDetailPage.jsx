@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import L from 'leaflet'
 import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
 import markerIcon from 'leaflet/dist/images/marker-icon.png'
 import markerShadow from 'leaflet/dist/images/marker-shadow.png'
-import { catalogApi } from '../../api'
+import { catalogApi, favoriteApi } from '../../api'
+import { useAuth } from '../../features/auth'
 import './VenueDetailPage.css'
 
 const venueMarkerIcon = L.icon({
@@ -31,6 +32,9 @@ function formatPrice(value) {
 }
 
 function VenueDetailPage() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { isAuthenticated, user } = useAuth()
   const { venueId } = useParams()
   const [venue, setVenue] = useState(null)
   const [status, setStatus] = useState('loading')
@@ -74,6 +78,7 @@ function VenueDetailPage() {
 
   const activeImage = useMemo(() => venue?.images?.[activeImageIndex] ?? null, [venue, activeImageIndex])
   const imageCount = venue?.images?.length ?? 0
+  const isClient = user?.role === 'CLIENT'
   const coordinates = useMemo(() => {
     const latitude = Number(venue?.address?.latitude)
     const longitude = Number(venue?.address?.longitude)
@@ -105,6 +110,37 @@ function VenueDetailPage() {
     })
   }
 
+  async function handleFavoriteToggle() {
+    if (!venue) {
+      return
+    }
+
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: location.pathname } })
+      return
+    }
+
+    if (!isClient) {
+      return
+    }
+
+    try {
+      if (venue.favorite) {
+        await favoriteApi.removeFavorite(venue.id)
+      } else {
+        await favoriteApi.addFavorite(venue.id)
+      }
+
+      setVenue((current) => (
+        current
+          ? { ...current, favorite: !current.favorite }
+          : current
+      ))
+    } catch (requestError) {
+      setError(requestError.response?.data?.message ?? 'Nie udalo sie zaktualizowac ulubionych.')
+    }
+  }
+
   if (status === 'loading') {
     return <main className="venue-detail"><p className="venue-detail__empty">Ladowanie szczegolow sali...</p></main>
   }
@@ -129,8 +165,12 @@ function VenueDetailPage() {
             <p>{venue.address.city}, {venue.address.street}, {venue.address.voivodeship}</p>
           </div>
 
-          <button type="button" className="venue-detail__favorite-button">
-            Polubione
+          <button
+            type="button"
+            className={`venue-detail__favorite-button${venue.favorite ? ' venue-detail__favorite-button--active' : ''}`}
+            onClick={() => void handleFavoriteToggle()}
+          >
+            {venue.favorite ? '♥ Polubione' : '♡ Polub'}
           </button>
         </header>
 

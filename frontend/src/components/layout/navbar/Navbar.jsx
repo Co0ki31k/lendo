@@ -22,7 +22,7 @@ function Navbar() {
           <span className="navbar__dot" aria-hidden="true">|</span>
           <button type="button" className="navbar__link">WeddChance</button>
           <span className="navbar__dot" aria-hidden="true">|</span>
-          <button type="button" className="navbar__link">Ulubione</button>
+          <NavLink to="/favorites" className={({ isActive }) => `navbar__link${isActive ? ' navbar__link--active' : ''}`}>Ulubione</NavLink>
         </nav>
       ) : null}
 

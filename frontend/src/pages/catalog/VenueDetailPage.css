@@ -27,6 +27,10 @@
   cursor: pointer;
 }
 
+.venue-detail__favorite-button--active {
+  background: rgba(125, 47, 39, 0.12);
+}
+
 .venue-detail__panel {
   width: min(1360px, 100%);
   margin: 0 auto;

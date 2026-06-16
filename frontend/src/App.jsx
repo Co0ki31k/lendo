@@ -3,6 +3,7 @@ import { Route, Routes } from 'react-router-dom'
 import Navbar from './components/layout/navbar/Navbar.jsx'
 import CatalogPage from './pages/catalog/CatalogPage.jsx'
 import VenueDetailPage from './pages/catalog/VenueDetailPage.jsx'
+import FavoritesPage from './pages/favorites/FavoritesPage.jsx'
 import LoginPage from './pages/auth/LoginPage.jsx'
 import RegisterPage from './pages/auth/RegisterPage.jsx'
 import OAuthCallbackPage from './pages/oauth-callback/OAuthCallbackPage.jsx'
@@ -16,6 +17,7 @@ function App() {
       <Navbar />
       <Routes>
         <Route path="/" element={<CatalogPage />} />
+        <Route path="/favorites" element={<FavoritesPage />} />
         <Route path="/venues/:venueId" element={<VenueDetailPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />

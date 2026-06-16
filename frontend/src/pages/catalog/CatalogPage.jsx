@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { catalogApi } from '../../api'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { catalogApi, favoriteApi } from '../../api'
+import { useAuth } from '../../features/auth'
 import './CatalogPage.css'
 
 function formatPrice(value) {
@@ -16,6 +17,9 @@ function formatPrice(value) {
 }
 
 function CatalogPage() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { isAuthenticated, user } = useAuth()
   const [pageData, setPageData] = useState(null)
   const [page, setPage] = useState(0)
   const [status, setStatus] = useState('loading')
@@ -71,6 +75,7 @@ function CatalogPage() {
   const pageNumber = pageData?.number ?? 0
   const hasPrevious = pageData?.first === false
   const hasNext = pageData?.last === false
+  const isClient = user?.role === 'CLIENT'
 
   function handleDraftFilterChange(field, value) {
     setDraftFilters((current) => ({
@@ -95,6 +100,44 @@ function CatalogPage() {
     setDraftFilters(clearedFilters)
     setFilters(clearedFilters)
     setPage(0)
+  }
+
+  async function handleFavoriteToggle(event, venueId, isFavorite) {
+    event.preventDefault()
+
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: location.pathname } })
+      return
+    }
+
+    if (!isClient) {
+      return
+    }
+
+    try {
+      if (isFavorite) {
+        await favoriteApi.removeFavorite(venueId)
+      } else {
+        await favoriteApi.addFavorite(venueId)
+      }
+
+      setPageData((current) => {
+        if (!current) {
+          return current
+        }
+
+        return {
+          ...current,
+          content: current.content.map((venue) => (
+            venue.id === venueId
+              ? { ...venue, favorite: !isFavorite }
+              : venue
+          )),
+        }
+      })
+    } catch (requestError) {
+      setError(requestError.response?.data?.message ?? 'Nie udalo sie zaktualizowac ulubionych.')
+    }
   }
 
   return (
@@ -175,6 +218,15 @@ function CatalogPage() {
                 <section className="catalog-page__list">
                   {venues.map((venue) => (
                     <article key={venue.id} className="catalog-page__card">
+                      <button
+                        type="button"
+                        className={`catalog-page__favorite-button${venue.favorite ? ' catalog-page__favorite-button--active' : ''}`}
+                        aria-label={venue.favorite ? `Usun ${venue.name} z ulubionych` : `Dodaj ${venue.name} do ulubionych`}
+                        onClick={(event) => void handleFavoriteToggle(event, venue.id, venue.favorite)}
+                      >
+                        {venue.favorite ? '♥' : '♡'}
+                      </button>
+
                       <Link to={`/venues/${venue.id}`} className="catalog-page__card-link">
                         <div className="catalog-page__card-image-wrap">
                           {venue.primaryImageUrl ? (
