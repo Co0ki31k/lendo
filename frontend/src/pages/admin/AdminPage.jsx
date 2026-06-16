@@ -111,21 +111,21 @@ function buildVenueParams(query) {
 
 function PaginationControls({ page, onPageChange }) {
   return (
-    <div className="admin-pagination">
+    <div className="admin-dashboard__pagination">
       <button
         type="button"
-        className="admin-page__refresh admin-page__refresh--secondary"
+        className="admin-dashboard__secondary-action"
         onClick={() => onPageChange(page.page - 1)}
         disabled={!page.hasPrevious}
       >
         Poprzednia
       </button>
-      <span className="admin-pagination__label">
+      <span className="admin-dashboard__pagination-label">
         Strona {page.totalPages === 0 ? 0 : page.page + 1} z {page.totalPages}
       </span>
       <button
         type="button"
-        className="admin-page__refresh admin-page__refresh--secondary"
+        className="admin-dashboard__secondary-action"
         onClick={() => onPageChange(page.page + 1)}
         disabled={!page.hasNext}
       >
@@ -136,6 +136,7 @@ function PaginationControls({ page, onPageChange }) {
 }
 
 function AdminPage() {
+  const [adminView, setAdminView] = useState('venues')
   const [partnerQuery, setPartnerQuery] = useState(INITIAL_PARTNER_QUERY)
   const [venueQuery, setVenueQuery] = useState(INITIAL_VENUE_QUERY)
   const [partnerData, setPartnerData] = useState(EMPTY_PARTNER_RESPONSE)
@@ -166,7 +167,10 @@ function AdminPage() {
     try {
       const response = await adminApi.getVenues(buildVenueParams(query))
       setVenueData(response)
-      setVenueComments(Object.fromEntries(response.items.map((venue) => [venue.id, venue.adminReviewComment ?? ''])))
+      setVenueComments((current) => ({
+        ...Object.fromEntries(response.items.map((venue) => [venue.id, venue.adminReviewComment ?? ''])),
+        ...current,
+      }))
     } catch (loadError) {
       setError(loadError.response?.data?.message ?? 'Nie udalo sie pobrac listy obiektow.')
     } finally {
@@ -285,64 +289,42 @@ function AdminPage() {
     { value: 'REJECTED', label: 'Odrzucone' },
   ], [])
 
-  return (
-    <main className="admin-page">
-      <section className="admin-page__header">
-        <div>
-          <span className="admin-page__eyebrow">Panel admina</span>
-          <h1 className="admin-page__title">Weryfikacja partnerow i obiektow</h1>
-          <p className="admin-page__text">
-            Filtrowanie, sortowanie i paginacja dla review partnerow oraz sal.
-          </p>
-        </div>
-        <button type="button" className="admin-page__refresh" onClick={handleRefresh}>
-          Odswiez dane
-        </button>
-      </section>
-
-      {error ? <p className="admin-page__error">{error}</p> : null}
-
-      <section className="admin-page__stats" aria-label="Podsumowanie">
-        <article className="admin-page__stat">
-          <span className="admin-page__stat-label">Partnerzy</span>
-          <strong className="admin-page__stat-value">{partnerStats.total}</strong>
-          <span className="admin-page__stat-meta">Zweryfikowani: {partnerStats.verified}</span>
-        </article>
-        <article className="admin-page__stat">
-          <span className="admin-page__stat-label">Do weryfikacji</span>
-          <strong className="admin-page__stat-value">{partnerStats.pending}</strong>
-          <span className="admin-page__stat-meta">Profile oczekujace</span>
-        </article>
-        <article className="admin-page__stat">
-          <span className="admin-page__stat-label">Obiekty</span>
-          <strong className="admin-page__stat-value">{venueStats.total}</strong>
-          <span className="admin-page__stat-meta">Oczekujace: {venueStats.pending}</span>
-        </article>
-        <article className="admin-page__stat">
-          <span className="admin-page__stat-label">Zaakceptowane</span>
-          <strong className="admin-page__stat-value">{venueStats.approved}</strong>
-          <span className="admin-page__stat-meta">Do poprawy: {venueStats.draft}</span>
-        </article>
-      </section>
-
-      <section className="admin-page__section">
-        <div className="admin-page__section-header">
+  function renderPartnerView() {
+    return (
+      <section className="admin-dashboard__workspace">
+        <div className="admin-dashboard__workspace-header">
           <div>
-            <h2>Partnerzy</h2>
-            <p>Lista wszystkich profili partnerow z mozliwoscia filtrowania i zmiany statusu weryfikacji.</p>
+            <span className="admin-dashboard__workspace-eyebrow">Partnerzy</span>
+            <h2>Weryfikacja partnerow</h2>
+            <p>Filtrowanie, sortowanie i decyzje dla kont partnerow.</p>
           </div>
         </div>
 
-        <div className="admin-page__toolbar">
+        <div className="admin-dashboard__stats-grid">
+          <article className="admin-dashboard__stat-card">
+            <span>Wszystkie profile</span>
+            <strong>{partnerStats.total}</strong>
+          </article>
+          <article className="admin-dashboard__stat-card">
+            <span>Zweryfikowane</span>
+            <strong>{partnerStats.verified}</strong>
+          </article>
+          <article className="admin-dashboard__stat-card">
+            <span>Oczekujace</span>
+            <strong>{partnerStats.pending}</strong>
+          </article>
+        </div>
+
+        <div className="admin-dashboard__toolbar">
           <input
             type="search"
-            className="admin-page__input"
+            className="admin-dashboard__input"
             value={partnerQuery.search}
             onChange={(event) => updatePartnerQuery({ search: event.target.value, page: 0 })}
             placeholder="Szukaj po firmie, emailu lub NIP"
           />
           <select
-            className="admin-page__select"
+            className="admin-dashboard__select"
             value={partnerQuery.verified}
             onChange={(event) => updatePartnerQuery({ verified: event.target.value, page: 0 })}
           >
@@ -351,7 +333,7 @@ function AdminPage() {
             <option value="pending">Oczekujacy</option>
           </select>
           <select
-            className="admin-page__select"
+            className="admin-dashboard__select"
             value={partnerQuery.sortBy}
             onChange={(event) => updatePartnerQuery({ sortBy: event.target.value, page: 0 })}
           >
@@ -360,7 +342,7 @@ function AdminPage() {
             <option value="verified">Sortuj: status</option>
           </select>
           <select
-            className="admin-page__select"
+            className="admin-dashboard__select"
             value={partnerQuery.sortDir}
             onChange={(event) => updatePartnerQuery({ sortDir: event.target.value, page: 0 })}
           >
@@ -368,7 +350,7 @@ function AdminPage() {
             <option value="asc">Rosnaco</option>
           </select>
           <select
-            className="admin-page__select"
+            className="admin-dashboard__select"
             value={partnerQuery.size}
             onChange={(event) => updatePartnerQuery({ size: Number(event.target.value), page: 0 })}
           >
@@ -379,12 +361,12 @@ function AdminPage() {
         </div>
 
         {isLoadingPartners ? (
-          <p className="admin-page__empty">Ladowanie partnerow...</p>
+          <p className="admin-dashboard__empty">Ladowanie partnerow...</p>
         ) : partners.length === 0 ? (
-          <p className="admin-page__empty">Brak partnerow dla wybranych filtrow.</p>
+          <p className="admin-dashboard__empty">Brak partnerow dla wybranych filtrow.</p>
         ) : (
           <>
-            <div className="admin-page__table-wrap">
+            <div className="admin-dashboard__table-wrap">
               <table className="admin-table">
                 <thead>
                   <tr>
@@ -416,16 +398,16 @@ function AdminPage() {
                           <span>{partner.phoneNumber || '-'}</span>
                         </td>
                         <td>
-                          <span className={`admin-badge ${partner.verified ? 'admin-badge--approved' : 'admin-badge--pending'}`}>
+                          <span className={`admin-dashboard__status-badge ${partner.verified ? 'admin-dashboard__status-badge--approved' : 'admin-dashboard__status-badge--pending'}`}>
                             {partner.verified ? 'Zweryfikowany' : 'Oczekuje'}
                           </span>
                         </td>
                         <td>{formatDateTime(partner.createdAt)}</td>
                         <td>
-                          <div className="admin-actions">
+                          <div className="admin-dashboard__actions">
                             <button
                               type="button"
-                              className="admin-action admin-action--approve"
+                              className="admin-dashboard__action admin-dashboard__action--approve"
                               disabled={isSubmitting || partner.verified}
                               onClick={() => handlePartnerVerification(partner.userId, true)}
                             >
@@ -433,7 +415,7 @@ function AdminPage() {
                             </button>
                             <button
                               type="button"
-                              className="admin-action admin-action--reject"
+                              className="admin-dashboard__action admin-dashboard__action--reject"
                               disabled={isSubmitting || !partner.verified}
                               onClick={() => handlePartnerVerification(partner.userId, false)}
                             >
@@ -455,25 +437,53 @@ function AdminPage() {
           </>
         )}
       </section>
+    )
+  }
 
-      <section className="admin-page__section">
-        <div className="admin-page__section-header">
+  function renderVenueView() {
+    return (
+      <section className="admin-dashboard__workspace">
+        <div className="admin-dashboard__workspace-header">
           <div>
-            <h2>Obiekty</h2>
-            <p>Review sal z filtrowaniem po statusie, wyszukiwaniem i kontrola sortowania.</p>
+            <span className="admin-dashboard__workspace-eyebrow">Obiekty</span>
+            <h2>Review obiektow</h2>
+            <p>Przegladaj zgloszenia, komentuj poprawki i podejmuj decyzje.</p>
           </div>
         </div>
 
-        <div className="admin-page__toolbar">
+        <div className="admin-dashboard__stats-grid">
+          <article className="admin-dashboard__stat-card">
+            <span>Wszystkie obiekty</span>
+            <strong>{venueStats.total}</strong>
+          </article>
+          <article className="admin-dashboard__stat-card">
+            <span>Oczekujace</span>
+            <strong>{venueStats.pending}</strong>
+          </article>
+          <article className="admin-dashboard__stat-card">
+            <span>Zaakceptowane</span>
+            <strong>{venueStats.approved}</strong>
+          </article>
+          <article className="admin-dashboard__stat-card">
+            <span>Do poprawy</span>
+            <strong>{venueStats.draft}</strong>
+          </article>
+          <article className="admin-dashboard__stat-card">
+            <span>Odrzucone</span>
+            <strong>{venueStats.rejected}</strong>
+          </article>
+        </div>
+
+        <div className="admin-dashboard__toolbar">
           <input
             type="search"
-            className="admin-page__input"
+            className="admin-dashboard__input"
             value={venueQuery.search}
             onChange={(event) => updateVenueQuery({ search: event.target.value, page: 0 })}
             placeholder="Szukaj po nazwie, adresie lub emailu managera"
           />
           <select
-            className="admin-page__select"
+            className="admin-dashboard__select"
             value={venueQuery.status}
             onChange={(event) => updateVenueQuery({ status: event.target.value, page: 0 })}
           >
@@ -482,7 +492,7 @@ function AdminPage() {
             ))}
           </select>
           <select
-            className="admin-page__select"
+            className="admin-dashboard__select"
             value={venueQuery.sortBy}
             onChange={(event) => updateVenueQuery({ sortBy: event.target.value, page: 0 })}
           >
@@ -492,7 +502,7 @@ function AdminPage() {
             <option value="basePricePerGuest">Sortuj: cena</option>
           </select>
           <select
-            className="admin-page__select"
+            className="admin-dashboard__select"
             value={venueQuery.sortDir}
             onChange={(event) => updateVenueQuery({ sortDir: event.target.value, page: 0 })}
           >
@@ -500,7 +510,7 @@ function AdminPage() {
             <option value="asc">Rosnaco</option>
           </select>
           <select
-            className="admin-page__select"
+            className="admin-dashboard__select"
             value={venueQuery.size}
             onChange={(event) => updateVenueQuery({ size: Number(event.target.value), page: 0 })}
           >
@@ -511,28 +521,29 @@ function AdminPage() {
         </div>
 
         {isLoadingVenues ? (
-          <p className="admin-page__empty">Ladowanie obiektow...</p>
+          <p className="admin-dashboard__empty">Ladowanie obiektow...</p>
         ) : venues.length === 0 ? (
-          <p className="admin-page__empty">Brak obiektow dla wybranych filtrow.</p>
+          <p className="admin-dashboard__empty">Brak obiektow dla wybranych filtrow.</p>
         ) : (
           <>
-            <div className="admin-page__cards">
+            <div className="admin-dashboard__cards">
               {venues.map((venue) => {
                 const isExpanded = Boolean(expandedVenues[venue.id])
+                const comment = venueComments[venue.id] ?? ''
 
                 return (
-                  <article key={venue.id} className="admin-venue-card">
-                    <div className="admin-venue-card__top">
+                  <article key={venue.id} className="admin-dashboard__venue-card">
+                    <div className="admin-dashboard__venue-top">
                       <div>
                         <h3>{venue.name}</h3>
                         <p>{venue.address?.city || '-'}, {venue.address?.street || '-'}</p>
                       </div>
-                      <span className={`admin-badge admin-badge--${venue.status.toLowerCase()}`}>
+                      <span className={`admin-dashboard__status-badge admin-dashboard__status-badge--${venue.status.toLowerCase()}`}>
                         {VENUE_STATUS_LABELS[venue.status] ?? venue.status}
                       </span>
                     </div>
 
-                    <dl className="admin-venue-card__meta">
+                    <dl className="admin-dashboard__venue-meta">
                       <div>
                         <dt>Manager</dt>
                         <dd>{venue.managerEmail}</dd>
@@ -551,17 +562,28 @@ function AdminPage() {
                       </div>
                     </dl>
 
+                    <div className="admin-dashboard__feedback-panel">
+                      <strong>Komentarz dla managera</strong>
+                      <textarea
+                        className="admin-dashboard__comment"
+                        value={comment}
+                        onChange={(event) => handleVenueCommentChange(venue.id, event.target.value)}
+                        placeholder="Wpisz, co manager ma poprawic przed ponownym review."
+                        rows="4"
+                      />
+                    </div>
+
                     <button
                       type="button"
-                      className="admin-venue-card__details-toggle"
+                      className="admin-dashboard__details-toggle"
                       onClick={() => toggleVenueDetails(venue.id)}
                     >
                       {isExpanded ? 'Ukryj szczegoly zgloszenia' : 'Pokaz szczegoly zgloszenia'}
                     </button>
 
                     {isExpanded ? (
-                      <section className="admin-venue-card__details" aria-label="Szczegoly zgloszenia">
-                        <dl className="admin-venue-card__details-grid">
+                      <section className="admin-dashboard__details" aria-label="Szczegoly zgloszenia">
+                        <dl className="admin-dashboard__details-grid">
                           <div>
                             <dt>Styl</dt>
                             <dd>{venue.style || '-'}</dd>
@@ -595,27 +617,17 @@ function AdminPage() {
                             <dd>{venue.address?.latitude ?? '-'}, {venue.address?.longitude ?? '-'}</dd>
                           </div>
                         </dl>
-                        <div className="admin-venue-card__description">
+                        <div className="admin-dashboard__description">
                           <h4>Opis obiektu</h4>
                           <p>{venue.description || 'Brak opisu.'}</p>
-                        </div>
-                        <div className="admin-venue-card__description">
-                          <h4>Komentarz dla managera</h4>
-                          <textarea
-                            className="admin-venue-card__comment"
-                            value={venueComments[venue.id] ?? ''}
-                            onChange={(event) => handleVenueCommentChange(venue.id, event.target.value)}
-                            placeholder="Wpisz, co manager ma poprawic przed ponownym review."
-                            rows="4"
-                          />
                         </div>
                       </section>
                     ) : null}
 
-                    <div className="admin-venue-card__actions">
+                    <div className="admin-dashboard__actions">
                       <button
                         type="button"
-                        className={`admin-action admin-action--approve ${venue.status === 'APPROVED' ? 'admin-action--current' : ''}`}
+                        className={`admin-dashboard__action admin-dashboard__action--approve ${venue.status === 'APPROVED' ? 'admin-dashboard__action--current' : ''}`}
                         disabled={Boolean(activeRequests[`venue:${venue.id}:APPROVED`]) || venue.status === 'APPROVED'}
                         onClick={() => handleVenueStatusUpdate(venue.id, 'APPROVED')}
                       >
@@ -623,15 +635,15 @@ function AdminPage() {
                       </button>
                       <button
                         type="button"
-                        className={`admin-action admin-action--draft ${venue.status === 'DRAFT' ? 'admin-action--current' : ''}`}
-                        disabled={Boolean(activeRequests[`venue:${venue.id}:DRAFT`]) || !(venueComments[venue.id] ?? '').trim()}
+                        className={`admin-dashboard__action admin-dashboard__action--draft ${venue.status === 'DRAFT' ? 'admin-dashboard__action--current' : ''}`}
+                        disabled={Boolean(activeRequests[`venue:${venue.id}:DRAFT`]) || !comment.trim()}
                         onClick={() => handleVenueStatusUpdate(venue.id, 'DRAFT')}
                       >
                         Cofnij do poprawy
                       </button>
                       <button
                         type="button"
-                        className={`admin-action admin-action--reject ${venue.status === 'REJECTED' ? 'admin-action--current' : ''}`}
+                        className={`admin-dashboard__action admin-dashboard__action--reject ${venue.status === 'REJECTED' ? 'admin-dashboard__action--current' : ''}`}
                         disabled={Boolean(activeRequests[`venue:${venue.id}:REJECTED`]) || venue.status === 'REJECTED'}
                         onClick={() => handleVenueStatusUpdate(venue.id, 'REJECTED')}
                       >
@@ -649,6 +661,123 @@ function AdminPage() {
             />
           </>
         )}
+      </section>
+    )
+  }
+
+  function renderUsersView() {
+    return (
+      <section className="admin-dashboard__workspace">
+        <div className="admin-dashboard__workspace-header">
+          <div>
+            <span className="admin-dashboard__workspace-eyebrow">Uzytkownicy</span>
+            <h2>Zarzadzanie uzytkownikami</h2>
+            <p>Placeholder pod przyszly ekran admina do obslugi zwyklych kont.</p>
+          </div>
+        </div>
+
+        <div className="admin-dashboard__placeholder-panel">
+          <strong>Na razie placeholder</strong>
+          <span>
+            Tu podepniemy pozniej liste userow, blokady kont, role i pozostale akcje administracyjne.
+          </span>
+        </div>
+      </section>
+    )
+  }
+
+  function renderWorkspace() {
+    if (adminView === 'partners') {
+      return renderPartnerView()
+    }
+
+    if (adminView === 'users') {
+      return renderUsersView()
+    }
+
+    return renderVenueView()
+  }
+
+  return (
+    <main className="admin-dashboard">
+      <section className="admin-dashboard__panel">
+        <header className="admin-dashboard__header">
+          <div>
+            <span className="admin-dashboard__eyebrow">Dashboard admina</span>
+            <h1 className="admin-dashboard__title">Zarzadzanie partnerami i obiektami</h1>
+            <p className="admin-dashboard__text">Uproszczony panel review z boczna nawigacja i podzialem na ekrany.</p>
+          </div>
+          <button type="button" className="admin-dashboard__submit" onClick={handleRefresh}>
+            Odswiez dane
+          </button>
+        </header>
+
+        {error ? <p className="admin-dashboard__error">{error}</p> : null}
+
+        <div className="admin-dashboard__layout">
+          {renderWorkspace()}
+
+          <aside className="admin-dashboard__sidebar">
+            <section className="admin-dashboard__sidebar-section">
+              <span className="admin-dashboard__sidebar-label">Panel</span>
+              <strong className="admin-dashboard__sidebar-title">
+                {adminView === 'partners' ? 'Partnerzy' : adminView === 'users' ? 'Uzytkownicy' : 'Obiekty'}
+              </strong>
+              <span className="admin-dashboard__sidebar-meta">
+                {adminView === 'partners'
+                  ? 'Weryfikacja partnerow i filtrowanie profili.'
+                  : adminView === 'users'
+                    ? 'Placeholder pod przyszle zarzadzanie kontami.'
+                    : 'Review sal, komentarze i decyzje administracyjne.'}
+              </span>
+            </section>
+
+            <section className="admin-dashboard__sidebar-section">
+              <span className="admin-dashboard__sidebar-label">Ekrany</span>
+              <div className="admin-dashboard__nav-group">
+                <button
+                  type="button"
+                  className={`admin-dashboard__nav-button${adminView === 'partners' ? ' admin-dashboard__nav-button--active' : ''}`}
+                  onClick={() => setAdminView('partners')}
+                >
+                  Partnerzy
+                </button>
+                <button
+                  type="button"
+                  className={`admin-dashboard__nav-button${adminView === 'venues' ? ' admin-dashboard__nav-button--active' : ''}`}
+                  onClick={() => setAdminView('venues')}
+                >
+                  Obiekty
+                </button>
+                <button
+                  type="button"
+                  className={`admin-dashboard__nav-button${adminView === 'users' ? ' admin-dashboard__nav-button--active' : ''}`}
+                  onClick={() => setAdminView('users')}
+                >
+                  Uzytkownicy
+                </button>
+              </div>
+            </section>
+
+            <section className="admin-dashboard__sidebar-section">
+              <span className="admin-dashboard__sidebar-label">Szybki podglad</span>
+              <div className="admin-dashboard__sidebar-summary">
+                <div>
+                  <strong>{partnerStats.pending}</strong>
+                  <span>Partnerzy do weryfikacji</span>
+                </div>
+                <div>
+                  <strong>{venueStats.pending}</strong>
+                  <span>Obiekty oczekujace</span>
+                </div>
+                <div>
+                  <strong>{venueStats.draft}</strong>
+                  <span>Obiekty do poprawy</span>
+                </div>
+              </div>
+            </section>
+          </aside>
+        </div>
       </section>
     </main>
   )
