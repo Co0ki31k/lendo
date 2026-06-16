@@ -5,7 +5,7 @@ function VenueImagesManager({ venueId, selectedVenue = null }) {
   const [images, setImages] = useState([])
   const [status, setStatus] = useState('loading')
   const [error, setError] = useState('')
-  const [uploadFile, setUploadFile] = useState(null)
+  const [uploadFiles, setUploadFiles] = useState([])
   const [displayOrder, setDisplayOrder] = useState('')
   const [primaryImage, setPrimaryImage] = useState(false)
   const [activeRequest, setActiveRequest] = useState('')
@@ -47,8 +47,8 @@ function VenueImagesManager({ venueId, selectedVenue = null }) {
     event.preventDefault()
     const formElement = event.currentTarget
 
-    if (!uploadFile) {
-      setError('Wybierz plik obrazka do przeslania.')
+    if (uploadFiles.length === 0) {
+      setError('Wybierz przynajmniej jeden plik obrazka do przeslania.')
       return
     }
 
@@ -56,20 +56,33 @@ function VenueImagesManager({ venueId, selectedVenue = null }) {
     setError('')
 
     try {
-      const createdImage = await partnerApi.uploadVenueImage(venueId, {
-        file: uploadFile,
-        displayOrder,
-        primaryImage,
-      })
+      const startingDisplayOrder = displayOrder === '' ? null : Number(displayOrder)
+      const createdImages = []
 
-      const nextImages = [...images, createdImage].sort((left, right) => (left.displayOrder ?? 0) - (right.displayOrder ?? 0))
-      setImages(primaryImage ? nextImages.map((image) => ({ ...image, primaryImage: image.id === createdImage.id })) : nextImages)
-      setUploadFile(null)
+      for (const [index, file] of uploadFiles.entries()) {
+        const createdImage = await partnerApi.uploadVenueImage(venueId, {
+          file,
+          displayOrder: startingDisplayOrder == null ? '' : startingDisplayOrder + index,
+          primaryImage: primaryImage && index === 0,
+        })
+
+        createdImages.push(createdImage)
+      }
+
+      const createdPrimaryImageId = createdImages.find((image) => image.primaryImage)?.id
+      const nextImages = [...images, ...createdImages].sort((left, right) => (left.displayOrder ?? 0) - (right.displayOrder ?? 0))
+
+      setImages(
+        createdPrimaryImageId
+          ? nextImages.map((image) => ({ ...image, primaryImage: image.id === createdPrimaryImageId }))
+          : nextImages,
+      )
+      setUploadFiles([])
       setDisplayOrder('')
       setPrimaryImage(false)
       formElement.reset()
     } catch (requestError) {
-      setError(requestError.response?.data?.message ?? 'Nie udalo sie przeslac zdjecia.')
+      setError(requestError.response?.data?.message ?? 'Nie udalo sie przeslac zdjec.')
     } finally {
       setActiveRequest('')
     }
@@ -156,8 +169,14 @@ function VenueImagesManager({ venueId, selectedVenue = null }) {
 
       <form className="partner-dashboard__image-upload" onSubmit={handleUpload}>
         <label className="partner-dashboard__field partner-dashboard__field--full">
-          <span>Plik obrazka</span>
-          <input type="file" accept="image/*" onChange={(event) => setUploadFile(event.target.files?.[0] ?? null)} required />
+          <span>Pliki obrazkow</span>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={(event) => setUploadFiles(Array.from(event.target.files ?? []))}
+            required
+          />
         </label>
 
         <label className="partner-dashboard__field">
@@ -167,11 +186,11 @@ function VenueImagesManager({ venueId, selectedVenue = null }) {
 
         <label className="partner-dashboard__toggle partner-dashboard__field--full">
           <input type="checkbox" checked={primaryImage} onChange={(event) => setPrimaryImage(event.target.checked)} />
-          <span>Ustaw jako zdjecie glowne</span>
+          <span>Ustaw pierwsze z dodawanych zdjec jako glowne</span>
         </label>
 
         <button type="submit" className="partner-dashboard__submit" disabled={activeRequest === 'upload'}>
-          {activeRequest === 'upload' ? 'Przesylanie...' : 'Dodaj zdjecie'}
+          {activeRequest === 'upload' ? 'Przesylanie...' : 'Dodaj zdjecia'}
         </button>
       </form>
 
