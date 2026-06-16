@@ -116,12 +116,21 @@
 
 .venue-detail__slider-shell {
   display: grid;
+  grid-template-columns: minmax(0, 1fr) 116px;
+  gap: 14px;
+  align-items: stretch;
+}
+
+.venue-detail__slider-main {
+  position: relative;
+  display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 14px;
   align-items: center;
 }
 
 .venue-detail__slider-button {
+  position: relative;
   width: 44px;
   height: 44px;
   border: 1px solid rgba(125, 47, 39, 0.14);
@@ -131,6 +140,14 @@
   font-size: 1.75rem;
   line-height: 1;
   cursor: pointer;
+}
+
+.venue-detail__slider-button--left {
+  margin-left: 0;
+}
+
+.venue-detail__slider-button--right {
+  margin-right: 0;
 }
 
 .venue-detail__hero-image {
@@ -159,9 +176,9 @@
 
 .venue-detail__thumbs {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 12px;
-  margin-top: 16px;
+  align-content: start;
 }
 
 .venue-detail__thumb {
@@ -169,15 +186,15 @@
   border: 1px solid rgba(100, 66, 45, 0.14);
   border-radius: 14px;
   overflow: hidden;
-  background: #fffdf9;
+  background: #ede7df;
   cursor: pointer;
 }
 
 .venue-detail__thumb--placeholder {
   display: grid;
   place-items: center;
-  min-height: 96px;
-  color: #a08a7c;
+  min-height: 54px;
+  color: #b29f90;
   font-weight: 600;
 }
 
@@ -189,7 +206,7 @@
 .venue-detail__thumb img {
   display: block;
   width: 100%;
-  aspect-ratio: 16 / 10;
+  aspect-ratio: 1 / 1;
   object-fit: cover;
 }
 

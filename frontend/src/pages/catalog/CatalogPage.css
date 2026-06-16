@@ -238,16 +238,16 @@
 }
 
 .catalog-page__card-location {
-  margin: 10px 0 0;
+  margin: 6px 0 0;
   font-size: 1.08rem;
 }
 
 .catalog-page__card-side {
   display: grid;
-  grid-template-rows: auto 1fr 1fr auto;
+  grid-template-rows: auto auto auto auto;
   gap: 16px;
   justify-items: end;
-  align-content: stretch;
+  align-content: start;
   padding: 22px;
   border-left: 1px solid rgba(100, 66, 45, 0.14);
   background: rgba(255, 248, 241, 0.8);
@@ -259,26 +259,20 @@
 }
 
 .catalog-page__card-stat-line {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.catalog-page__card-stat-icon {
-  display: inline-grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 999px;
-  background: rgba(141, 58, 45, 0.1);
-  color: #7d2f27;
-  font-size: 1.02rem;
-  font-weight: 700;
+  display: grid;
+  justify-items: end;
+  gap: 4px;
 }
 
 .catalog-page__card-stat strong {
   color: #241712;
   font-size: 1.2rem;
+}
+
+.catalog-page__card-stat-label {
+  color: #7d2f27;
+  font-size: 0.88rem;
+  font-weight: 600;
 }
 
 .catalog-page__card-stat {

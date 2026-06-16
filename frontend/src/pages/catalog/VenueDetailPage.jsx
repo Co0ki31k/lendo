@@ -233,64 +233,66 @@ function VenueDetailPage() {
 
         <section className="venue-detail__gallery">
           <div className="venue-detail__slider-shell">
-            {imageCount > 1 ? (
-              <button
-                type="button"
-                className="venue-detail__slider-button"
-                onClick={() => handleImageStep(-1)}
-                aria-label="Poprzednie zdjecie"
-              >
-                {'<'}
-              </button>
-            ) : null}
+            <div className="venue-detail__slider-main">
+              {imageCount > 1 ? (
+                <button
+                  type="button"
+                  className="venue-detail__slider-button venue-detail__slider-button--left"
+                  onClick={() => handleImageStep(-1)}
+                  aria-label="Poprzednie zdjecie"
+                >
+                  {'<'}
+                </button>
+              ) : null}
 
-            {activeImage ? (
-              <img
-                src={activeImage.imageUrl}
-                alt={venue.name}
-                className="venue-detail__hero-image"
-              />
-            ) : (
-              <div className="venue-detail__hero-image venue-detail__hero-image--fallback">Brak zdjec</div>
-            )}
+              {activeImage ? (
+                <img
+                  src={activeImage.imageUrl}
+                  alt={venue.name}
+                  className="venue-detail__hero-image"
+                />
+              ) : (
+                <div className="venue-detail__hero-image venue-detail__hero-image--fallback">Brak zdjec</div>
+              )}
 
-            {imageCount > 1 ? (
-              <button
-                type="button"
-                className="venue-detail__slider-button"
-                onClick={() => handleImageStep(1)}
-                aria-label="Nastepne zdjecie"
-              >
-                {'>'}
-              </button>
-            ) : null}
+              {imageCount > 1 ? (
+                <button
+                  type="button"
+                  className="venue-detail__slider-button venue-detail__slider-button--right"
+                  onClick={() => handleImageStep(1)}
+                  aria-label="Nastepne zdjecie"
+                >
+                  {'>'}
+                </button>
+              ) : null}
+            </div>
+
+            <div className="venue-detail__thumbs">
+              {galleryThumbItems.map((image, index) => (
+                image ? (
+                  <button
+                    key={image.id}
+                    type="button"
+                    className={`venue-detail__thumb${index === activeImageIndex ? ' venue-detail__thumb--active' : ''}`}
+                    onClick={() => setActiveImageIndex(index)}
+                  >
+                    <img src={image.imageUrl} alt={`${venue.name} ${index + 1}`} />
+                  </button>
+                ) : (
+                  <div
+                    key={`placeholder-${index}`}
+                    className="venue-detail__thumb venue-detail__thumb--placeholder"
+                    aria-hidden="true"
+                  >
+                    <span>Brak</span>
+                  </div>
+                )
+              ))}
+            </div>
           </div>
 
           <div className="venue-detail__slider-status">
             {imageCount > 0 ? `Zdjecie ${activeImageIndex + 1} z ${imageCount}` : 'Brak zdjec do wyswietlenia'}
-          </div>
-
-          <div className="venue-detail__thumbs">
-            {galleryThumbItems.map((image, index) => (
-              image ? (
-                <button
-                  key={image.id}
-                  type="button"
-                  className={`venue-detail__thumb${index === activeImageIndex ? ' venue-detail__thumb--active' : ''}`}
-                  onClick={() => setActiveImageIndex(index)}
-                >
-                  <img src={image.imageUrl} alt={`${venue.name} ${index + 1}`} />
-                </button>
-              ) : (
-                <div
-                  key={`placeholder-${index}`}
-                  className="venue-detail__thumb venue-detail__thumb--placeholder"
-                  aria-hidden="true"
-                >
-                  <span>Brak</span>
-                </div>
-              )
-            ))}
           </div>
         </section>
 
