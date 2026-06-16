@@ -143,10 +143,35 @@
   color: #241712;
 }
 
+.venue-detail__section-heading h2 {
+  margin: 0;
+  color: #241712;
+}
+
+.venue-detail__section-heading p {
+  margin: 8px 0 0;
+  color: #5b4a41;
+}
+
 .venue-detail__description p {
   margin: 0;
   line-height: 1.75;
   white-space: pre-wrap;
+}
+
+.venue-detail__map-section {
+  margin-top: 28px;
+  padding: 24px;
+  border: 1px solid rgba(100, 66, 45, 0.14);
+  border-radius: 18px;
+  background: rgba(255, 250, 244, 0.9);
+}
+
+.venue-detail__map {
+  margin-top: 18px;
+  height: 360px;
+  border-radius: 16px;
+  overflow: hidden;
 }
 
 @media (max-width: 720px) {
@@ -160,5 +185,9 @@
 
   .venue-detail__info-grid {
     grid-template-columns: 1fr;
+  }
+
+  .venue-detail__map {
+    height: 300px;
   }
 }

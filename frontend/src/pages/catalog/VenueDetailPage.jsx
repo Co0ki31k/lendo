@@ -1,7 +1,22 @@
 import { useEffect, useMemo, useState } from 'react'
+import L from 'leaflet'
+import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet'
 import { useParams } from 'react-router-dom'
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
+import markerIcon from 'leaflet/dist/images/marker-icon.png'
+import markerShadow from 'leaflet/dist/images/marker-shadow.png'
 import { catalogApi } from '../../api'
 import './VenueDetailPage.css'
+
+const venueMarkerIcon = L.icon({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+})
 
 function formatPrice(value) {
   if (value == null) {
@@ -58,6 +73,16 @@ function VenueDetailPage() {
   }, [venueId])
 
   const activeImage = useMemo(() => venue?.images?.[activeImageIndex] ?? null, [venue, activeImageIndex])
+  const coordinates = useMemo(() => {
+    const latitude = Number(venue?.address?.latitude)
+    const longitude = Number(venue?.address?.longitude)
+
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      return null
+    }
+
+    return [latitude, longitude]
+  }, [venue])
 
   if (status === 'loading') {
     return <main className="venue-detail"><p className="venue-detail__empty">Ladowanie szczegolow sali...</p></main>
@@ -145,6 +170,30 @@ function VenueDetailPage() {
             <h2>Opis obiektu</h2>
             <p>{venue.description || 'Brak opisu.'}</p>
           </section>
+
+          {coordinates ? (
+            <section className="venue-detail__map-section">
+              <div className="venue-detail__section-heading">
+                <h2>Lokalizacja</h2>
+                <p>Mapa pokazuje polozenie obiektu na podstawie zapisanych wspolrzednych.</p>
+              </div>
+
+              <MapContainer
+                center={coordinates}
+                zoom={13}
+                scrollWheelZoom={false}
+                className="venue-detail__map"
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <Marker position={coordinates} icon={venueMarkerIcon}>
+                  <Popup>Obiekt</Popup>
+                </Marker>
+              </MapContainer>
+            </section>
+          ) : null}
         </section>
       </section>
     </main>
