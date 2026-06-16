@@ -14,6 +14,20 @@ export async function deletePartner(userId) {
   await api.delete(`/api/admin/partners/${userId}`)
 }
 
+export async function getUsers(params = {}) {
+  const response = await api.get('/api/admin/users', { params })
+  return response.data
+}
+
+export async function updateUserRole(userId, role) {
+  const response = await api.patch(`/api/admin/users/${userId}/role`, { role })
+  return response.data
+}
+
+export async function deleteUser(userId) {
+  await api.delete(`/api/admin/users/${userId}`)
+}
+
 export async function getVenues(params = {}) {
   const response = await api.get('/api/admin/venues', { params })
   return response.data

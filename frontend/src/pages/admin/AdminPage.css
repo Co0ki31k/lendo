@@ -155,21 +155,6 @@
   box-shadow: 0 8px 18px rgba(125, 47, 39, 0.08);
 }
 
-.admin-dashboard__sidebar-summary {
-  display: grid;
-  gap: 14px;
-}
-
-.admin-dashboard__sidebar-summary strong,
-.admin-dashboard__sidebar-summary span {
-  display: block;
-}
-
-.admin-dashboard__sidebar-summary strong {
-  font-size: 1.4rem;
-  color: #241712;
-}
-
 .admin-dashboard__workspace-header,
 .admin-dashboard__venue-top {
   display: flex;
@@ -241,6 +226,12 @@
   margin-top: 20px;
 }
 
+.admin-dashboard__user-list {
+  display: grid;
+  gap: 16px;
+  margin-top: 20px;
+}
+
 .admin-dashboard__partner-card {
   border: 1px solid rgba(100, 66, 45, 0.14);
   border-radius: 14px;
@@ -249,7 +240,22 @@
   padding: 20px;
 }
 
+.admin-dashboard__user-card {
+  border: 1px solid rgba(100, 66, 45, 0.14);
+  border-radius: 14px;
+  background: rgba(255, 250, 244, 0.9);
+  box-shadow: 0 10px 24px rgba(55, 31, 19, 0.05);
+  padding: 20px;
+}
+
 .admin-dashboard__partner-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-dashboard__user-top {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -265,29 +271,36 @@
   color: #241712;
 }
 
+.admin-dashboard__user-top h3 {
+  margin: 0;
+  color: #241712;
+}
+
 .admin-dashboard__partner-top p {
   margin: 8px 0 0;
   color: #5b4a41;
 }
 
-.admin-dashboard__partner-tax-id {
-  display: inline-block;
-  margin-top: 10px;
-  color: #7d2f27;
-  font-size: 0.92rem;
-  font-weight: 600;
+.admin-dashboard__user-top p {
+  margin: 8px 0 0;
+  color: #5b4a41;
 }
 
-.admin-dashboard__partner-side {
+.admin-dashboard__user-side {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 12px;
+  gap: 10px;
   margin-left: auto;
 }
 
-.admin-dashboard__actions--partner {
+.admin-dashboard__actions--user {
   justify-content: flex-end;
+}
+
+.admin-dashboard__user-meta {
+  color: #5b4a41;
+  font-size: 0.9rem;
 }
 
 .admin-table {
@@ -613,13 +626,17 @@
     flex-direction: column;
   }
 
-  .admin-dashboard__partner-side {
+  .admin-dashboard__user-top {
+    flex-direction: column;
+  }
+
+  .admin-dashboard__user-side {
     width: 100%;
     align-items: stretch;
     margin-left: 0;
   }
 
-  .admin-dashboard__actions--partner {
+  .admin-dashboard__actions--user {
     justify-content: flex-start;
   }
 

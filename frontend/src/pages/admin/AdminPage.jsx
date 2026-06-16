@@ -58,6 +58,30 @@ const EMPTY_VENUE_RESPONSE = {
   },
 }
 
+const INITIAL_USER_QUERY = {
+  page: 0,
+  size: 10,
+  search: '',
+  role: 'all',
+  sortBy: 'createdAt',
+  sortDir: 'desc',
+}
+
+const EMPTY_USER_RESPONSE = {
+  items: [],
+  page: EMPTY_PAGE,
+  summary: {
+    total: 0,
+    users: 0,
+    admins: 0,
+  },
+}
+
+const USER_ROLE_LABELS = {
+  CLIENT: 'User',
+  ADMIN: 'Admin',
+}
+
 function formatDateTime(value) {
   if (!value) {
     return '-'
@@ -109,6 +133,17 @@ function buildVenueParams(query) {
   }
 }
 
+function buildUserParams(query) {
+  return {
+    page: query.page,
+    size: query.size,
+    sortBy: query.sortBy,
+    sortDir: query.sortDir,
+    ...(query.search.trim() ? { search: query.search.trim() } : {}),
+    ...(query.role !== 'all' ? { role: query.role } : {}),
+  }
+}
+
 function PaginationControls({ page, onPageChange }) {
   return (
     <div className="admin-dashboard__pagination">
@@ -139,14 +174,18 @@ function AdminPage() {
   const [adminView, setAdminView] = useState('stats')
   const [partnerQuery, setPartnerQuery] = useState(INITIAL_PARTNER_QUERY)
   const [venueQuery, setVenueQuery] = useState(INITIAL_VENUE_QUERY)
+  const [userQuery, setUserQuery] = useState(INITIAL_USER_QUERY)
   const [partnerData, setPartnerData] = useState(EMPTY_PARTNER_RESPONSE)
   const [venueData, setVenueData] = useState(EMPTY_VENUE_RESPONSE)
+  const [userData, setUserData] = useState(EMPTY_USER_RESPONSE)
   const [adminStats, setAdminStats] = useState({
     partners: EMPTY_PARTNER_RESPONSE.summary,
     venues: EMPTY_VENUE_RESPONSE.summary,
+    users: EMPTY_USER_RESPONSE.summary,
   })
   const [isLoadingPartners, setIsLoadingPartners] = useState(true)
   const [isLoadingVenues, setIsLoadingVenues] = useState(true)
+  const [isLoadingUsers, setIsLoadingUsers] = useState(true)
   const [error, setError] = useState('')
   const [activeRequests, setActiveRequests] = useState({})
   const [expandedVenues, setExpandedVenues] = useState({})
@@ -184,16 +223,31 @@ function AdminPage() {
     }
   }, [])
 
+  const loadUsers = useCallback(async (query) => {
+    setIsLoadingUsers(true)
+
+    try {
+      const response = await adminApi.getUsers(buildUserParams(query))
+      setUserData(response)
+    } catch (loadError) {
+      setError(loadError.response?.data?.message ?? 'Nie udalo sie pobrac listy uzytkownikow.')
+    } finally {
+      setIsLoadingUsers(false)
+    }
+  }, [])
+
   const loadAdminStats = useCallback(async () => {
     try {
-      const [partnersResponse, venuesResponse] = await Promise.all([
+      const [partnersResponse, venuesResponse, usersResponse] = await Promise.all([
         adminApi.getPartners({ page: 0, size: 1, sortBy: 'createdAt', sortDir: 'desc' }),
         adminApi.getVenues({ page: 0, size: 1, sortBy: 'createdAt', sortDir: 'desc' }),
+        adminApi.getUsers({ page: 0, size: 1, sortBy: 'createdAt', sortDir: 'desc' }),
       ])
 
       setAdminStats({
         partners: partnersResponse.summary,
         venues: venuesResponse.summary,
+        users: usersResponse.summary,
       })
     } catch (loadError) {
       setError(loadError.response?.data?.message ?? 'Nie udalo sie pobrac statystyk admina.')
@@ -231,6 +285,16 @@ function AdminPage() {
   }, [loadAdminStats])
 
   useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void loadUsers(userQuery)
+    }, 0)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [loadUsers, userQuery])
+
+  useEffect(() => {
     if (!error) {
       return undefined
     }
@@ -247,6 +311,7 @@ function AdminPage() {
   const partnerStats = partnerData.summary
   const partners = partnerData.items
   const venues = venueData.items
+  const users = userData.items
 
   function resetError() {
     setError('')
@@ -268,12 +333,21 @@ function AdminPage() {
     }))
   }
 
+  function updateUserQuery(patch) {
+    resetError()
+    setUserQuery((current) => ({
+      ...current,
+      ...patch,
+    }))
+  }
+
   function handleRefresh() {
     resetError()
     void Promise.all([
       loadAdminStats(),
       loadPartners(partnerQuery),
       loadVenues(venueQuery),
+      loadUsers(userQuery),
     ])
   }
 
@@ -340,6 +414,34 @@ function AdminPage() {
       await Promise.all([loadVenues(venueQuery), loadAdminStats()])
     } catch (requestError) {
       setError(requestError.response?.data?.message ?? 'Nie udalo sie usunac obiektu.')
+    } finally {
+      setActiveRequests((current) => ({ ...current, [requestKey]: false }))
+    }
+  }
+
+  async function handleUserRoleUpdate(userId, role) {
+    const requestKey = `user-role:${userId}`
+    setActiveRequests((current) => ({ ...current, [requestKey]: true }))
+
+    try {
+      await adminApi.updateUserRole(userId, role)
+      await Promise.all([loadUsers(userQuery), loadAdminStats()])
+    } catch (requestError) {
+      setError(requestError.response?.data?.message ?? 'Nie udalo sie zmienic roli uzytkownika.')
+    } finally {
+      setActiveRequests((current) => ({ ...current, [requestKey]: false }))
+    }
+  }
+
+  async function handleUserDelete(userId) {
+    const requestKey = `user-delete:${userId}`
+    setActiveRequests((current) => ({ ...current, [requestKey]: true }))
+
+    try {
+      await adminApi.deleteUser(userId)
+      await Promise.all([loadUsers(userQuery), loadAdminStats()])
+    } catch (requestError) {
+      setError(requestError.response?.data?.message ?? 'Nie udalo sie usunac uzytkownika.')
     } finally {
       setActiveRequests((current) => ({ ...current, [requestKey]: false }))
     }
@@ -472,41 +574,11 @@ function AdminPage() {
                       <div className="admin-dashboard__partner-summary">
                         <h3>{partner.companyName || `${partner.firstName} ${partner.lastName}`}</h3>
                         <p>{partner.firstName} {partner.lastName}</p>
-                        <span className="admin-dashboard__partner-tax-id">NIP: {partner.taxId || '-'}</span>
                       </div>
 
-                      <div className="admin-dashboard__partner-side">
-                        <span className={`admin-dashboard__status-badge ${partner.verified ? 'admin-dashboard__status-badge--approved' : 'admin-dashboard__status-badge--pending'}`}>
-                          {partner.verified ? 'Zweryfikowany' : 'Oczekuje'}
-                        </span>
-
-                        <div className="admin-dashboard__actions admin-dashboard__actions--partner">
-                          <button
-                            type="button"
-                            className="admin-dashboard__action admin-dashboard__action--approve"
-                            disabled={isSubmitting || isDeleting || partner.verified}
-                            onClick={() => handlePartnerVerification(partner.userId, true)}
-                          >
-                            Potwierdz
-                          </button>
-                          <button
-                            type="button"
-                            className="admin-dashboard__action admin-dashboard__action--reject"
-                            disabled={isSubmitting || isDeleting || !partner.verified}
-                            onClick={() => handlePartnerVerification(partner.userId, false)}
-                          >
-                            Cofnij
-                          </button>
-                          <button
-                            type="button"
-                            className="admin-dashboard__action admin-dashboard__action--reject"
-                            disabled={isSubmitting || isDeleting}
-                            onClick={() => handlePartnerDelete(partner.userId)}
-                          >
-                            {isDeleting ? 'Usuwanie...' : 'Usun partnera'}
-                          </button>
-                        </div>
-                      </div>
+                      <span className={`admin-dashboard__status-badge ${partner.verified ? 'admin-dashboard__status-badge--approved' : 'admin-dashboard__status-badge--pending'}`}>
+                        {partner.verified ? 'Zweryfikowany' : 'Oczekuje'}
+                      </span>
                     </div>
 
                     <button
@@ -543,6 +615,33 @@ function AdminPage() {
                         </dl>
                       </section>
                     ) : null}
+
+                    <div className="admin-dashboard__actions">
+                      <button
+                        type="button"
+                        className="admin-dashboard__action admin-dashboard__action--approve"
+                        disabled={isSubmitting || isDeleting || partner.verified}
+                        onClick={() => handlePartnerVerification(partner.userId, true)}
+                      >
+                        Potwierdz
+                      </button>
+                      <button
+                        type="button"
+                        className="admin-dashboard__action admin-dashboard__action--reject"
+                        disabled={isSubmitting || isDeleting || !partner.verified}
+                        onClick={() => handlePartnerVerification(partner.userId, false)}
+                      >
+                        Cofnij
+                      </button>
+                      <button
+                        type="button"
+                        className="admin-dashboard__action admin-dashboard__action--reject"
+                        disabled={isSubmitting || isDeleting}
+                        onClick={() => handlePartnerDelete(partner.userId)}
+                      >
+                        {isDeleting ? 'Usuwanie...' : 'Usun partnera'}
+                      </button>
+                    </div>
                   </article>
                 )
               })}
@@ -828,6 +927,18 @@ function AdminPage() {
             <span>Obiekty odrzucone</span>
             <strong>{adminStats.venues.rejected}</strong>
           </article>
+          <article className="admin-dashboard__stat-card">
+            <span>Wszystkie konta User/Admin</span>
+            <strong>{adminStats.users.total}</strong>
+          </article>
+          <article className="admin-dashboard__stat-card">
+            <span>Konta User</span>
+            <strong>{adminStats.users.users}</strong>
+          </article>
+          <article className="admin-dashboard__stat-card">
+            <span>Konta Admin</span>
+            <strong>{adminStats.users.admins}</strong>
+          </article>
         </div>
       </section>
     )
@@ -840,16 +951,134 @@ function AdminPage() {
           <div>
             <span className="admin-dashboard__workspace-eyebrow">Uzytkownicy</span>
             <h2>Zarzadzanie uzytkownikami</h2>
-            <p>Placeholder pod przyszly ekran admina do obslugi zwyklych kont.</p>
+            <p>Ta zakladka obsluguje tylko role User i Admin. Manager pozostaje poza tym ekranem.</p>
           </div>
         </div>
 
-        <div className="admin-dashboard__placeholder-panel">
-          <strong>Na razie placeholder</strong>
-          <span>
-            Tu podepniemy pozniej liste userow, blokady kont, role i pozostale akcje administracyjne.
-          </span>
+        <div className="admin-dashboard__stats-grid">
+          <article className="admin-dashboard__stat-card">
+            <span>Wszystkie konta</span>
+            <strong>{userData.summary.total}</strong>
+          </article>
+          <article className="admin-dashboard__stat-card">
+            <span>User</span>
+            <strong>{userData.summary.users}</strong>
+          </article>
+          <article className="admin-dashboard__stat-card">
+            <span>Admin</span>
+            <strong>{userData.summary.admins}</strong>
+          </article>
         </div>
+
+        <div className="admin-dashboard__toolbar">
+          <input
+            type="search"
+            className="admin-dashboard__input"
+            value={userQuery.search}
+            onChange={(event) => updateUserQuery({ search: event.target.value, page: 0 })}
+            placeholder="Szukaj po emailu, imieniu, nazwisku lub telefonie"
+          />
+          <select
+            className="admin-dashboard__select"
+            value={userQuery.role}
+            onChange={(event) => updateUserQuery({ role: event.target.value, page: 0 })}
+          >
+            <option value="all">Wszystkie role</option>
+            <option value="CLIENT">User</option>
+            <option value="ADMIN">Admin</option>
+          </select>
+          <select
+            className="admin-dashboard__select"
+            value={userQuery.sortBy}
+            onChange={(event) => updateUserQuery({ sortBy: event.target.value, page: 0 })}
+          >
+            <option value="createdAt">Sortuj: data</option>
+            <option value="email">Sortuj: email</option>
+            <option value="firstName">Sortuj: imie</option>
+            <option value="lastName">Sortuj: nazwisko</option>
+          </select>
+          <select
+            className="admin-dashboard__select"
+            value={userQuery.sortDir}
+            onChange={(event) => updateUserQuery({ sortDir: event.target.value, page: 0 })}
+          >
+            <option value="desc">Malejaco</option>
+            <option value="asc">Rosnaco</option>
+          </select>
+          <select
+            className="admin-dashboard__select"
+            value={userQuery.size}
+            onChange={(event) => updateUserQuery({ size: Number(event.target.value), page: 0 })}
+          >
+            <option value="10">10 / strona</option>
+            <option value="20">20 / strona</option>
+            <option value="50">50 / strona</option>
+          </select>
+        </div>
+
+        {isLoadingUsers ? (
+          <p className="admin-dashboard__empty">Ladowanie uzytkownikow...</p>
+        ) : users.length === 0 ? (
+          <p className="admin-dashboard__empty">Brak uzytkownikow dla wybranych filtrow.</p>
+        ) : (
+          <>
+            <div className="admin-dashboard__user-list">
+              {users.map((account) => {
+                const isRoleUpdating = Boolean(activeRequests[`user-role:${account.id}`])
+                const isDeleting = Boolean(activeRequests[`user-delete:${account.id}`])
+                const nextRole = account.role === 'ADMIN' ? 'CLIENT' : 'ADMIN'
+
+                return (
+                  <article key={account.id} className="admin-dashboard__user-card">
+                    <div className="admin-dashboard__user-top">
+                      <div>
+                        <h3>{account.firstName || account.lastName ? `${account.firstName || ''} ${account.lastName || ''}`.trim() : account.email}</h3>
+                        <p>{account.email}</p>
+                      </div>
+
+                      <div className="admin-dashboard__user-side">
+                        <span className={`admin-dashboard__status-badge ${account.role === 'ADMIN' ? 'admin-dashboard__status-badge--approved' : 'admin-dashboard__status-badge--pending'}`}>
+                          {USER_ROLE_LABELS[account.role] ?? account.role}
+                        </span>
+                        <span className="admin-dashboard__user-meta">
+                          {account.phoneNumber || 'Brak telefonu'} | {formatDateTime(account.createdAt)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="admin-dashboard__actions admin-dashboard__actions--user">
+                      <button
+                        type="button"
+                        className="admin-dashboard__action admin-dashboard__action--approve"
+                        disabled={isRoleUpdating || isDeleting}
+                        onClick={() => handleUserRoleUpdate(account.id, nextRole)}
+                      >
+                        {isRoleUpdating
+                          ? 'Zapisywanie...'
+                          : account.role === 'ADMIN'
+                            ? 'Zmien na User'
+                            : 'Nadaj Admina'}
+                      </button>
+                      <button
+                        type="button"
+                        className="admin-dashboard__action admin-dashboard__action--reject"
+                        disabled={isRoleUpdating || isDeleting}
+                        onClick={() => handleUserDelete(account.id)}
+                      >
+                        {isDeleting ? 'Usuwanie...' : 'Usun konto'}
+                      </button>
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+
+            <PaginationControls
+              page={userData.page}
+              onPageChange={(nextPage) => updateUserQuery({ page: nextPage })}
+            />
+          </>
+        )}
       </section>
     )
   }
@@ -899,7 +1128,7 @@ function AdminPage() {
                   : adminView === 'partners'
                   ? 'Weryfikacja partnerow i filtrowanie profili.'
                   : adminView === 'users'
-                    ? 'Placeholder pod przyszle zarzadzanie kontami.'
+                    ? 'Lista kont User i Admin z mozliwoscia zmiany roli albo usuniecia.'
                     : 'Review sal, komentarze i decyzje administracyjne.'}
               </span>
             </section>
@@ -938,23 +1167,6 @@ function AdminPage() {
               </div>
             </section>
 
-            <section className="admin-dashboard__sidebar-section">
-              <span className="admin-dashboard__sidebar-label">Szybki podglad</span>
-              <div className="admin-dashboard__sidebar-summary">
-                <div>
-                  <strong>{adminStats.partners.pending}</strong>
-                  <span>Partnerzy do weryfikacji</span>
-                </div>
-                <div>
-                  <strong>{adminStats.venues.pending}</strong>
-                  <span>Obiekty oczekujace</span>
-                </div>
-                <div>
-                  <strong>{adminStats.venues.draft}</strong>
-                  <span>Obiekty do poprawy</span>
-                </div>
-              </div>
-            </section>
           </aside>
 
           {renderWorkspace()}

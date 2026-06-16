@@ -5,6 +5,7 @@ import { buildVenuePayload, createVenueFormValues } from './venueForm.js'
 
 function EditVenueView({ selectedVenue, onVenueUpdated }) {
   const editFormId = `venue-edit-form-${selectedVenue.id}`
+  const isDraftVenue = selectedVenue.status === 'DRAFT'
   const [status, setStatus] = useState('loading')
   const [error, setError] = useState('')
   const [saveMessage, setSaveMessage] = useState('')
@@ -186,20 +187,22 @@ function EditVenueView({ selectedVenue, onVenueUpdated }) {
         </div>
       ) : null}
 
-      <form id={editFormId} className="partner-dashboard__form" onSubmit={handleSubmit}>
+      <form id={editFormId} className="partner-dashboard__form" onSubmit={isDraftVenue ? undefined : handleSubmit}>
         <VenueFormFields venueFormValues={venueFormValues} onVenueChange={handleVenueChange} />
       </form>
 
       <div className="partner-dashboard__edit-actions">
-        <button
-          type="submit"
-          form={editFormId}
-          className="partner-dashboard__submit"
-          disabled={isSubmitting || isResubmitting || isDeleting}
-        >
-          {isSubmitting ? 'Zapisywanie...' : 'Zapisz zmiany'}
-        </button>
-        {selectedVenue.status === 'DRAFT' ? (
+        {!isDraftVenue ? (
+          <button
+            type="submit"
+            form={editFormId}
+            className="partner-dashboard__submit"
+            disabled={isSubmitting || isResubmitting || isDeleting}
+          >
+            {isSubmitting ? 'Zapisywanie...' : 'Zapisz zmiany'}
+          </button>
+        ) : null}
+        {isDraftVenue ? (
           <button
             type="button"
             className="partner-dashboard__secondary-action"
