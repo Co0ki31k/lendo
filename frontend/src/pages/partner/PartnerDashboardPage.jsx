@@ -66,6 +66,32 @@ function PartnerDashboardPage() {
   const [objectView, setObjectView] = useState('calendar')
   const [venueQuery, setVenueQuery] = useState(INITIAL_VENUE_LIST_QUERY)
 
+  const loadVenueList = useCallback(async (query, { silent = false } = {}) => {
+    if (!silent) {
+      setStatus('loading')
+      setError('')
+      setNotice('')
+    }
+
+    try {
+      const venuesResponse = await partnerApi.getOwnVenues(buildVenueListParams(query))
+      setVenueData(venuesResponse)
+      setSelectedVenueId((currentSelectedVenueId) => {
+        const nextActionableVenues = venuesResponse.items.filter((venue) => ['APPROVED', 'DRAFT'].includes(venue.status))
+
+        if (currentSelectedVenueId && nextActionableVenues.some((venue) => venue.id === currentSelectedVenueId)) {
+          return currentSelectedVenueId
+        }
+
+        return nextActionableVenues[0]?.id ?? null
+      })
+      setStatus('ready')
+    } catch (requestError) {
+      setError(requestError.response?.data?.message ?? 'Nie udalo sie pobrac listy obiektow managera.')
+      setStatus('error')
+    }
+  }, [])
+
   const loadDashboardData = useCallback(async () => {
     setStatus('loading')
     setError('')
@@ -147,7 +173,7 @@ function PartnerDashboardPage() {
       }
       setVenueFormValues(INITIAL_VENUE_FORM_VALUES)
       setManagerView('select')
-      void loadDashboardData()
+      void loadVenueList(venueQuery, { silent: true })
     } catch (requestError) {
       setError(requestError.response?.data?.message ?? 'Nie udalo sie dodac obiektu. Sprawdz, czy adres jest poprawny.')
     } finally {
@@ -160,7 +186,7 @@ function PartnerDashboardPage() {
       venue.id === updatedVenue.id ? updatedVenue : venue
     ))
 
-    void loadDashboardData()
+    void loadVenueList(venueQuery, { silent: true })
 
     if (updatedVenue.status === 'APPROVED') {
       setSelectedVenueId(updatedVenue.id)
@@ -216,7 +242,7 @@ function PartnerDashboardPage() {
           pageMeta={venueData.page}
           onVenueSelect={setSelectedVenueId}
           onVenueQueryChange={handleVenueQueryChange}
-          onRefresh={() => void loadDashboardData()}
+          onRefresh={() => void loadVenueList(venueQuery, { silent: true })}
         />
       )
     }

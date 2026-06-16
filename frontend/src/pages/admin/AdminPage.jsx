@@ -136,11 +136,15 @@ function PaginationControls({ page, onPageChange }) {
 }
 
 function AdminPage() {
-  const [adminView, setAdminView] = useState('venues')
+  const [adminView, setAdminView] = useState('stats')
   const [partnerQuery, setPartnerQuery] = useState(INITIAL_PARTNER_QUERY)
   const [venueQuery, setVenueQuery] = useState(INITIAL_VENUE_QUERY)
   const [partnerData, setPartnerData] = useState(EMPTY_PARTNER_RESPONSE)
   const [venueData, setVenueData] = useState(EMPTY_VENUE_RESPONSE)
+  const [adminStats, setAdminStats] = useState({
+    partners: EMPTY_PARTNER_RESPONSE.summary,
+    venues: EMPTY_VENUE_RESPONSE.summary,
+  })
   const [isLoadingPartners, setIsLoadingPartners] = useState(true)
   const [isLoadingVenues, setIsLoadingVenues] = useState(true)
   const [error, setError] = useState('')
@@ -178,6 +182,22 @@ function AdminPage() {
     }
   }, [])
 
+  const loadAdminStats = useCallback(async () => {
+    try {
+      const [partnersResponse, venuesResponse] = await Promise.all([
+        adminApi.getPartners({ page: 0, size: 1, sortBy: 'createdAt', sortDir: 'desc' }),
+        adminApi.getVenues({ page: 0, size: 1, sortBy: 'createdAt', sortDir: 'desc' }),
+      ])
+
+      setAdminStats({
+        partners: partnersResponse.summary,
+        venues: venuesResponse.summary,
+      })
+    } catch (loadError) {
+      setError(loadError.response?.data?.message ?? 'Nie udalo sie pobrac statystyk admina.')
+    }
+  }, [])
+
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
       void loadPartners(partnerQuery)
@@ -197,6 +217,16 @@ function AdminPage() {
       window.clearTimeout(timeoutId)
     }
   }, [loadVenues, venueQuery])
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void loadAdminStats()
+    }, 0)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [loadAdminStats])
 
   const partnerStats = partnerData.summary
   const venueStats = venueData.summary
@@ -226,6 +256,7 @@ function AdminPage() {
   function handleRefresh() {
     resetError()
     void Promise.all([
+      loadAdminStats(),
       loadPartners(partnerQuery),
       loadVenues(venueQuery),
     ])
@@ -237,7 +268,7 @@ function AdminPage() {
 
     try {
       await adminApi.updatePartnerVerification(userId, verified)
-      await loadPartners(partnerQuery)
+      await Promise.all([loadPartners(partnerQuery), loadAdminStats()])
     } catch (requestError) {
       setError(requestError.response?.data?.message ?? 'Nie udalo sie zaktualizowac weryfikacji partnera.')
     } finally {
@@ -259,7 +290,7 @@ function AdminPage() {
         ...current,
         [venueId]: updatedVenue.adminReviewComment ?? '',
       }))
-      await loadVenues(venueQuery)
+      await Promise.all([loadVenues(venueQuery), loadAdminStats()])
     } catch (requestError) {
       setError(requestError.response?.data?.message ?? 'Nie udalo sie zaktualizowac statusu obiektu.')
     } finally {
@@ -628,7 +659,7 @@ function AdminPage() {
                       <button
                         type="button"
                         className={`admin-dashboard__action admin-dashboard__action--approve ${venue.status === 'APPROVED' ? 'admin-dashboard__action--current' : ''}`}
-                        disabled={Boolean(activeRequests[`venue:${venue.id}:APPROVED`]) || venue.status === 'APPROVED'}
+                        disabled={Boolean(activeRequests[`venue:${venue.id}:APPROVED`]) || venue.status === 'APPROVED' || venue.status === 'DRAFT'}
                         onClick={() => handleVenueStatusUpdate(venue.id, 'APPROVED')}
                       >
                         Zaakceptuj
@@ -636,7 +667,7 @@ function AdminPage() {
                       <button
                         type="button"
                         className={`admin-dashboard__action admin-dashboard__action--draft ${venue.status === 'DRAFT' ? 'admin-dashboard__action--current' : ''}`}
-                        disabled={Boolean(activeRequests[`venue:${venue.id}:DRAFT`]) || !comment.trim()}
+                        disabled={Boolean(activeRequests[`venue:${venue.id}:DRAFT`]) || !comment.trim() || venue.status === 'DRAFT'}
                         onClick={() => handleVenueStatusUpdate(venue.id, 'DRAFT')}
                       >
                         Cofnij do poprawy
@@ -644,7 +675,7 @@ function AdminPage() {
                       <button
                         type="button"
                         className={`admin-dashboard__action admin-dashboard__action--reject ${venue.status === 'REJECTED' ? 'admin-dashboard__action--current' : ''}`}
-                        disabled={Boolean(activeRequests[`venue:${venue.id}:REJECTED`]) || venue.status === 'REJECTED'}
+                        disabled={Boolean(activeRequests[`venue:${venue.id}:REJECTED`]) || venue.status === 'REJECTED' || venue.status === 'DRAFT'}
                         onClick={() => handleVenueStatusUpdate(venue.id, 'REJECTED')}
                       >
                         Odrzuc
@@ -661,6 +692,55 @@ function AdminPage() {
             />
           </>
         )}
+      </section>
+    )
+  }
+
+  function renderStatsView() {
+    return (
+      <section className="admin-dashboard__workspace">
+        <div className="admin-dashboard__workspace-header">
+          <div>
+            <span className="admin-dashboard__workspace-eyebrow">Statystyki</span>
+            <h2>Podsumowanie panelu admina</h2>
+            <p>Ten widok pokazuje globalne liczby dla calego systemu, niezaleznie od aktywnych filtrow list.</p>
+          </div>
+        </div>
+
+        <div className="admin-dashboard__stats-grid">
+          <article className="admin-dashboard__stat-card">
+            <span>Wszyscy partnerzy</span>
+            <strong>{adminStats.partners.total}</strong>
+          </article>
+          <article className="admin-dashboard__stat-card">
+            <span>Partnerzy zweryfikowani</span>
+            <strong>{adminStats.partners.verified}</strong>
+          </article>
+          <article className="admin-dashboard__stat-card">
+            <span>Partnerzy oczekujacy</span>
+            <strong>{adminStats.partners.pending}</strong>
+          </article>
+          <article className="admin-dashboard__stat-card">
+            <span>Wszystkie obiekty</span>
+            <strong>{adminStats.venues.total}</strong>
+          </article>
+          <article className="admin-dashboard__stat-card">
+            <span>Obiekty oczekujace</span>
+            <strong>{adminStats.venues.pending}</strong>
+          </article>
+          <article className="admin-dashboard__stat-card">
+            <span>Obiekty zaakceptowane</span>
+            <strong>{adminStats.venues.approved}</strong>
+          </article>
+          <article className="admin-dashboard__stat-card">
+            <span>Obiekty do poprawy</span>
+            <strong>{adminStats.venues.draft}</strong>
+          </article>
+          <article className="admin-dashboard__stat-card">
+            <span>Obiekty odrzucone</span>
+            <strong>{adminStats.venues.rejected}</strong>
+          </article>
+        </div>
       </section>
     )
   }
@@ -687,6 +767,10 @@ function AdminPage() {
   }
 
   function renderWorkspace() {
+    if (adminView === 'stats') {
+      return renderStatsView()
+    }
+
     if (adminView === 'partners') {
       return renderPartnerView()
     }
@@ -715,16 +799,16 @@ function AdminPage() {
         {error ? <p className="admin-dashboard__error">{error}</p> : null}
 
         <div className="admin-dashboard__layout">
-          {renderWorkspace()}
-
           <aside className="admin-dashboard__sidebar">
             <section className="admin-dashboard__sidebar-section">
               <span className="admin-dashboard__sidebar-label">Panel</span>
               <strong className="admin-dashboard__sidebar-title">
-                {adminView === 'partners' ? 'Partnerzy' : adminView === 'users' ? 'Uzytkownicy' : 'Obiekty'}
+                {adminView === 'stats' ? 'Statystyki' : adminView === 'partners' ? 'Partnerzy' : adminView === 'users' ? 'Uzytkownicy' : 'Obiekty'}
               </strong>
               <span className="admin-dashboard__sidebar-meta">
-                {adminView === 'partners'
+                {adminView === 'stats'
+                  ? 'Globalny widok liczb dla calego systemu.'
+                  : adminView === 'partners'
                   ? 'Weryfikacja partnerow i filtrowanie profili.'
                   : adminView === 'users'
                     ? 'Placeholder pod przyszle zarzadzanie kontami.'
@@ -735,6 +819,13 @@ function AdminPage() {
             <section className="admin-dashboard__sidebar-section">
               <span className="admin-dashboard__sidebar-label">Ekrany</span>
               <div className="admin-dashboard__nav-group">
+                <button
+                  type="button"
+                  className={`admin-dashboard__nav-button${adminView === 'stats' ? ' admin-dashboard__nav-button--active' : ''}`}
+                  onClick={() => setAdminView('stats')}
+                >
+                  Statystyki
+                </button>
                 <button
                   type="button"
                   className={`admin-dashboard__nav-button${adminView === 'partners' ? ' admin-dashboard__nav-button--active' : ''}`}
@@ -763,20 +854,22 @@ function AdminPage() {
               <span className="admin-dashboard__sidebar-label">Szybki podglad</span>
               <div className="admin-dashboard__sidebar-summary">
                 <div>
-                  <strong>{partnerStats.pending}</strong>
+                  <strong>{adminStats.partners.pending}</strong>
                   <span>Partnerzy do weryfikacji</span>
                 </div>
                 <div>
-                  <strong>{venueStats.pending}</strong>
+                  <strong>{adminStats.venues.pending}</strong>
                   <span>Obiekty oczekujace</span>
                 </div>
                 <div>
-                  <strong>{venueStats.draft}</strong>
+                  <strong>{adminStats.venues.draft}</strong>
                   <span>Obiekty do poprawy</span>
                 </div>
               </div>
             </section>
           </aside>
+
+          {renderWorkspace()}
         </div>
       </section>
     </main>
