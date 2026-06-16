@@ -238,7 +238,7 @@
 }
 
 .catalog-page__card-location {
-  margin: 6px 0 0;
+  margin: 2px 0 0;
   font-size: 1.08rem;
 }
 
@@ -246,7 +246,7 @@
   display: grid;
   grid-template-rows: auto auto auto auto;
   gap: 16px;
-  justify-items: end;
+  justify-items: start;
   align-content: start;
   padding: 22px;
   border-left: 1px solid rgba(100, 66, 45, 0.14);
@@ -260,8 +260,8 @@
 
 .catalog-page__card-stat-line {
   display: grid;
-  justify-items: end;
-  gap: 4px;
+  justify-items: start;
+  gap: 2px;
 }
 
 .catalog-page__card-stat strong {

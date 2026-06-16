@@ -256,13 +256,13 @@ function CatalogPage() {
 
                           <div className="catalog-page__card-stat">
                             <span className="catalog-page__card-stat-line">
-                              <span className="catalog-page__card-stat-label">Cena za osobę</span>
+                              <span className="catalog-page__card-stat-label">Cena za osobę:</span>
                               <strong>{formatPrice(venue.basePricePerGuest)}</strong>
                             </span>
                           </div>
                           <div className="catalog-page__card-stat">
                             <span className="catalog-page__card-stat-line">
-                              <span className="catalog-page__card-stat-label">Maks osób</span>
+                              <span className="catalog-page__card-stat-label">Maks osób:</span>
                               <strong>{venue.capacityMax ?? '-'}</strong>
                             </span>
                           </div>
