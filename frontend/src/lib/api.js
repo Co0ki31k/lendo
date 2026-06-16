@@ -31,6 +31,10 @@ const refreshClient = axios.create({
 let refreshPromise = null
 const authBypassUrls = ['/api/auth/login', '/api/auth/register', '/api/auth/refresh']
 
+function isJwtToken(value) {
+  return typeof value === 'string' && value.split('.').length === 3
+}
+
 async function refreshAccessToken() {
   const refreshToken = getRefreshToken()
 
@@ -60,8 +64,10 @@ async function refreshAccessToken() {
 api.interceptors.request.use((config) => {
   const accessToken = getAccessToken()
 
-  if (accessToken) {
+  if (isJwtToken(accessToken)) {
     config.headers.Authorization = `Bearer ${accessToken}`
+  } else if (config.headers.Authorization) {
+    delete config.headers.Authorization
   }
 
   return config

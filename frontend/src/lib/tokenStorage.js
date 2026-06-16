@@ -3,25 +3,51 @@ import { buildUserFromAccessToken } from './jwt'
 const ACCESS_TOKEN_KEY = 'lendo.accessToken'
 const REFRESH_TOKEN_KEY = 'lendo.refreshToken'
 const USER_KEY = 'lendo.user'
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 function isBrowser() {
   return typeof window !== 'undefined'
 }
 
-export function getAccessToken() {
+function isJwtToken(value) {
+  return typeof value === 'string' && value.split('.').length === 3
+}
+
+function isRefreshToken(value) {
+  return typeof value === 'string' && UUID_PATTERN.test(value)
+}
+
+function readStoredTokens() {
   if (!isBrowser()) {
-    return null
+    return { accessToken: null, refreshToken: null }
   }
 
-  return window.localStorage.getItem(ACCESS_TOKEN_KEY)
+  const accessToken = window.localStorage.getItem(ACCESS_TOKEN_KEY)
+  const refreshToken = window.localStorage.getItem(REFRESH_TOKEN_KEY)
+
+  if (isJwtToken(accessToken) || isRefreshToken(refreshToken)) {
+    return { accessToken, refreshToken }
+  }
+
+  if (isRefreshToken(accessToken) && isJwtToken(refreshToken)) {
+    window.localStorage.setItem(ACCESS_TOKEN_KEY, refreshToken)
+    window.localStorage.setItem(REFRESH_TOKEN_KEY, accessToken)
+
+    return {
+      accessToken: refreshToken,
+      refreshToken: accessToken,
+    }
+  }
+
+  return { accessToken, refreshToken }
+}
+
+export function getAccessToken() {
+  return readStoredTokens().accessToken
 }
 
 export function getRefreshToken() {
-  if (!isBrowser()) {
-    return null
-  }
-
-  return window.localStorage.getItem(REFRESH_TOKEN_KEY)
+  return readStoredTokens().refreshToken
 }
 
 export function getStoredUser() {
@@ -51,11 +77,11 @@ export function storeAuthSession(authResponse) {
   const refreshToken = authResponse.refresh_token
   const user = authResponse.user ?? buildUserFromAccessToken(accessToken)
 
-  if (accessToken) {
+  if (isJwtToken(accessToken)) {
     window.localStorage.setItem(ACCESS_TOKEN_KEY, accessToken)
   }
 
-  if (refreshToken) {
+  if (isRefreshToken(refreshToken)) {
     window.localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken)
   }
 
