@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -48,6 +49,13 @@ public class AdminPartnerController {
             @Valid @RequestBody PartnerVerificationRequest request
     ) {
         return ResponseEntity.ok(adminPartnerService.setVerification(userId, request.verified()));
+    }
+
+    @DeleteMapping("/{userId}")
+    @Operation(summary = "Delete partner profile and reset account role")
+    public ResponseEntity<Void> deletePartner(@PathVariable UUID userId) {
+        adminPartnerService.deletePartner(userId);
+        return ResponseEntity.noContent().build();
     }
 
 }

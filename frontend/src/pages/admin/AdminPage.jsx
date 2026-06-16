@@ -276,6 +276,20 @@ function AdminPage() {
     }
   }
 
+  async function handlePartnerDelete(userId) {
+    const requestKey = `partner-delete:${userId}`
+    setActiveRequests((current) => ({ ...current, [requestKey]: true }))
+
+    try {
+      await adminApi.deletePartner(userId)
+      await Promise.all([loadPartners(partnerQuery), loadAdminStats()])
+    } catch (requestError) {
+      setError(requestError.response?.data?.message ?? 'Nie udalo sie usunac partnera.')
+    } finally {
+      setActiveRequests((current) => ({ ...current, [requestKey]: false }))
+    }
+  }
+
   async function handleVenueStatusUpdate(venueId, status) {
     const requestKey = `venue:${venueId}:${status}`
     setActiveRequests((current) => ({ ...current, [requestKey]: true }))
@@ -293,6 +307,20 @@ function AdminPage() {
       await Promise.all([loadVenues(venueQuery), loadAdminStats()])
     } catch (requestError) {
       setError(requestError.response?.data?.message ?? 'Nie udalo sie zaktualizowac statusu obiektu.')
+    } finally {
+      setActiveRequests((current) => ({ ...current, [requestKey]: false }))
+    }
+  }
+
+  async function handleVenueDelete(venueId) {
+    const requestKey = `venue-delete:${venueId}`
+    setActiveRequests((current) => ({ ...current, [requestKey]: true }))
+
+    try {
+      await adminApi.deleteVenue(venueId)
+      await Promise.all([loadVenues(venueQuery), loadAdminStats()])
+    } catch (requestError) {
+      setError(requestError.response?.data?.message ?? 'Nie udalo sie usunac obiektu.')
     } finally {
       setActiveRequests((current) => ({ ...current, [requestKey]: false }))
     }
@@ -412,7 +440,9 @@ function AdminPage() {
                 <tbody>
                   {partners.map((partner) => {
                     const requestKey = `partner:${partner.userId}`
+                    const deleteRequestKey = `partner-delete:${partner.userId}`
                     const isSubmitting = Boolean(activeRequests[requestKey])
+                    const isDeleting = Boolean(activeRequests[deleteRequestKey])
 
                     return (
                       <tr key={partner.userId}>
@@ -439,7 +469,7 @@ function AdminPage() {
                             <button
                               type="button"
                               className="admin-dashboard__action admin-dashboard__action--approve"
-                              disabled={isSubmitting || partner.verified}
+                              disabled={isSubmitting || isDeleting || partner.verified}
                               onClick={() => handlePartnerVerification(partner.userId, true)}
                             >
                               Potwierdz
@@ -447,10 +477,18 @@ function AdminPage() {
                             <button
                               type="button"
                               className="admin-dashboard__action admin-dashboard__action--reject"
-                              disabled={isSubmitting || !partner.verified}
+                              disabled={isSubmitting || isDeleting || !partner.verified}
                               onClick={() => handlePartnerVerification(partner.userId, false)}
                             >
                               Cofnij
+                            </button>
+                            <button
+                              type="button"
+                              className="admin-dashboard__action admin-dashboard__action--reject"
+                              disabled={isSubmitting || isDeleting}
+                              onClick={() => handlePartnerDelete(partner.userId)}
+                            >
+                              {isDeleting ? 'Usuwanie...' : 'Usun partnera'}
                             </button>
                           </div>
                         </td>
@@ -561,6 +599,7 @@ function AdminPage() {
               {venues.map((venue) => {
                 const isExpanded = Boolean(expandedVenues[venue.id])
                 const comment = venueComments[venue.id] ?? ''
+                const isDeletingVenue = Boolean(activeRequests[`venue-delete:${venue.id}`])
 
                 return (
                   <article key={venue.id} className="admin-dashboard__venue-card">
@@ -659,7 +698,7 @@ function AdminPage() {
                       <button
                         type="button"
                         className={`admin-dashboard__action admin-dashboard__action--approve ${venue.status === 'APPROVED' ? 'admin-dashboard__action--current' : ''}`}
-                        disabled={Boolean(activeRequests[`venue:${venue.id}:APPROVED`]) || venue.status === 'APPROVED' || venue.status === 'DRAFT'}
+                        disabled={isDeletingVenue || Boolean(activeRequests[`venue:${venue.id}:APPROVED`]) || venue.status === 'APPROVED' || venue.status === 'DRAFT'}
                         onClick={() => handleVenueStatusUpdate(venue.id, 'APPROVED')}
                       >
                         Zaakceptuj
@@ -667,7 +706,7 @@ function AdminPage() {
                       <button
                         type="button"
                         className={`admin-dashboard__action admin-dashboard__action--draft ${venue.status === 'DRAFT' ? 'admin-dashboard__action--current' : ''}`}
-                        disabled={Boolean(activeRequests[`venue:${venue.id}:DRAFT`]) || !comment.trim() || venue.status === 'DRAFT'}
+                        disabled={isDeletingVenue || Boolean(activeRequests[`venue:${venue.id}:DRAFT`]) || !comment.trim() || venue.status === 'DRAFT'}
                         onClick={() => handleVenueStatusUpdate(venue.id, 'DRAFT')}
                       >
                         Cofnij do poprawy
@@ -675,10 +714,18 @@ function AdminPage() {
                       <button
                         type="button"
                         className={`admin-dashboard__action admin-dashboard__action--reject ${venue.status === 'REJECTED' ? 'admin-dashboard__action--current' : ''}`}
-                        disabled={Boolean(activeRequests[`venue:${venue.id}:REJECTED`]) || venue.status === 'REJECTED' || venue.status === 'DRAFT'}
+                        disabled={isDeletingVenue || Boolean(activeRequests[`venue:${venue.id}:REJECTED`]) || venue.status === 'REJECTED' || venue.status === 'DRAFT'}
                         onClick={() => handleVenueStatusUpdate(venue.id, 'REJECTED')}
                       >
                         Odrzuc
+                      </button>
+                      <button
+                        type="button"
+                        className="admin-dashboard__action admin-dashboard__action--reject"
+                        disabled={isDeletingVenue}
+                        onClick={() => handleVenueDelete(venue.id)}
+                      >
+                        {isDeletingVenue ? 'Usuwanie...' : 'Usun obiekt'}
                       </button>
                     </div>
                   </article>

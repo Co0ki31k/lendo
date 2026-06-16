@@ -171,6 +171,19 @@ public class PartnerVenueService {
     }
 
     @Transactional
+    public void deleteVenue(User user, Long venueId) {
+        Venue venue = resolveManagedVenue(user, venueId);
+        deleteVenueInternal(venue);
+    }
+
+    @Transactional
+    public void deleteVenueByAdmin(Long venueId) {
+        Venue venue = venueRepository.findById(venueId)
+                .orElseThrow(() -> new RuntimeException("Obiekt nie istnieje"));
+        deleteVenueInternal(venue);
+    }
+
+    @Transactional
     public VenueImageResponse uploadVenueImage(
             User user,
             Long venueId,
@@ -476,6 +489,16 @@ public class PartnerVenueService {
         if (contentType == null || !contentType.startsWith("image/")) {
             throw new RuntimeException("Przesylany plik musi byc obrazkiem");
         }
+    }
+
+    private void deleteVenueInternal(Venue venue) {
+        List<VenueImage> images = venueImageRepository.findByVenueIdOrderByDisplayOrderAscIdAsc(venue.getId());
+
+        for (VenueImage image : images) {
+            cloudinaryVenueImageService.deleteVenueImage(image.getCloudinaryPublicId());
+        }
+
+        venueRepository.delete(venue);
     }
 
     private Specification<Venue> buildManagerVenueSpecification(User user, String search, String status) {

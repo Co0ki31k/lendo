@@ -67,6 +67,16 @@ public class PartnerVenueController {
         return ResponseEntity.ok(partnerVenueService.updateVenue(user, venueId, request));
     }
 
+    @DeleteMapping("/{venueId}")
+    @Operation(summary = "Delete current partner venue")
+    public ResponseEntity<Void> deleteVenue(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long venueId
+    ) {
+        partnerVenueService.deleteVenue(user, venueId);
+        return ResponseEntity.noContent().build();
+    }
+
     @PatchMapping("/{venueId}/submit")
     @Operation(summary = "Submit current partner venue for admin review")
     public ResponseEntity<VenueResponse> submitVenueForReview(

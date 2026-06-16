@@ -182,6 +182,17 @@ function PartnerDashboardPage() {
   }
 
   function handleVenueUpdated(updatedVenue) {
+    if (updatedVenue.deleted) {
+      const nextVenues = venueData.items.filter((venue) => venue.id !== updatedVenue.id)
+      const nextActionableVenue = nextVenues.find((venue) => ['APPROVED', 'DRAFT'].includes(venue.status))
+
+      setSelectedVenueId(nextActionableVenue?.id ?? null)
+      setManagerView('select')
+      setNotice('Obiekt zostal usuniety.')
+      void loadVenueList(venueQuery, { silent: true })
+      return
+    }
+
     const nextVenues = venueData.items.map((venue) => (
       venue.id === updatedVenue.id ? updatedVenue : venue
     ))

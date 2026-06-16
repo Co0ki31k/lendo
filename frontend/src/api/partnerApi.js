@@ -30,6 +30,10 @@ export async function updateVenue(venueId, payload) {
   return response.data
 }
 
+export async function deleteVenue(venueId) {
+  await api.delete(`/api/partner/venues/${venueId}`)
+}
+
 export async function submitVenueForReview(venueId) {
   const response = await api.patch(`/api/partner/venues/${venueId}/submit`)
   return response.data

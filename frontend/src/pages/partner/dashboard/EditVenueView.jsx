@@ -10,6 +10,7 @@ function EditVenueView({ selectedVenue, onVenueUpdated }) {
   const [saveMessage, setSaveMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isResubmitting, setIsResubmitting] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   const [venueFormValues, setVenueFormValues] = useState(createVenueFormValues())
 
   useEffect(() => {
@@ -100,6 +101,21 @@ function EditVenueView({ selectedVenue, onVenueUpdated }) {
     }
   }
 
+  async function handleDelete() {
+    setIsDeleting(true)
+    setError('')
+    setSaveMessage('')
+
+    try {
+      await partnerApi.deleteVenue(selectedVenue.id)
+      onVenueUpdated({ ...selectedVenue, deleted: true })
+    } catch (requestError) {
+      setError(requestError.response?.data?.message ?? 'Nie udalo sie usunac obiektu.')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   if (status === 'loading') {
     return (
       <section className="partner-dashboard__workspace">
@@ -151,7 +167,7 @@ function EditVenueView({ selectedVenue, onVenueUpdated }) {
           type="submit"
           form={editFormId}
           className="partner-dashboard__submit"
-          disabled={isSubmitting || isResubmitting}
+          disabled={isSubmitting || isResubmitting || isDeleting}
         >
           {isSubmitting ? 'Zapisywanie...' : 'Zapisz zmiany'}
         </button>
@@ -160,11 +176,19 @@ function EditVenueView({ selectedVenue, onVenueUpdated }) {
             type="button"
             className="partner-dashboard__secondary-action"
             onClick={handleResubmit}
-            disabled={isSubmitting || isResubmitting}
+            disabled={isSubmitting || isResubmitting || isDeleting}
           >
             {isResubmitting ? 'Wysylanie...' : 'Wyslij ponownie do akceptacji'}
           </button>
         ) : null}
+        <button
+          type="button"
+          className="partner-dashboard__secondary-action partner-dashboard__secondary-action--danger"
+          onClick={handleDelete}
+          disabled={isSubmitting || isResubmitting || isDeleting}
+        >
+          {isDeleting ? 'Usuwanie...' : 'Usun obiekt'}
+        </button>
       </div>
     </section>
   )

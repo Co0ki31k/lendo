@@ -10,6 +10,10 @@ export async function updatePartnerVerification(userId, verified) {
   return response.data
 }
 
+export async function deletePartner(userId) {
+  await api.delete(`/api/admin/partners/${userId}`)
+}
+
 export async function getVenues(params = {}) {
   const response = await api.get('/api/admin/venues', { params })
   return response.data
@@ -18,4 +22,8 @@ export async function getVenues(params = {}) {
 export async function updateVenueStatus(venueId, status, comment = '') {
   const response = await api.patch(`/api/admin/venues/${venueId}/status`, { status, comment })
   return response.data
+}
+
+export async function deleteVenue(venueId) {
+  await api.delete(`/api/admin/venues/${venueId}`)
 }
