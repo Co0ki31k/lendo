@@ -60,7 +60,7 @@ public class PartnerVenueService {
                         .noCorkageFee(request.noCorkageFee())
                         .civilWeddingGarden(request.civilWeddingGarden())
                         .verified(false)
-                        .status(VenueStatus.DRAFT)
+                        .status(VenueStatus.PENDING)
                         .build()
         );
 

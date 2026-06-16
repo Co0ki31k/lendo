@@ -1,7 +1,7 @@
 function StatsView({ venues }) {
   const approvedVenues = venues.filter((venue) => venue.status === 'APPROVED').length
-  const pendingVenues = venues.filter((venue) => venue.status === 'PENDING').length
-  const draftVenues = venues.filter((venue) => venue.status === 'DRAFT').length
+  const pendingVenues = venues.filter((venue) => ['PENDING', 'DRAFT'].includes(venue.status)).length
+  const rejectedVenues = venues.filter((venue) => venue.status === 'REJECTED').length
 
   return (
     <section className="partner-dashboard__workspace">
@@ -27,8 +27,8 @@ function StatsView({ venues }) {
           <strong>{pendingVenues}</strong>
         </article>
         <article className="partner-dashboard__stat-card">
-          <span>Szkice</span>
-          <strong>{draftVenues}</strong>
+          <span>Odrzucone</span>
+          <strong>{rejectedVenues}</strong>
         </article>
       </div>
 

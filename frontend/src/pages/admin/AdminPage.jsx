@@ -6,7 +6,7 @@ const VENUE_STATUS_LABELS = {
   PENDING: 'Oczekuje',
   APPROVED: 'Zaakceptowany',
   REJECTED: 'Odrzucony',
-  DRAFT: 'Szkic',
+  DRAFT: 'Oczekuje',
 }
 
 function formatDateTime(value) {
@@ -92,16 +92,16 @@ function AdminPage() {
 
   const venueStats = useMemo(() => ({
     total: venues.length,
-    pending: venues.filter((venue) => venue.status === 'PENDING').length,
+    pending: venues.filter((venue) => ['PENDING', 'DRAFT'].includes(venue.status)).length,
     approved: venues.filter((venue) => venue.status === 'APPROVED').length,
   }), [venues])
 
   const sortedVenues = useMemo(() => {
     const statusPriority = {
       PENDING: 0,
+      DRAFT: 0,
       REJECTED: 1,
       APPROVED: 2,
-      DRAFT: 3,
     }
 
     return [...venues].sort((left, right) => {

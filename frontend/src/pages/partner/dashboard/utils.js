@@ -10,6 +10,17 @@ export function formatMoney(value) {
   }).format(value)
 }
 
+export function formatVenueStatus(status) {
+  const labels = {
+    PENDING: 'Oczekujacy',
+    APPROVED: 'Zaakceptowany',
+    REJECTED: 'Odrzucony',
+    DRAFT: 'Oczekujacy',
+  }
+
+  return labels[status] ?? status ?? '-'
+}
+
 export function buildAccountName(user) {
   const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(' ').trim()
   return fullName || user?.email || 'Konto managera'

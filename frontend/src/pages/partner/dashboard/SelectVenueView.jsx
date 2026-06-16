@@ -1,4 +1,4 @@
-import { formatMoney } from './utils'
+import { formatMoney, formatVenueStatus } from './utils'
 
 function SelectVenueView({
   venues,
@@ -36,7 +36,7 @@ function SelectVenueView({
                   <p>{venue.address?.city || '-'}, {venue.address?.street || '-'}</p>
                 </div>
                 <span className={`partner-dashboard__status-badge partner-dashboard__status-badge--${venue.status?.toLowerCase()}`}>
-                  {venue.status}
+                  {formatVenueStatus(venue.status)}
                 </span>
               </div>
 
