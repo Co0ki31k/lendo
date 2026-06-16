@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { geocodingApi, partnerApi } from '../../../api'
 import VenueFormFields from './VenueFormFields.jsx'
+import VenueImagesManager from './VenueImagesManager.jsx'
 import { buildVenuePayload, createVenueFormValues } from './venueForm.js'
 
 function EditVenueView({ selectedVenue, onVenueUpdated }) {
@@ -199,6 +200,8 @@ function EditVenueView({ selectedVenue, onVenueUpdated }) {
           {isSubmitting ? 'Zapisywanie...' : 'Zapisz zmiany'}
         </button>
       </form>
+
+      <VenueImagesManager venueId={selectedVenue.id} />
     </section>
   )
 }
