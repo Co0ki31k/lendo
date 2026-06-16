@@ -38,11 +38,13 @@ function PartnerDashboardPage() {
       setProfile(profileResponse)
       setVenues(venuesResponse)
       setSelectedVenueId((currentSelectedVenueId) => {
-        if (currentSelectedVenueId && venuesResponse.some((venue) => venue.id === currentSelectedVenueId)) {
+        const nextApprovedVenues = venuesResponse.filter((venue) => venue.status === 'APPROVED')
+
+        if (currentSelectedVenueId && nextApprovedVenues.some((venue) => venue.id === currentSelectedVenueId)) {
           return currentSelectedVenueId
         }
 
-        return venuesResponse[0]?.id ?? null
+        return nextApprovedVenues[0]?.id ?? null
       })
       setStatus('ready')
     } catch (requestError) {
@@ -61,9 +63,19 @@ function PartnerDashboardPage() {
     }
   }, [loadDashboardData])
 
+  const approvedVenues = useMemo(
+    () => venues.filter((venue) => venue.status === 'APPROVED'),
+    [venues],
+  )
+
+  const approvedVenueIds = useMemo(
+    () => approvedVenues.map((venue) => venue.id),
+    [approvedVenues],
+  )
+
   const selectedVenue = useMemo(
-    () => venues.find((venue) => venue.id === selectedVenueId) ?? null,
-    [selectedVenueId, venues],
+    () => approvedVenues.find((venue) => venue.id === selectedVenueId) ?? null,
+    [approvedVenues, selectedVenueId],
   )
 
   const accountName = useMemo(() => buildAccountName(user), [user])
@@ -151,7 +163,9 @@ function PartnerDashboardPage() {
     try {
       const createdVenue = await partnerApi.createVenue(buildVenuePayload())
       setVenues((currentVenues) => [createdVenue, ...currentVenues])
-      setSelectedVenueId(createdVenue.id)
+      if (createdVenue.status === 'APPROVED') {
+        setSelectedVenueId(createdVenue.id)
+      }
       setVenueFormValues(INITIAL_VENUE_FORM_VALUES)
       setCoordinatePreview(null)
       setManagerView('select')
@@ -186,6 +200,7 @@ function PartnerDashboardPage() {
       return (
         <SelectVenueView
           venues={venues}
+          approvedVenueIds={approvedVenueIds}
           selectedVenueId={selectedVenueId}
           onVenueSelect={setSelectedVenueId}
           onRefresh={() => void loadDashboardData()}
@@ -233,6 +248,7 @@ function PartnerDashboardPage() {
         <div className="partner-dashboard__layout">
           <PartnerDashboardSidebar
             selectedVenue={selectedVenue}
+            hasApprovedVenue={Boolean(selectedVenue)}
             managerView={managerView}
             objectView={objectView}
             onManagerViewChange={setManagerView}
