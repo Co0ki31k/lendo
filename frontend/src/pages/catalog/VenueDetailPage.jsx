@@ -19,7 +19,7 @@ const venueMarkerIcon = L.icon({
   shadowSize: [41, 41],
 })
 
-const galleryThumbSlots = 6
+const minimumSliderSlots = 4
 
 function formatPrice(value) {
   if (value == null) {
@@ -100,7 +100,7 @@ function VenueDetailPage() {
   const galleryThumbItems = useMemo(() => {
     const images = venue?.images ?? []
 
-    return Array.from({ length: Math.max(galleryThumbSlots, images.length) }, (_, index) => images[index] ?? null)
+    return Array.from({ length: Math.max(minimumSliderSlots, images.length) }, (_, index) => images[index] ?? null)
   }, [venue])
   const isClient = user?.role === 'CLIENT'
   const coordinates = useMemo(() => {
@@ -265,29 +265,29 @@ function VenueDetailPage() {
                   {'>'}
                 </button>
               ) : null}
-            </div>
 
-            <div className="venue-detail__thumbs">
-              {galleryThumbItems.map((image, index) => (
-                image ? (
-                  <button
-                    key={image.id}
-                    type="button"
-                    className={`venue-detail__thumb${index === activeImageIndex ? ' venue-detail__thumb--active' : ''}`}
-                    onClick={() => setActiveImageIndex(index)}
-                  >
-                    <img src={image.imageUrl} alt={`${venue.name} ${index + 1}`} />
-                  </button>
-                ) : (
-                  <div
-                    key={`placeholder-${index}`}
-                    className="venue-detail__thumb venue-detail__thumb--placeholder"
-                    aria-hidden="true"
-                  >
-                    <span>Brak</span>
-                  </div>
-                )
-              ))}
+              <div className="venue-detail__slider-slots">
+                {galleryThumbItems.map((image, index) => (
+                  image ? (
+                    <button
+                      key={image.id}
+                      type="button"
+                      className={`venue-detail__thumb${index === activeImageIndex ? ' venue-detail__thumb--active' : ''}`}
+                      onClick={() => setActiveImageIndex(index)}
+                    >
+                      <img src={image.imageUrl} alt={`${venue.name} ${index + 1}`} />
+                    </button>
+                  ) : (
+                    <div
+                      key={`placeholder-${index}`}
+                      className="venue-detail__thumb venue-detail__thumb--placeholder"
+                      aria-hidden="true"
+                    >
+                      <span>Brak</span>
+                    </div>
+                  )
+                ))}
+              </div>
             </div>
           </div>
 
