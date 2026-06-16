@@ -68,6 +68,15 @@
   color: #7a1d1d;
 }
 
+.partner-dashboard__notice {
+  margin: 0 0 20px;
+  padding: 14px 16px;
+  border: 1px solid rgba(125, 47, 39, 0.16);
+  border-radius: 8px;
+  background: rgba(125, 47, 39, 0.06);
+  color: #5b3026;
+}
+
 .partner-dashboard__layout {
   display: grid;
   grid-template-columns: 300px minmax(0, 1fr);

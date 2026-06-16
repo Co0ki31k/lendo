@@ -19,3 +19,13 @@ export async function createVenue(payload) {
   const response = await api.post('/api/partner/venues', payload)
   return response.data
 }
+
+export async function getVenue(venueId) {
+  const response = await api.get(`/api/partner/venues/${venueId}`)
+  return response.data
+}
+
+export async function updateVenue(venueId, payload) {
+  const response = await api.put(`/api/partner/venues/${venueId}`, payload)
+  return response.data
+}

@@ -10,6 +10,7 @@ import SelectVenueView from './dashboard/SelectVenueView.jsx'
 import StatsView from './dashboard/StatsView.jsx'
 import { INITIAL_VENUE_FORM_VALUES } from './dashboard/constants.js'
 import { buildAccountName } from './dashboard/utils.js'
+import { buildVenuePayload } from './dashboard/venueForm.js'
 import './PartnerDashboardPage.css'
 
 function PartnerDashboardPage() {
@@ -20,6 +21,7 @@ function PartnerDashboardPage() {
   const [venueFormValues, setVenueFormValues] = useState(INITIAL_VENUE_FORM_VALUES)
   const [status, setStatus] = useState('loading')
   const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
   const [isVenueSubmitting, setIsVenueSubmitting] = useState(false)
   const [isGeocodingAddress, setIsGeocodingAddress] = useState(false)
   const [coordinatePreview, setCoordinatePreview] = useState(null)
@@ -29,6 +31,7 @@ function PartnerDashboardPage() {
   const loadDashboardData = useCallback(async () => {
     setStatus('loading')
     setError('')
+    setNotice('')
 
     try {
       const [profileResponse, venuesResponse] = await Promise.all([
@@ -103,18 +106,6 @@ function PartnerDashboardPage() {
     }
   }
 
-  function buildVenuePayload() {
-    return {
-      ...venueFormValues,
-      capacityMin: Number(venueFormValues.capacityMin),
-      capacityMax: Number(venueFormValues.capacityMax),
-      accommodationPlaces: Number(venueFormValues.accommodationPlaces),
-      basePricePerGuest: Number(venueFormValues.basePricePerGuest),
-      latitude: Number(venueFormValues.latitude),
-      longitude: Number(venueFormValues.longitude),
-    }
-  }
-
   async function handleResolveCoordinates() {
     const addressFields = ['street', 'city', 'postalCode', 'voivodeship']
     const hasCompleteAddress = addressFields.every((fieldName) => venueFormValues[fieldName]?.trim())
@@ -126,6 +117,7 @@ function PartnerDashboardPage() {
 
     setIsGeocodingAddress(true)
     setError('')
+    setNotice('')
 
     try {
       const match = await geocodingApi.getCoordinatesFromAddress({
@@ -159,12 +151,15 @@ function PartnerDashboardPage() {
 
     setIsVenueSubmitting(true)
     setError('')
+    setNotice('')
 
     try {
-      const createdVenue = await partnerApi.createVenue(buildVenuePayload())
+      const createdVenue = await partnerApi.createVenue(buildVenuePayload(venueFormValues))
       setVenues((currentVenues) => [createdVenue, ...currentVenues])
       if (createdVenue.status === 'APPROVED') {
         setSelectedVenueId(createdVenue.id)
+      } else {
+        setNotice('Obiekt zostal utworzony i oczekuje teraz na review admina.')
       }
       setVenueFormValues(INITIAL_VENUE_FORM_VALUES)
       setCoordinatePreview(null)
@@ -174,6 +169,25 @@ function PartnerDashboardPage() {
     } finally {
       setIsVenueSubmitting(false)
     }
+  }
+
+  function handleVenueUpdated(updatedVenue) {
+    const nextVenues = venues.map((venue) => (
+      venue.id === updatedVenue.id ? updatedVenue : venue
+    ))
+
+    setVenues(nextVenues)
+
+    if (updatedVenue.status === 'APPROVED') {
+      setSelectedVenueId(updatedVenue.id)
+      setNotice('Zmiany w obiekcie zostaly zapisane.')
+      return
+    }
+
+    const nextApprovedVenue = nextVenues.find((venue) => venue.status === 'APPROVED' && venue.id !== updatedVenue.id)
+    setSelectedVenueId(nextApprovedVenue?.id ?? null)
+    setManagerView('select')
+    setNotice('Zmiany zapisane. Obiekt wrocil do statusu oczekujacego i nie jest juz aktywnym obiektem dashboardu.')
   }
 
   function renderWorkspace() {
@@ -208,7 +222,13 @@ function PartnerDashboardPage() {
       )
     }
 
-    return <ObjectWorkspaceView selectedVenue={selectedVenue} objectView={objectView} />
+    return (
+      <ObjectWorkspaceView
+        selectedVenue={selectedVenue}
+        objectView={objectView}
+        onVenueUpdated={handleVenueUpdated}
+      />
+    )
   }
 
   if (status === 'loading') {
@@ -244,6 +264,7 @@ function PartnerDashboardPage() {
         <PartnerDashboardHeader accountName={accountName} />
 
         {error ? <p className="partner-dashboard__error">{error}</p> : null}
+        {notice ? <p className="partner-dashboard__notice">{notice}</p> : null}
 
         <div className="partner-dashboard__layout">
           <PartnerDashboardSidebar

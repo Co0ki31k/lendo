@@ -1,4 +1,6 @@
-function ObjectWorkspaceView({ selectedVenue, objectView }) {
+import EditVenueView from './EditVenueView.jsx'
+
+function ObjectWorkspaceView({ selectedVenue, objectView, onVenueUpdated }) {
   if (!selectedVenue) {
     return (
       <section className="partner-dashboard__workspace">
@@ -12,9 +14,13 @@ function ObjectWorkspaceView({ selectedVenue, objectView }) {
 
   const objectViewTitle = objectView === 'calendar'
     ? 'Kalendarz'
-    : objectView === 'messages'
+      : objectView === 'messages'
       ? 'Wiadomosci'
       : 'Edycja'
+
+  if (objectView === 'edit') {
+    return <EditVenueView selectedVenue={selectedVenue} onVenueUpdated={onVenueUpdated} />
+  }
 
   return (
     <section className="partner-dashboard__workspace">
