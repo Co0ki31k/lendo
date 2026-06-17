@@ -220,8 +220,12 @@ public class SmartPlannerBookingService {
                 + request.menuVeganCount()
                 + request.menuGlutenFreeCount();
 
-        if (configuredMenus <= 0) {
-            throw new RuntimeException("Musisz podac co najmniej jedno menu");
+        if (Boolean.TRUE.equals(request.fullService())) {
+            if (configuredMenus <= 0) {
+                throw new RuntimeException("Musisz podac co najmniej jedno menu");
+            }
+        } else if (configuredMenus != 0) {
+            throw new RuntimeException("Dla bookingu bez full service liczby menu musza byc rowne zero");
         }
 
         if (configuredMenus > request.estimatedGuests()) {

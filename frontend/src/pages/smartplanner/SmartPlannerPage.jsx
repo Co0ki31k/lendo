@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { catalogApi, smartPlannerApi } from '../../api'
 import StatusCalendar from '../../components/calendar/StatusCalendar.jsx'
 import './SmartPlannerPage.css'
@@ -91,6 +91,7 @@ function buildMonthBounds(year, month) {
 
 function SmartPlannerPage() {
   const today = new Date()
+  const navigate = useNavigate()
   const [currentStep, setCurrentStep] = useState(0)
   const [visitedSteps, setVisitedSteps] = useState([0])
   const [form, setForm] = useState({
@@ -156,6 +157,8 @@ function SmartPlannerPage() {
     () => MONTH_OPTIONS.find((option) => option.value === Number(form.month))?.label ?? form.month,
     [form.month],
   )
+
+  const isWithoutService = form.fullService === 'false'
 
   useEffect(() => {
     if (!hasSearchPrerequisites) {
@@ -287,6 +290,14 @@ function SmartPlannerPage() {
     setForm((current) => ({
       ...current,
       [field]: value,
+      ...(field === 'fullService' && value === 'false'
+        ? {
+            menuStandardCount: 0,
+            menuVegetarianCount: 0,
+            menuVeganCount: 0,
+            menuGlutenFreeCount: 0,
+          }
+        : {}),
     }))
   }
 
@@ -342,6 +353,7 @@ function SmartPlannerPage() {
       })
 
       setSubmitState({ status: 'success', error: '' })
+      navigate('/smartplanner/bookings')
     } catch (error) {
       setSubmitState({
         status: 'error',
@@ -615,6 +627,7 @@ function SmartPlannerPage() {
                           type="number"
                           min="0"
                           value={form.menuStandardCount}
+                          disabled={isWithoutService}
                           onChange={(event) => handleFieldChange('menuStandardCount', Number(event.target.value))}
                         />
                       </label>
@@ -625,6 +638,7 @@ function SmartPlannerPage() {
                           type="number"
                           min="0"
                           value={form.menuVegetarianCount}
+                          disabled={isWithoutService}
                           onChange={(event) => handleFieldChange('menuVegetarianCount', Number(event.target.value))}
                         />
                       </label>
@@ -635,6 +649,7 @@ function SmartPlannerPage() {
                           type="number"
                           min="0"
                           value={form.menuVeganCount}
+                          disabled={isWithoutService}
                           onChange={(event) => handleFieldChange('menuVeganCount', Number(event.target.value))}
                         />
                       </label>
@@ -645,6 +660,7 @@ function SmartPlannerPage() {
                           type="number"
                           min="0"
                           value={form.menuGlutenFreeCount}
+                          disabled={isWithoutService}
                           onChange={(event) => handleFieldChange('menuGlutenFreeCount', Number(event.target.value))}
                         />
                       </label>
@@ -669,14 +685,6 @@ function SmartPlannerPage() {
                     </label>
 
                     {submitState.status === 'error' ? <p className="smartplanner-page__error">{submitState.error}</p> : null}
-                    {submitState.status === 'success' ? (
-                      <div className="smartplanner-page__success">
-                        <span>Formularz zostal wyslany do managera.</span>
-                        <Link to="/smartplanner/bookings" className="smartplanner-page__success-link">
-                          Przejdz do moich zgloszen
-                        </Link>
-                      </div>
-                    ) : null}
                   </>
                 ) : null}
               </div>

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { partnerApi } from '../../../api'
-
-const STATUS_OPTIONS = ['', 'SUBMITTED', 'APPROVED', 'REJECTED', 'EXPIRED', 'CANCELLED']
+import { SMART_PLANNER_STATUS_OPTIONS, formatSmartPlannerStatus } from '../../../features/smartplanner/statusLabels.js'
 
 function formatCurrency(value) {
   if (value == null) {
@@ -31,18 +30,6 @@ function formatDate(value, withTime = false) {
     month: 'long',
     year: 'numeric',
   }).format(new Date(value))
-}
-
-function formatStatus(status) {
-  const labels = {
-    SUBMITTED: 'Oczekuje',
-    APPROVED: 'Zatwierdzony',
-    REJECTED: 'Odrzucony',
-    EXPIRED: 'Wygasl',
-    CANCELLED: 'Anulowany',
-  }
-
-  return labels[status] ?? status
 }
 
 function SmartPlannerRequestsView() {
@@ -261,8 +248,8 @@ function SmartPlannerRequestsView() {
           value={filters.status}
           onChange={(event) => setFilters((current) => ({ ...current, status: event.target.value }))}
         >
-          {STATUS_OPTIONS.map((option) => (
-            <option key={option || 'all'} value={option}>{option || 'Wszystkie statusy'}</option>
+          {SMART_PLANNER_STATUS_OPTIONS.map((option) => (
+            <option key={option.value || 'all'} value={option.value}>{option.label}</option>
           ))}
         </select>
         <input
@@ -301,7 +288,7 @@ function SmartPlannerRequestsView() {
                   <div className="partner-dashboard__venue-top">
                     <div>
                       <span className={`partner-dashboard__status-badge partner-dashboard__status-badge--${booking.status.toLowerCase()}`}>
-                        {formatStatus(booking.status)}
+                        {formatSmartPlannerStatus(booking.status)}
                       </span>
                       <h3>{booking.venueName}</h3>
                       <p>{formatDate(booking.eventDate)} | {booking.clientFirstName || '-'} {booking.clientLastName || ''}</p>
@@ -342,116 +329,136 @@ function SmartPlannerRequestsView() {
 
               {detailState.status === 'ready' && detailState.booking ? (
                 <>
-                  <div className="partner-dashboard__workspace-header">
-                    <div>
-                      <span className="partner-dashboard__workspace-eyebrow">Szczegoly zgloszenia</span>
-                      <h2>{detailState.booking.venueName}</h2>
+                  <article className="partner-dashboard__smartplanner-card">
+                    <div className="partner-dashboard__workspace-header">
+                      <div>
+                        <span className="partner-dashboard__workspace-eyebrow">Szczegoly zgloszenia</span>
+                        <h2>{detailState.booking.venueName}</h2>
+                        <p>
+                          Termin {formatDate(detailState.booking.eventDate)}.
+                          Klient: {detailState.booking.clientFirstName || '-'} {detailState.booking.clientLastName || ''} ({detailState.booking.clientEmail})
+                        </p>
+                      </div>
+                      <span className={`partner-dashboard__status-badge partner-dashboard__status-badge--${detailState.booking.status.toLowerCase()}`}>
+                        {formatSmartPlannerStatus(detailState.booking.status)}
+                      </span>
+                    </div>
+                  </article>
+
+                  <article className="partner-dashboard__smartplanner-card">
+                    <dl className="partner-dashboard__venue-meta partner-dashboard__venue-meta--expanded partner-dashboard__venue-meta--flush">
+                      <div>
+                        <dt>Liczba gosci</dt>
+                        <dd>{detailState.booking.estimatedGuests}</dd>
+                      </div>
+                      <div>
+                        <dt>Cena za osobe</dt>
+                        <dd>{formatCurrency(detailState.booking.pricePerGuest)}</dd>
+                      </div>
+                      <div>
+                        <dt>Budzet max klienta</dt>
+                        <dd>{formatCurrency(detailState.booking.maxPricePerGuest)}</dd>
+                      </div>
+                      <div>
+                        <dt>Koszt estymowany</dt>
+                        <dd>{formatCurrency(detailState.booking.totalEstimatedCost)}</dd>
+                      </div>
+                      <div>
+                        <dt>Service</dt>
+                        <dd>{detailState.booking.fullService ? 'Full service' : 'Bez full service'}</dd>
+                      </div>
+                      <div>
+                        <dt>Data wyslania</dt>
+                        <dd>{formatDate(detailState.booking.createdAt, true)}</dd>
+                      </div>
+                      <div>
+                        <dt>Standard</dt>
+                        <dd>{detailState.booking.dietLogistics.menuStandardCount}</dd>
+                      </div>
+                      <div>
+                        <dt>Vegetarian</dt>
+                        <dd>{detailState.booking.dietLogistics.menuVegetarianCount}</dd>
+                      </div>
+                      <div>
+                        <dt>Vegan</dt>
+                        <dd>{detailState.booking.dietLogistics.menuVeganCount}</dd>
+                      </div>
+                      <div>
+                        <dt>Gluten free</dt>
+                        <dd>{detailState.booking.dietLogistics.menuGlutenFreeCount}</dd>
+                      </div>
+                    </dl>
+                  </article>
+
+                  <article className="partner-dashboard__smartplanner-card">
+                    <div className="partner-dashboard__feedback-panel partner-dashboard__feedback-panel--compact">
+                      <strong>Alergie</strong>
+                      <p>{detailState.booking.dietLogistics.allergiesNotes || 'Brak uwag o alergiach.'}</p>
+                    </div>
+                  </article>
+
+                  <article className="partner-dashboard__smartplanner-card">
+                    <div className="partner-dashboard__feedback-panel partner-dashboard__feedback-panel--compact">
+                      <strong>Uwagi klienta</strong>
+                      <p>{detailState.booking.serviceNotes || 'Brak dodatkowych uwag.'}</p>
+                    </div>
+                  </article>
+
+                  <article className="partner-dashboard__smartplanner-card">
+                    <form className="partner-dashboard__form partner-dashboard__form--compact" onSubmit={(event) => void handleDecisionSubmit(event)}>
+                      <label className="partner-dashboard__field">
+                        <span>Decyzja</span>
+                        <select
+                          className="partner-dashboard__select"
+                          value={decision}
+                          onChange={(event) => setDecision(event.target.value)}
+                          disabled={!canDecide}
+                        >
+                          <option value="APPROVED">Zatwierdz</option>
+                          <option value="REJECTED">Odrzuc</option>
+                        </select>
+                      </label>
+
+                      <label className="partner-dashboard__field partner-dashboard__field--full">
+                        <span>Komentarz managera</span>
+                        <textarea
+                          rows="5"
+                          value={comment}
+                          onChange={(event) => setComment(event.target.value)}
+                          disabled={!canDecide}
+                        />
+                      </label>
+
+                      {submitState.error ? <p className="partner-dashboard__error">{submitState.error}</p> : null}
+                      {submitState.status === 'success' ? (
+                        <p className="partner-dashboard__notice">Decyzja zostala zapisana.</p>
+                      ) : null}
+
+                      <div className="partner-dashboard__edit-actions">
+                        <button
+                          type="submit"
+                          className="partner-dashboard__submit"
+                          disabled={!canDecide || submitState.status === 'loading'}
+                        >
+                          {submitState.status === 'loading'
+                            ? 'Zapisywanie...'
+                            : canDecide
+                              ? 'Zapisz decyzje'
+                              : 'Zgloszenie juz rozpatrzone'}
+                        </button>
+                      </div>
+                    </form>
+                  </article>
+
+                  <article className="partner-dashboard__smartplanner-card">
+                    <div className="partner-dashboard__feedback-panel partner-dashboard__feedback-panel--compact">
+                      <strong>Historia decyzji</strong>
                       <p>
-                        Termin {formatDate(detailState.booking.eventDate)}.
-                        Klient: {detailState.booking.clientFirstName || '-'} {detailState.booking.clientLastName || ''} ({detailState.booking.clientEmail})
+                        Rozpatrzono: {detailState.booking.decidedAt ? formatDate(detailState.booking.decidedAt, true) : 'Jeszcze nie rozpatrzono'}.
+                        {' '}Ostatni komentarz: {detailState.booking.decisionComment || 'Brak'}.
                       </p>
                     </div>
-                    <span className={`partner-dashboard__status-badge partner-dashboard__status-badge--${detailState.booking.status.toLowerCase()}`}>
-                      {formatStatus(detailState.booking.status)}
-                    </span>
-                  </div>
-
-                  <dl className="partner-dashboard__venue-meta partner-dashboard__venue-meta--expanded">
-                    <div>
-                      <dt>Liczba gosci</dt>
-                      <dd>{detailState.booking.estimatedGuests}</dd>
-                    </div>
-                    <div>
-                      <dt>Cena za osobe</dt>
-                      <dd>{formatCurrency(detailState.booking.pricePerGuest)}</dd>
-                    </div>
-                    <div>
-                      <dt>Budzet max klienta</dt>
-                      <dd>{formatCurrency(detailState.booking.maxPricePerGuest)}</dd>
-                    </div>
-                    <div>
-                      <dt>Koszt estymowany</dt>
-                      <dd>{formatCurrency(detailState.booking.totalEstimatedCost)}</dd>
-                    </div>
-                    <div>
-                      <dt>Standard</dt>
-                      <dd>{detailState.booking.dietLogistics.menuStandardCount}</dd>
-                    </div>
-                    <div>
-                      <dt>Vegetarian</dt>
-                      <dd>{detailState.booking.dietLogistics.menuVegetarianCount}</dd>
-                    </div>
-                    <div>
-                      <dt>Vegan</dt>
-                      <dd>{detailState.booking.dietLogistics.menuVeganCount}</dd>
-                    </div>
-                    <div>
-                      <dt>Gluten free</dt>
-                      <dd>{detailState.booking.dietLogistics.menuGlutenFreeCount}</dd>
-                    </div>
-                  </dl>
-
-                  <div className="partner-dashboard__feedback-panel">
-                    <strong>Alergie</strong>
-                    <p>{detailState.booking.dietLogistics.allergiesNotes || 'Brak uwag o alergiach.'}</p>
-                  </div>
-
-                  <div className="partner-dashboard__feedback-panel">
-                    <strong>Uwagi klienta</strong>
-                    <p>{detailState.booking.serviceNotes || 'Brak dodatkowych uwag.'}</p>
-                  </div>
-
-                  <form className="partner-dashboard__form" onSubmit={(event) => void handleDecisionSubmit(event)}>
-                    <label className="partner-dashboard__field">
-                      <span>Decyzja</span>
-                      <select
-                        className="partner-dashboard__select"
-                        value={decision}
-                        onChange={(event) => setDecision(event.target.value)}
-                        disabled={!canDecide}
-                      >
-                        <option value="APPROVED">Zatwierdz</option>
-                        <option value="REJECTED">Odrzuc</option>
-                      </select>
-                    </label>
-
-                    <label className="partner-dashboard__field partner-dashboard__field--full">
-                      <span>Komentarz managera</span>
-                      <textarea
-                        rows="5"
-                        value={comment}
-                        onChange={(event) => setComment(event.target.value)}
-                        disabled={!canDecide}
-                      />
-                    </label>
-
-                    {submitState.error ? <p className="partner-dashboard__error">{submitState.error}</p> : null}
-                    {submitState.status === 'success' ? (
-                      <p className="partner-dashboard__notice">Decyzja zostala zapisana.</p>
-                    ) : null}
-
-                    <div className="partner-dashboard__edit-actions">
-                      <button
-                        type="submit"
-                        className="partner-dashboard__submit"
-                        disabled={!canDecide || submitState.status === 'loading'}
-                      >
-                        {submitState.status === 'loading'
-                          ? 'Zapisywanie...'
-                          : canDecide
-                            ? 'Zapisz decyzje'
-                            : 'Zgloszenie juz rozpatrzone'}
-                      </button>
-                    </div>
-                  </form>
-
-                  <div className="partner-dashboard__placeholder-panel">
-                    <strong>Historia decyzji</strong>
-                    <span>
-                      Rozpatrzono: {detailState.booking.decidedAt ? formatDate(detailState.booking.decidedAt, true) : 'Jeszcze nie rozpatrzono'}.
-                      Ostatni komentarz: {detailState.booking.decisionComment || 'Brak'}.
-                    </span>
-                  </div>
+                  </article>
                 </>
               ) : null}
             </div>

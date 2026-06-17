@@ -284,8 +284,20 @@
   align-content: start;
 }
 
+.partner-dashboard__smartplanner-card {
+  padding: 22px;
+  border: 1px solid rgba(100, 66, 45, 0.14);
+  border-radius: 14px;
+  background: rgba(255, 250, 244, 0.9);
+  box-shadow: 0 10px 24px rgba(55, 31, 19, 0.05);
+}
+
 .partner-dashboard__venue-meta--expanded {
   margin-top: 24px;
+}
+
+.partner-dashboard__venue-meta--flush {
+  margin-top: 0;
 }
 
 .partner-dashboard__venue-card-button {
@@ -342,6 +354,36 @@
   border: 1px solid rgba(197, 141, 41, 0.22);
   border-radius: 12px;
   background: rgba(197, 141, 41, 0.1);
+}
+
+.partner-dashboard__feedback-panel--compact {
+  margin-top: 0;
+}
+
+.partner-dashboard__shopping-list {
+  display: grid;
+  gap: 12px;
+}
+
+.partner-dashboard__shopping-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(100, 66, 45, 0.1);
+}
+
+.partner-dashboard__shopping-item:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.partner-dashboard__shopping-item span {
+  color: #5b4a41;
+}
+
+.partner-dashboard__shopping-item strong {
+  color: #241712;
 }
 
 .partner-dashboard__messages-list {

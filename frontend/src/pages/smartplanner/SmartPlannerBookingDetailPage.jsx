@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { smartPlannerApi } from '../../api'
+import { formatSmartPlannerStatus } from '../../features/smartplanner/statusLabels.js'
 import './SmartPlannerBookingDetailPage.css'
 
 function formatCurrency(value) {
@@ -31,18 +32,6 @@ function formatDate(value, withTime = false) {
     month: 'long',
     year: 'numeric',
   }).format(new Date(value))
-}
-
-function formatStatus(status) {
-  const labels = {
-    SUBMITTED: 'Oczekuje',
-    APPROVED: 'Zatwierdzony',
-    REJECTED: 'Odrzucony',
-    EXPIRED: 'Wygasl',
-    CANCELLED: 'Anulowany',
-  }
-
-  return labels[status] ?? status
 }
 
 function SmartPlannerBookingDetailPage() {
@@ -105,10 +94,10 @@ function SmartPlannerBookingDetailPage() {
           <div>
             <span className="smartplanner-booking-detail__eyebrow">Booking #{booking.bookingId}</span>
             <h1>{booking.venueName}</h1>
-            <p>Status: {formatStatus(booking.status)}</p>
+            <p>Status: {formatSmartPlannerStatus(booking.status)}</p>
           </div>
           <div className={`smartplanner-booking-detail__status smartplanner-booking-detail__status--${booking.status.toLowerCase()}`}>
-            {formatStatus(booking.status)}
+            {formatSmartPlannerStatus(booking.status)}
           </div>
         </header>
 

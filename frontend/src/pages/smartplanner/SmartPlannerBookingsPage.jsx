@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { smartPlannerApi } from '../../api'
+import { SMART_PLANNER_STATUS_OPTIONS, formatSmartPlannerStatus } from '../../features/smartplanner/statusLabels.js'
 import './SmartPlannerBookingsPage.css'
-
-const STATUS_OPTIONS = ['', 'SUBMITTED', 'APPROVED', 'REJECTED', 'EXPIRED', 'CANCELLED']
 
 function formatCurrency(value) {
   if (value == null) {
@@ -27,18 +26,6 @@ function formatDate(value) {
     month: 'long',
     year: 'numeric',
   }).format(new Date(value))
-}
-
-function formatStatus(status) {
-  const labels = {
-    SUBMITTED: 'Oczekuje',
-    APPROVED: 'Zatwierdzony',
-    REJECTED: 'Odrzucony',
-    EXPIRED: 'Wygasl',
-    CANCELLED: 'Anulowany',
-  }
-
-  return labels[status] ?? status
 }
 
 function SmartPlannerBookingsPage() {
@@ -108,8 +95,8 @@ function SmartPlannerBookingsPage() {
           <label className="smartplanner-bookings__field">
             <span>Status</span>
             <select value={filters.status} onChange={(event) => setFilters((current) => ({ ...current, status: event.target.value }))}>
-              {STATUS_OPTIONS.map((option) => (
-                <option key={option || 'all'} value={option}>{option || 'Wszystkie'}</option>
+              {SMART_PLANNER_STATUS_OPTIONS.map((option) => (
+                <option key={option.value || 'all'} value={option.value}>{option.label}</option>
               ))}
             </select>
           </label>
@@ -167,7 +154,7 @@ function SmartPlannerBookingsPage() {
                       <div className="smartplanner-bookings__card-heading">
                         <div>
                           <span className={`smartplanner-bookings__badge smartplanner-bookings__badge--${booking.status.toLowerCase()}`}>
-                            {formatStatus(booking.status)}
+                            {formatSmartPlannerStatus(booking.status)}
                           </span>
                           <h2>{booking.venueName}</h2>
                         </div>

@@ -48,6 +48,13 @@ function PartnerDashboardSidebar({
           >
             Zgloszenia SmartPlanner
           </button>
+          <button
+            type="button"
+            className={`partner-dashboard__nav-button${managerView === 'shopping' ? ' partner-dashboard__nav-button--active' : ''}`}
+            onClick={() => onManagerViewChange('shopping')}
+          >
+            Lista zakupow
+          </button>
         </div>
       </section>
 

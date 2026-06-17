@@ -162,6 +162,14 @@
   font: inherit;
 }
 
+.smartplanner-page__field input:disabled,
+.smartplanner-page__field select:disabled,
+.smartplanner-page__field textarea:disabled {
+  background: rgba(235, 228, 222, 0.72);
+  color: #8f7a6d;
+  cursor: not-allowed;
+}
+
 .smartplanner-page__metric,
 .smartplanner-page__selected-offer {
   display: flex;

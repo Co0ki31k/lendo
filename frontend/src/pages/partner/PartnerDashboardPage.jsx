@@ -7,6 +7,7 @@ import ObjectWorkspaceView from './dashboard/ObjectWorkspaceView.jsx'
 import PartnerDashboardHeader from './dashboard/PartnerDashboardHeader.jsx'
 import PartnerDashboardSidebar from './dashboard/PartnerDashboardSidebar.jsx'
 import SelectVenueView from './dashboard/SelectVenueView.jsx'
+import SmartPlannerShoppingView from './dashboard/SmartPlannerShoppingView.jsx'
 import StatsView from './dashboard/StatsView.jsx'
 import SmartPlannerRequestsView from './dashboard/SmartPlannerRequestsView.jsx'
 import { INITIAL_VENUE_FORM_VALUES } from './dashboard/constants.js'
@@ -288,6 +289,10 @@ function PartnerDashboardPage() {
 
     if (managerView === 'smartplanner') {
       return <SmartPlannerRequestsView />
+    }
+
+    if (managerView === 'shopping') {
+      return <SmartPlannerShoppingView />
     }
 
     return (
