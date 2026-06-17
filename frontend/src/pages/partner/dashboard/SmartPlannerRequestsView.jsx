@@ -49,12 +49,14 @@ function SmartPlannerRequestsView() {
     error: '',
     booking: null,
   })
-  const [decision, setDecision] = useState('APPROVED')
+  const [decisionOverride, setDecisionOverride] = useState('')
   const [comment, setComment] = useState('')
   const [submitState, setSubmitState] = useState({
     status: 'idle',
     error: '',
   })
+  const canDecide = detailState.booking?.status === 'SUBMITTED' || detailState.booking?.status === 'CHANGE_REQUESTED'
+  const isChangeRequest = detailState.booking?.status === 'CHANGE_REQUESTED'
 
   useEffect(() => {
     let isMounted = true
@@ -148,8 +150,13 @@ function SmartPlannerRequestsView() {
     }
   }, [selectedBookingId])
 
-  const bookings = useMemo(() => listState.data?.items ?? [], [listState.data])
+  const bookings = useMemo(
+    () => (listState.data?.items ?? []).filter((booking) => booking.status !== 'CANCELLATION_REQUESTED'),
+    [listState.data],
+  )
   const summary = listState.data?.summary
+
+  const decision = decisionOverride || (detailState.booking?.status === 'CHANGE_REQUESTED' ? 'APPROVE_CHANGES' : 'APPROVED')
 
   async function handleDecisionSubmit(event) {
     event.preventDefault()
@@ -166,11 +173,12 @@ function SmartPlannerRequestsView() {
         comment: comment || null,
       })
 
-      setDetailState({
-        status: 'ready',
-        error: '',
-        booking: response,
-      })
+        setDetailState({
+          status: 'ready',
+          error: '',
+          booking: response,
+        })
+      setDecisionOverride('')
       setComment(response.decisionComment ?? '')
       setSubmitState({ status: 'success', error: '' })
       setListState((current) => {
@@ -198,7 +206,7 @@ function SmartPlannerRequestsView() {
           ...current,
           data: {
             ...current.data,
-            items: nextItems,
+            items: nextItems.filter((booking) => booking.status !== 'CANCELLATION_REQUESTED'),
             summary: nextSummary,
           },
         }
@@ -210,8 +218,6 @@ function SmartPlannerRequestsView() {
       })
     }
   }
-
-  const canDecide = detailState.booking?.status === 'SUBMITTED'
 
   return (
     <section className="partner-dashboard__workspace">
@@ -404,6 +410,31 @@ function SmartPlannerRequestsView() {
                     </div>
                   </article>
 
+                  {detailState.booking.clientRequestNotes ? (
+                    <article className="partner-dashboard__smartplanner-card">
+                      <div className="partner-dashboard__feedback-panel partner-dashboard__feedback-panel--compact">
+                        <strong>Powod klienta</strong>
+                        <p>{detailState.booking.clientRequestNotes}</p>
+                      </div>
+                    </article>
+                  ) : null}
+
+                  {detailState.booking.pendingChange ? (
+                    <article className="partner-dashboard__smartplanner-card">
+                      <strong className="partner-dashboard__shopping-title">Proponowane zmiany</strong>
+                      <dl className="partner-dashboard__venue-meta partner-dashboard__venue-meta--flush">
+                        <div><dt>Gosci</dt><dd>{detailState.booking.pendingChange.estimatedGuests}</dd></div>
+                        <div><dt>Budzet max</dt><dd>{formatCurrency(detailState.booking.pendingChange.maxPricePerGuest)}</dd></div>
+                        <div><dt>Service</dt><dd>{detailState.booking.pendingChange.fullService ? 'Full service' : 'Bez full service'}</dd></div>
+                        <div><dt>Standard</dt><dd>{detailState.booking.pendingChange.dietLogistics.menuStandardCount}</dd></div>
+                        <div><dt>Vegetarian</dt><dd>{detailState.booking.pendingChange.dietLogistics.menuVegetarianCount}</dd></div>
+                        <div><dt>Vegan</dt><dd>{detailState.booking.pendingChange.dietLogistics.menuVeganCount}</dd></div>
+                        <div><dt>Gluten free</dt><dd>{detailState.booking.pendingChange.dietLogistics.menuGlutenFreeCount}</dd></div>
+                      </dl>
+                      <p className="partner-dashboard__venue-note">{detailState.booking.pendingChange.requestNotes || 'Brak uzasadnienia zmiany.'}</p>
+                    </article>
+                  ) : null}
+
                   <article className="partner-dashboard__smartplanner-card">
                     <form className="partner-dashboard__form partner-dashboard__form--compact" onSubmit={(event) => void handleDecisionSubmit(event)}>
                       <label className="partner-dashboard__field">
@@ -411,11 +442,20 @@ function SmartPlannerRequestsView() {
                         <select
                           className="partner-dashboard__select"
                           value={decision}
-                          onChange={(event) => setDecision(event.target.value)}
+                          onChange={(event) => setDecisionOverride(event.target.value)}
                           disabled={!canDecide}
                         >
-                          <option value="APPROVED">Zatwierdz</option>
-                          <option value="REJECTED">Odrzuc</option>
+                          {isChangeRequest ? (
+                            <>
+                              <option value="APPROVE_CHANGES">Zatwierdz zmiany</option>
+                              <option value="REJECT_CHANGES">Odrzuc zmiany</option>
+                            </>
+                          ) : (
+                            <>
+                              <option value="APPROVED">Zatwierdz booking</option>
+                              <option value="REJECTED">Odrzuc booking</option>
+                            </>
+                          )}
                         </select>
                       </label>
 

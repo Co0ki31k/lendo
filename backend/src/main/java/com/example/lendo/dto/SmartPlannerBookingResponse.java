@@ -23,12 +23,18 @@ public record SmartPlannerBookingResponse(
         BigDecimal totalEstimatedCost,
         boolean fullService,
         String serviceNotes,
+        String clientRequestNotes,
         String decisionComment,
         LocalDateTime decidedAt,
         LocalDateTime createdAt,
-        DietLogistics dietLogistics
+        DietLogistics dietLogistics,
+        PendingChangePreview pendingChange
 ) {
-    public static SmartPlannerBookingResponse from(Booking booking, GuestDietLogistics dietLogistics) {
+    public static SmartPlannerBookingResponse from(
+            Booking booking,
+            GuestDietLogistics dietLogistics,
+            PendingChangePreview pendingChange
+    ) {
         return new SmartPlannerBookingResponse(
                 booking.getId(),
                 booking.getStatus().name(),
@@ -45,6 +51,7 @@ public record SmartPlannerBookingResponse(
                 booking.getTotalEstimatedCost(),
                 booking.isFullService(),
                 booking.getServiceNotes(),
+                booking.getClientRequestNotes(),
                 booking.getDecisionComment(),
                 booking.getDecidedAt(),
                 booking.getCreatedAt(),
@@ -54,7 +61,8 @@ public record SmartPlannerBookingResponse(
                         dietLogistics.getMenuVeganCount(),
                         dietLogistics.getMenuGlutenFreeCount(),
                         dietLogistics.getAllergiesNotes()
-                )
+                ),
+                pendingChange
         );
     }
 
@@ -64,6 +72,16 @@ public record SmartPlannerBookingResponse(
             Integer menuVeganCount,
             Integer menuGlutenFreeCount,
             String allergiesNotes
+    ) {
+    }
+
+    public record PendingChangePreview(
+            Integer estimatedGuests,
+            BigDecimal maxPricePerGuest,
+            boolean fullService,
+            String serviceNotes,
+            String requestNotes,
+            DietLogistics dietLogistics
     ) {
     }
 }

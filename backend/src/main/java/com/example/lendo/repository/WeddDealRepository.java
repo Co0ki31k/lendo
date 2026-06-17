@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 
 @Repository
 public interface WeddDealRepository extends JpaRepository<WeddDeal, Long> {
+    boolean existsByCalendarId(Long calendarId);
 
     @Query("""
             select wd

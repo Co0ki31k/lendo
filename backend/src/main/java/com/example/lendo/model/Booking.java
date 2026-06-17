@@ -64,6 +64,12 @@ public class Booking {
     @Column(name = "service_notes")
     private String serviceNotes;
 
+    @Column(name = "client_request_notes")
+    private String clientRequestNotes;
+
+    @Column(name = "pending_change_payload")
+    private String pendingChangePayload;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
     @Builder.Default

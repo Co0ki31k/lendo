@@ -19,3 +19,13 @@ export async function getBookingDetails(bookingId) {
   const response = await api.get(`/api/smart-planner/bookings/${bookingId}`)
   return response.data
 }
+
+export async function updateBooking(bookingId, payload) {
+  const response = await api.put(`/api/smart-planner/bookings/${bookingId}`, payload)
+  return response.data
+}
+
+export async function requestBookingCancellation(bookingId, payload) {
+  const response = await api.patch(`/api/smart-planner/bookings/${bookingId}/cancel-request`, payload)
+  return response.data
+}

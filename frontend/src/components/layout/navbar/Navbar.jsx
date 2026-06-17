@@ -27,7 +27,7 @@ function Navbar() {
               <span className="navbar__dot" aria-hidden="true">|</span>
             </>
           ) : null}
-          <NavLink to="/" className={({ isActive }) => `navbar__link${isActive ? ' navbar__link--active' : ''}`}>WeddChance</NavLink>
+          <NavLink to="/weddchance" className={({ isActive }) => `navbar__link${isActive ? ' navbar__link--active' : ''}`}>WeddChance</NavLink>
           <span className="navbar__dot" aria-hidden="true">|</span>
           <NavLink to="/favorites" className={({ isActive }) => `navbar__link${isActive ? ' navbar__link--active' : ''}`}>Ulubione</NavLink>
         </nav>

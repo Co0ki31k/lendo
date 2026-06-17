@@ -16,6 +16,7 @@ import SmartPlannerBookingsPage from './pages/smartplanner/SmartPlannerBookingsP
 import SmartPlannerBookingDetailPage from './pages/smartplanner/SmartPlannerBookingDetailPage.jsx'
 import PartnerSmartPlannerBookingsPage from './pages/partner/PartnerSmartPlannerBookingsPage.jsx'
 import PartnerSmartPlannerBookingDetailPage from './pages/partner/PartnerSmartPlannerBookingDetailPage.jsx'
+import WeddChancePage from './pages/weddchance/WeddChancePage.jsx'
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
         <Route path="/" element={<CatalogPage />} />
         <Route path="/favorites" element={<FavoritesPage />} />
         <Route path="/venues/:venueId" element={<VenueDetailPage />} />
+        <Route path="/weddchance" element={<WeddChancePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/oauth2/callback" element={<OAuthCallbackPage />} />

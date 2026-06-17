@@ -55,6 +55,13 @@ function PartnerDashboardSidebar({
           >
             Lista zakupow
           </button>
+          <button
+            type="button"
+            className={`partner-dashboard__nav-button${managerView === 'weddchance' ? ' partner-dashboard__nav-button--active' : ''}`}
+            onClick={() => onManagerViewChange('weddchance')}
+          >
+            WeddChance
+          </button>
         </div>
       </section>
 

@@ -386,6 +386,12 @@
   color: #241712;
 }
 
+.partner-dashboard__shopping-title {
+  display: block;
+  margin-bottom: 14px;
+  color: #241712;
+}
+
 .partner-dashboard__messages-list {
   display: grid;
   gap: 16px;
@@ -459,6 +465,13 @@
 .partner-dashboard__status-badge--approved {
   background: rgba(51, 122, 76, 0.14);
   color: #245236;
+}
+
+.partner-dashboard__status-badge--submitted,
+.partner-dashboard__status-badge--change_requested,
+.partner-dashboard__status-badge--cancellation_requested {
+  background: rgba(197, 141, 41, 0.18);
+  color: #7b5310;
 }
 
 .partner-dashboard__status-badge--pending {

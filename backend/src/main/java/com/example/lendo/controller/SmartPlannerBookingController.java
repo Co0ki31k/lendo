@@ -1,9 +1,11 @@
 package com.example.lendo.controller;
 
 import com.example.lendo.dto.CreateSmartPlannerBookingRequest;
+import com.example.lendo.dto.RequestSmartPlannerCancellationRequest;
 import com.example.lendo.dto.SmartPlannerBookingListFilter;
 import com.example.lendo.dto.SmartPlannerBookingListResponse;
 import com.example.lendo.dto.SmartPlannerBookingResponse;
+import com.example.lendo.dto.UpdateSmartPlannerBookingRequest;
 import com.example.lendo.model.User;
 import com.example.lendo.service.SmartPlannerBookingService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -14,8 +16,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -61,5 +65,25 @@ public class SmartPlannerBookingController {
             @PathVariable Long bookingId
     ) {
         return ResponseEntity.ok(smartPlannerBookingService.getBookingDetails(user, bookingId));
+    }
+
+    @PutMapping("/{bookingId}")
+    @Operation(summary = "Request update of approved smart planner booking")
+    public ResponseEntity<SmartPlannerBookingResponse> updateApprovedBooking(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long bookingId,
+            @Valid @RequestBody UpdateSmartPlannerBookingRequest request
+    ) {
+        return ResponseEntity.ok(smartPlannerBookingService.requestBookingUpdate(user, bookingId, request));
+    }
+
+    @PatchMapping("/{bookingId}/cancel-request")
+    @Operation(summary = "Request cancellation of approved smart planner booking")
+    public ResponseEntity<SmartPlannerBookingResponse> requestCancellation(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long bookingId,
+            @Valid @RequestBody RequestSmartPlannerCancellationRequest request
+    ) {
+        return ResponseEntity.ok(smartPlannerBookingService.requestBookingCancellation(user, bookingId, request));
     }
 }

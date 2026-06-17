@@ -69,6 +69,8 @@
 
 .partner-smartplanner-detail__status--submitted { background: rgba(164, 109, 36, 0.12); color: #8d5e15; }
 .partner-smartplanner-detail__status--approved { background: rgba(46, 113, 69, 0.12); color: #2f6b44; }
+.partner-smartplanner-detail__status--change_requested,
+.partner-smartplanner-detail__status--cancellation_requested { background: rgba(125, 47, 39, 0.12); color: #7d2f27; }
 .partner-smartplanner-detail__status--rejected { background: rgba(159, 43, 43, 0.1); color: #8a2323; }
 .partner-smartplanner-detail__status--expired,
 .partner-smartplanner-detail__status--cancelled { background: rgba(91, 74, 65, 0.12); color: #5b4a41; }

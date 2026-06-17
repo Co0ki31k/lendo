@@ -10,6 +10,8 @@ public record SmartPlannerBookingListResponse(
             long total,
             long submitted,
             long approved,
+            long changeRequested,
+            long cancellationRequested,
             long rejected,
             long expired,
             long cancelled

@@ -1,10 +1,12 @@
 package com.example.lendo.service;
 
 import com.example.lendo.dto.CreateSmartPlannerBookingRequest;
+import com.example.lendo.dto.RequestSmartPlannerCancellationRequest;
 import com.example.lendo.dto.SmartPlannerBookingDecisionRequest;
 import com.example.lendo.dto.SmartPlannerBookingListFilter;
 import com.example.lendo.dto.SmartPlannerBookingListResponse;
 import com.example.lendo.dto.SmartPlannerBookingResponse;
+import com.example.lendo.dto.UpdateSmartPlannerBookingRequest;
 import com.example.lendo.model.Booking;
 import com.example.lendo.model.BookingRequestStatus;
 import com.example.lendo.model.BookingStatus;
@@ -13,11 +15,19 @@ import com.example.lendo.model.User;
 import com.example.lendo.model.Venue;
 import com.example.lendo.model.VenueCalendar;
 import com.example.lendo.model.VenueStatus;
+import com.example.lendo.model.WeddDeal;
 import com.example.lendo.repository.BookingRepository;
 import com.example.lendo.repository.BookingStatusRepository;
+import com.example.lendo.repository.ContractRepository;
 import com.example.lendo.repository.GuestDietLogisticsRepository;
 import com.example.lendo.repository.VenueCalendarRepository;
 import com.example.lendo.repository.VenueRepository;
+import com.example.lendo.repository.WeddDealRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
@@ -25,10 +35,11 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -44,6 +55,9 @@ public class SmartPlannerBookingService {
     private final BookingStatusRepository bookingStatusRepository;
     private final BookingRepository bookingRepository;
     private final GuestDietLogisticsRepository guestDietLogisticsRepository;
+    private final ContractRepository contractRepository;
+    private final WeddDealRepository weddDealRepository;
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public SmartPlannerBookingResponse createBooking(User user, CreateSmartPlannerBookingRequest request) {
@@ -51,7 +65,16 @@ public class SmartPlannerBookingService {
                 .filter(Venue::isVerified)
                 .orElseThrow(() -> new RuntimeException("Obiekt nie istnieje"));
 
-        validateBookingRequest(venue, request);
+        validateBookingData(
+                venue,
+                request.estimatedGuests(),
+                request.maxPricePerGuest(),
+                Boolean.TRUE.equals(request.fullService()),
+                request.menuStandardCount(),
+                request.menuVegetarianCount(),
+                request.menuVeganCount(),
+                request.menuGlutenFreeCount()
+        );
 
         BookingStatus availableStatus = resolveCalendarStatus(AVAILABLE);
         BookingStatus provisionalStatus = resolveCalendarStatus(PROVISIONAL);
@@ -96,7 +119,65 @@ public class SmartPlannerBookingService {
                         .build()
         );
 
-        return SmartPlannerBookingResponse.from(booking, dietLogistics);
+        return toBookingResponse(booking, dietLogistics);
+    }
+
+    @Transactional
+    public SmartPlannerBookingResponse requestBookingUpdate(User user, Long bookingId, UpdateSmartPlannerBookingRequest request) {
+        Booking booking = requireClientBooking(user, bookingId);
+
+        if (booking.getStatus() != BookingRequestStatus.APPROVED && booking.getStatus() != BookingRequestStatus.CHANGE_REQUESTED) {
+            throw new RuntimeException("Tylko zatwierdzony booking moze zostac zmieniony");
+        }
+
+        validateBookingData(
+                booking.getVenue(),
+                request.estimatedGuests(),
+                request.maxPricePerGuest(),
+                Boolean.TRUE.equals(request.fullService()),
+                request.menuStandardCount(),
+                request.menuVegetarianCount(),
+                request.menuVeganCount(),
+                request.menuGlutenFreeCount()
+        );
+
+        booking.setStatus(BookingRequestStatus.CHANGE_REQUESTED);
+        booking.setClientRequestNotes(normalizeOptionalText(request.requestNotes()));
+        booking.setPendingChangePayload(serializePendingChange(new PendingChangePayload(
+                request.estimatedGuests(),
+                request.maxPricePerGuest(),
+                Boolean.TRUE.equals(request.fullService()),
+                normalizeOptionalText(request.serviceNotes()),
+                normalizeOptionalText(request.requestNotes()),
+                request.menuStandardCount(),
+                request.menuVegetarianCount(),
+                request.menuVeganCount(),
+                request.menuGlutenFreeCount(),
+                normalizeOptionalText(request.allergiesNotes())
+        )));
+        booking.setDecisionComment(null);
+        booking.setDecidedAt(null);
+
+        GuestDietLogistics dietLogistics = requireDietLogistics(booking.getId());
+        return toBookingResponse(booking, dietLogistics);
+    }
+
+    @Transactional
+    public SmartPlannerBookingResponse requestBookingCancellation(User user, Long bookingId, RequestSmartPlannerCancellationRequest request) {
+        Booking booking = requireClientBooking(user, bookingId);
+
+        if (booking.getStatus() != BookingRequestStatus.APPROVED && booking.getStatus() != BookingRequestStatus.CANCELLATION_REQUESTED) {
+            throw new RuntimeException("Tylko zatwierdzony booking moze zostac skierowany do anulacji");
+        }
+
+        booking.setStatus(BookingRequestStatus.CANCELLATION_REQUESTED);
+        booking.setClientRequestNotes(normalizeOptionalText(request.reason()));
+        booking.setPendingChangePayload(null);
+        booking.setDecisionComment(null);
+        booking.setDecidedAt(null);
+
+        GuestDietLogistics dietLogistics = requireDietLogistics(booking.getId());
+        return toBookingResponse(booking, dietLogistics);
     }
 
     @Transactional
@@ -119,10 +200,7 @@ public class SmartPlannerBookingService {
 
         expireIfNeeded(booking, resolveCalendarStatus(AVAILABLE));
 
-        GuestDietLogistics dietLogistics = guestDietLogisticsRepository.findById(booking.getId())
-                .orElseThrow(() -> new IllegalStateException("Brak danych logistycznych dla bookingu " + booking.getId()));
-
-        return SmartPlannerBookingResponse.from(booking, dietLogistics);
+        return toBookingResponse(booking, requireDietLogistics(booking.getId()));
     }
 
     @Transactional
@@ -145,17 +223,23 @@ public class SmartPlannerBookingService {
 
         expireIfNeeded(booking, resolveCalendarStatus(AVAILABLE));
 
-        if (booking.getStatus() != BookingRequestStatus.SUBMITTED) {
-            throw new RuntimeException("Tylko booking oczekujacy moze zostac rozpatrzony");
-        }
+        return switch (booking.getStatus()) {
+            case SUBMITTED -> decideInitialSubmission(booking, request);
+            case CHANGE_REQUESTED -> decideChangeRequest(booking, request);
+            case CANCELLATION_REQUESTED -> decideCancellationRequest(booking, request);
+            default -> throw new RuntimeException("Ten booking nie oczekuje na decyzje managera");
+        };
+    }
 
-        BookingRequestStatus decision = parseDecision(request.decision());
+    private SmartPlannerBookingResponse decideInitialSubmission(Booking booking, SmartPlannerBookingDecisionRequest request) {
+        BookingRequestStatus decision = parseInitialDecision(request.decision());
         BookingStatus availableStatus = resolveCalendarStatus(AVAILABLE);
         BookingStatus confirmedStatus = resolveCalendarStatus(CONFIRMED);
 
         booking.setStatus(decision);
         booking.setDecisionComment(normalizeOptionalText(request.comment()));
         booking.setDecidedAt(LocalDateTime.now());
+        booking.setClientRequestNotes(null);
 
         if (decision == BookingRequestStatus.APPROVED) {
             booking.getCalendar().setStatus(confirmedStatus);
@@ -165,10 +249,120 @@ public class SmartPlannerBookingService {
             booking.getCalendar().setProvisionalExpiresAt(null);
         }
 
-        GuestDietLogistics dietLogistics = guestDietLogisticsRepository.findById(booking.getId())
-                .orElseThrow(() -> new IllegalStateException("Brak danych logistycznych dla bookingu " + booking.getId()));
+        return toBookingResponse(booking, requireDietLogistics(booking.getId()));
+    }
 
-        return SmartPlannerBookingResponse.from(booking, dietLogistics);
+    private SmartPlannerBookingResponse decideChangeRequest(Booking booking, SmartPlannerBookingDecisionRequest request) {
+        ChangeDecision decision = parseChangeDecision(request.decision());
+        GuestDietLogistics dietLogistics = requireDietLogistics(booking.getId());
+
+        if (decision == ChangeDecision.APPROVE_CHANGES) {
+            PendingChangePayload payload = requirePendingChangePayload(booking);
+            applyPendingChange(booking, dietLogistics, payload);
+        }
+
+        booking.setStatus(BookingRequestStatus.APPROVED);
+        booking.setClientRequestNotes(null);
+        booking.setPendingChangePayload(null);
+        booking.setDecisionComment(normalizeOptionalText(request.comment()));
+        booking.setDecidedAt(LocalDateTime.now());
+
+        return toBookingResponse(booking, dietLogistics);
+    }
+
+    private SmartPlannerBookingResponse decideCancellationRequest(Booking booking, SmartPlannerBookingDecisionRequest request) {
+        CancellationDecision decision = parseCancellationDecision(request.decision());
+        GuestDietLogistics dietLogistics = requireDietLogistics(booking.getId());
+
+        if (decision == CancellationDecision.REJECT_CANCELLATION) {
+            booking.setStatus(BookingRequestStatus.APPROVED);
+            booking.setClientRequestNotes(null);
+            booking.setDecisionComment(normalizeOptionalText(request.comment()));
+            booking.setDecidedAt(LocalDateTime.now());
+            return toBookingResponse(booking, dietLogistics);
+        }
+
+        if (decision == CancellationDecision.APPROVE_CANCELLATION_WEDDCHANCE) {
+            createWeddChanceFromBooking(booking, request);
+        }
+
+        BookingStatus availableStatus = resolveCalendarStatus(AVAILABLE);
+        booking.getCalendar().setStatus(availableStatus);
+        booking.getCalendar().setProvisionalExpiresAt(null);
+        booking.setStatus(BookingRequestStatus.CANCELLED);
+        booking.setDecisionComment(normalizeOptionalText(request.comment()));
+        booking.setDecidedAt(LocalDateTime.now());
+
+        SmartPlannerBookingResponse response = toBookingResponse(booking, dietLogistics);
+        deleteBookingTraces(booking);
+        return response;
+    }
+
+    private void createWeddChanceFromBooking(Booking booking, SmartPlannerBookingDecisionRequest request) {
+        if (weddDealRepository.existsByCalendarId(booking.getCalendar().getId())) {
+            throw new RuntimeException("Dla tego terminu istnieje juz oferta WeddChance");
+        }
+
+        if (request.discountPercentage() == null || request.specialPricePerGuest() == null) {
+            throw new RuntimeException("Do stworzenia WeddChance wymagany jest rabat i cena specjalna");
+        }
+
+        if (request.specialPricePerGuest().compareTo(booking.getVenue().getBasePricePerGuest()) >= 0) {
+            throw new RuntimeException("Cena specjalna musi byc nizsza niz standardowa cena obiektu");
+        }
+
+        boolean allowAdjustment = Boolean.TRUE.equals(request.allowGuestCountAdjustment());
+        Integer minGuestCount = allowAdjustment ? request.minGuestCount() : booking.getEstimatedGuests();
+        Integer maxGuestCount = allowAdjustment ? request.maxGuestCount() : booking.getEstimatedGuests();
+
+        if (minGuestCount == null || maxGuestCount == null || minGuestCount > maxGuestCount) {
+            throw new RuntimeException("Zakres liczby gosci dla WeddChance jest niepoprawny");
+        }
+
+        weddDealRepository.save(
+                WeddDeal.builder()
+                        .venue(booking.getVenue())
+                        .calendar(booking.getCalendar())
+                        .discountPercentage(request.discountPercentage())
+                        .specialPricePerGuest(request.specialPricePerGuest())
+                        .originalGuestCount(booking.getEstimatedGuests())
+                        .allowGuestCountAdjustment(allowAdjustment)
+                        .minGuestCount(minGuestCount)
+                        .maxGuestCount(maxGuestCount)
+                        .description(normalizeOptionalText(request.dealDescription()))
+                        .active(true)
+                        .build()
+        );
+    }
+
+    private void deleteBookingTraces(Booking booking) {
+        contractRepository.findByBookingId(booking.getId()).ifPresent(contractRepository::delete);
+        bookingRepository.delete(booking);
+    }
+
+    private void applyPendingChange(Booking booking, GuestDietLogistics dietLogistics, PendingChangePayload payload) {
+        validateBookingData(
+                booking.getVenue(),
+                payload.estimatedGuests(),
+                payload.maxPricePerGuest(),
+                payload.fullService(),
+                payload.menuStandardCount(),
+                payload.menuVegetarianCount(),
+                payload.menuVeganCount(),
+                payload.menuGlutenFreeCount()
+        );
+
+        booking.setEstimatedGuests(payload.estimatedGuests());
+        booking.setMaxPricePerGuest(payload.maxPricePerGuest());
+        booking.setFullService(payload.fullService());
+        booking.setServiceNotes(payload.serviceNotes());
+        booking.setTotalEstimatedCost(booking.getPricePerGuest().multiply(BigDecimal.valueOf(payload.estimatedGuests())));
+
+        dietLogistics.setMenuStandardCount(payload.menuStandardCount());
+        dietLogistics.setMenuVegetarianCount(payload.menuVegetarianCount());
+        dietLogistics.setMenuVeganCount(payload.menuVeganCount());
+        dietLogistics.setMenuGlutenFreeCount(payload.menuGlutenFreeCount());
+        dietLogistics.setAllergiesNotes(payload.allergiesNotes());
     }
 
     private SmartPlannerBookingListResponse toBookingListResponse(List<Booking> bookings) {
@@ -179,7 +373,7 @@ public class SmartPlannerBookingService {
                 .collect(Collectors.toMap(GuestDietLogistics::getBookingId, logistics -> logistics));
 
         List<SmartPlannerBookingResponse> items = bookings.stream()
-                .map(booking -> SmartPlannerBookingResponse.from(
+                .map(booking -> toBookingResponse(
                         booking,
                         requireDietLogistics(dietLogisticsByBookingId, booking.getId())
                 ))
@@ -199,9 +393,34 @@ public class SmartPlannerBookingService {
                         bookings.size(),
                         counters.get(BookingRequestStatus.SUBMITTED),
                         counters.get(BookingRequestStatus.APPROVED),
+                        counters.get(BookingRequestStatus.CHANGE_REQUESTED),
+                        counters.get(BookingRequestStatus.CANCELLATION_REQUESTED),
                         counters.get(BookingRequestStatus.REJECTED),
                         counters.get(BookingRequestStatus.EXPIRED),
                         counters.get(BookingRequestStatus.CANCELLED)
+                )
+        );
+    }
+
+    private SmartPlannerBookingResponse toBookingResponse(Booking booking, GuestDietLogistics dietLogistics) {
+        PendingChangePayload payload = deserializePendingChange(booking.getPendingChangePayload());
+
+        return SmartPlannerBookingResponse.from(
+                booking,
+                dietLogistics,
+                payload == null ? null : new SmartPlannerBookingResponse.PendingChangePreview(
+                        payload.estimatedGuests(),
+                        payload.maxPricePerGuest(),
+                        payload.fullService(),
+                        payload.serviceNotes(),
+                        payload.requestNotes(),
+                        new SmartPlannerBookingResponse.DietLogistics(
+                                payload.menuStandardCount(),
+                                payload.menuVegetarianCount(),
+                                payload.menuVeganCount(),
+                                payload.menuGlutenFreeCount(),
+                                payload.allergiesNotes()
+                        )
                 )
         );
     }
@@ -214,13 +433,35 @@ public class SmartPlannerBookingService {
         return dietLogistics;
     }
 
-    private void validateBookingRequest(Venue venue, CreateSmartPlannerBookingRequest request) {
-        int configuredMenus = request.menuStandardCount()
-                + request.menuVegetarianCount()
-                + request.menuVeganCount()
-                + request.menuGlutenFreeCount();
+    private GuestDietLogistics requireDietLogistics(Long bookingId) {
+        return guestDietLogisticsRepository.findById(bookingId)
+                .orElseThrow(() -> new IllegalStateException("Brak danych logistycznych dla bookingu " + bookingId));
+    }
 
-        if (Boolean.TRUE.equals(request.fullService())) {
+    private Booking requireClientBooking(User user, Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking nie istnieje"));
+
+        if (!booking.getClient().getId().equals(user.getId())) {
+            throw new AccessDeniedException("Nie masz dostepu do tego bookingu");
+        }
+
+        return booking;
+    }
+
+    private void validateBookingData(
+            Venue venue,
+            Integer estimatedGuests,
+            BigDecimal maxPricePerGuest,
+            boolean fullService,
+            Integer menuStandardCount,
+            Integer menuVegetarianCount,
+            Integer menuVeganCount,
+            Integer menuGlutenFreeCount
+    ) {
+        int configuredMenus = menuStandardCount + menuVegetarianCount + menuVeganCount + menuGlutenFreeCount;
+
+        if (fullService) {
             if (configuredMenus <= 0) {
                 throw new RuntimeException("Musisz podac co najmniej jedno menu");
             }
@@ -228,15 +469,15 @@ public class SmartPlannerBookingService {
             throw new RuntimeException("Dla bookingu bez full service liczby menu musza byc rowne zero");
         }
 
-        if (configuredMenus > request.estimatedGuests()) {
+        if (configuredMenus > estimatedGuests) {
             throw new RuntimeException("Suma menu nie moze przekraczac liczby gosci");
         }
 
-        if (request.estimatedGuests() < venue.getCapacityMin() || request.estimatedGuests() > venue.getCapacityMax()) {
+        if (estimatedGuests < venue.getCapacityMin() || estimatedGuests > venue.getCapacityMax()) {
             throw new RuntimeException("Liczba gosci jest poza zakresem pojemnosci obiektu");
         }
 
-        if (venue.getBasePricePerGuest().compareTo(request.maxPricePerGuest()) > 0) {
+        if (venue.getBasePricePerGuest().compareTo(maxPricePerGuest) > 0) {
             throw new RuntimeException("Obiekt przekracza maksymalna cene za osobe");
         }
     }
@@ -255,7 +496,12 @@ public class SmartPlannerBookingService {
 
         if (bookingRepository.existsByCalendarIdAndStatusIn(
                 calendar.getId(),
-                List.of(BookingRequestStatus.SUBMITTED, BookingRequestStatus.APPROVED)
+                List.of(
+                        BookingRequestStatus.SUBMITTED,
+                        BookingRequestStatus.APPROVED,
+                        BookingRequestStatus.CHANGE_REQUESTED,
+                        BookingRequestStatus.CANCELLATION_REQUESTED
+                )
         )) {
             throw new RuntimeException("Dla tego terminu istnieje juz aktywne zgloszenie");
         }
@@ -298,16 +544,33 @@ public class SmartPlannerBookingService {
         }
     }
 
-    private BookingRequestStatus parseDecision(String rawDecision) {
+    private BookingRequestStatus parseInitialDecision(String rawDecision) {
         try {
-            BookingRequestStatus decision = BookingRequestStatus.valueOf(rawDecision.trim().toUpperCase());
+            BookingRequestStatus decision = BookingRequestStatus.valueOf(rawDecision.trim().toUpperCase(Locale.ROOT));
             if (decision != BookingRequestStatus.APPROVED && decision != BookingRequestStatus.REJECTED) {
                 throw new IllegalArgumentException("unsupported");
             }
             return decision;
         } catch (IllegalArgumentException ex) {
-            throw new RuntimeException("Decyzja musi miec wartosc APPROVED albo REJECTED");
+            throw new RuntimeException("Decyzja dla nowego bookingu musi miec wartosc APPROVED albo REJECTED");
         }
+    }
+
+    private ChangeDecision parseChangeDecision(String rawDecision) {
+        return switch (rawDecision.trim().toUpperCase(Locale.ROOT)) {
+            case "APPROVE_CHANGES" -> ChangeDecision.APPROVE_CHANGES;
+            case "REJECT_CHANGES" -> ChangeDecision.REJECT_CHANGES;
+            default -> throw new RuntimeException("Decyzja dla zmian musi miec wartosc APPROVE_CHANGES albo REJECT_CHANGES");
+        };
+    }
+
+    private CancellationDecision parseCancellationDecision(String rawDecision) {
+        return switch (rawDecision.trim().toUpperCase(Locale.ROOT)) {
+            case "APPROVE_CANCELLATION_REMOVE" -> CancellationDecision.APPROVE_CANCELLATION_REMOVE;
+            case "APPROVE_CANCELLATION_WEDDCHANCE" -> CancellationDecision.APPROVE_CANCELLATION_WEDDCHANCE;
+            case "REJECT_CANCELLATION" -> CancellationDecision.REJECT_CANCELLATION;
+            default -> throw new RuntimeException("Nieobslugiwany typ decyzji dla anulacji");
+        };
     }
 
     private BookingStatus resolveCalendarStatus(String statusName) {
@@ -317,6 +580,34 @@ public class SmartPlannerBookingService {
 
     private String normalizeOptionalText(String value) {
         return value != null && !value.isBlank() ? value.trim() : null;
+    }
+
+    private String serializePendingChange(PendingChangePayload payload) {
+        try {
+            return objectMapper.writeValueAsString(payload);
+        } catch (JsonProcessingException ex) {
+            throw new RuntimeException("Nie udalo sie zapisac zmian bookingu");
+        }
+    }
+
+    private PendingChangePayload deserializePendingChange(String payload) {
+        if (payload == null || payload.isBlank()) {
+            return null;
+        }
+
+        try {
+            return objectMapper.readValue(payload, PendingChangePayload.class);
+        } catch (JsonProcessingException ex) {
+            throw new RuntimeException("Nie udalo sie odczytac zmian bookingu");
+        }
+    }
+
+    private PendingChangePayload requirePendingChangePayload(Booking booking) {
+        PendingChangePayload payload = deserializePendingChange(booking.getPendingChangePayload());
+        if (payload == null) {
+            throw new RuntimeException("Brak zapisanej propozycji zmian");
+        }
+        return payload;
     }
 
     private org.springframework.data.jpa.domain.Specification<Booking> buildClientBookingSpecification(
@@ -345,35 +636,26 @@ public class SmartPlannerBookingService {
         return (root, query, cb) -> buildFilterPredicate(root, cb, filter);
     }
 
-    private jakarta.persistence.criteria.Predicate buildFilterPredicate(
-            jakarta.persistence.criteria.Root<Booking> root,
-            jakarta.persistence.criteria.CriteriaBuilder cb,
+    private Predicate buildFilterPredicate(
+            Root<Booking> root,
+            CriteriaBuilder cb,
             SmartPlannerBookingListFilter filter
     ) {
-        List<jakarta.persistence.criteria.Predicate> predicates = new java.util.ArrayList<>();
+        List<Predicate> predicates = new ArrayList<>();
 
         if (filter != null && filter.status() != null && !filter.status().isBlank()) {
-            predicates.add(cb.equal(
-                    root.get("status"),
-                    parseBookingStatus(filter.status())
-            ));
+            predicates.add(cb.equal(root.get("status"), parseBookingStatus(filter.status())));
         }
 
         if (filter != null && filter.eventDateFrom() != null) {
-            predicates.add(cb.greaterThanOrEqualTo(
-                    root.get("calendar").get("eventDate"),
-                    filter.eventDateFrom()
-            ));
+            predicates.add(cb.greaterThanOrEqualTo(root.get("calendar").get("eventDate"), filter.eventDateFrom()));
         }
 
         if (filter != null && filter.eventDateTo() != null) {
-            predicates.add(cb.lessThanOrEqualTo(
-                    root.get("calendar").get("eventDate"),
-                    filter.eventDateTo()
-            ));
+            predicates.add(cb.lessThanOrEqualTo(root.get("calendar").get("eventDate"), filter.eventDateTo()));
         }
 
-        return cb.and(predicates.toArray(jakarta.persistence.criteria.Predicate[]::new));
+        return cb.and(predicates.toArray(Predicate[]::new));
     }
 
     private BookingRequestStatus parseBookingStatus(String rawStatus) {
@@ -382,5 +664,30 @@ public class SmartPlannerBookingService {
         } catch (IllegalArgumentException ex) {
             throw new RuntimeException("Nieobslugiwany status bookingu");
         }
+    }
+
+    private enum ChangeDecision {
+        APPROVE_CHANGES,
+        REJECT_CHANGES
+    }
+
+    private enum CancellationDecision {
+        APPROVE_CANCELLATION_REMOVE,
+        APPROVE_CANCELLATION_WEDDCHANCE,
+        REJECT_CANCELLATION
+    }
+
+    private record PendingChangePayload(
+            Integer estimatedGuests,
+            BigDecimal maxPricePerGuest,
+            boolean fullService,
+            String serviceNotes,
+            String requestNotes,
+            Integer menuStandardCount,
+            Integer menuVegetarianCount,
+            Integer menuVeganCount,
+            Integer menuGlutenFreeCount,
+            String allergiesNotes
+    ) {
     }
 }

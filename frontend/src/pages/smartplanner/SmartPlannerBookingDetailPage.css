@@ -68,6 +68,8 @@
 
 .smartplanner-booking-detail__status--submitted { background: rgba(164, 109, 36, 0.12); color: #8d5e15; }
 .smartplanner-booking-detail__status--approved { background: rgba(46, 113, 69, 0.12); color: #2f6b44; }
+.smartplanner-booking-detail__status--change_requested,
+.smartplanner-booking-detail__status--cancellation_requested { background: rgba(125, 47, 39, 0.12); color: #7d2f27; }
 .smartplanner-booking-detail__status--rejected { background: rgba(159, 43, 43, 0.1); color: #8a2323; }
 .smartplanner-booking-detail__status--expired,
 .smartplanner-booking-detail__status--cancelled { background: rgba(91, 74, 65, 0.12); color: #5b4a41; }
@@ -125,6 +127,73 @@
   color: #7a1d1d;
 }
 
+.smartplanner-booking-detail__error--inline,
+.smartplanner-booking-detail__success {
+  width: min(1360px, 100%);
+  margin: 20px auto 0;
+  padding: 14px 16px;
+  border-radius: 12px;
+}
+
+.smartplanner-booking-detail__success {
+  border: 1px solid rgba(46, 113, 69, 0.2);
+  background: rgba(46, 113, 69, 0.08);
+  color: #2f6b44;
+}
+
+.smartplanner-booking-detail__form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.smartplanner-booking-detail__field {
+  display: grid;
+  gap: 8px;
+  color: #241712;
+  font-weight: 600;
+}
+
+.smartplanner-booking-detail__field--full {
+  grid-column: 1 / -1;
+}
+
+.smartplanner-booking-detail__field input,
+.smartplanner-booking-detail__field select,
+.smartplanner-booking-detail__field textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid rgba(125, 47, 39, 0.14);
+  border-radius: 12px;
+  background: #fffdf9;
+  color: #241712;
+  font: inherit;
+}
+
+.smartplanner-booking-detail__field input:disabled,
+.smartplanner-booking-detail__field select:disabled,
+.smartplanner-booking-detail__field textarea:disabled {
+  background: rgba(235, 228, 222, 0.72);
+  color: #8f7a6d;
+  cursor: not-allowed;
+}
+
+.smartplanner-booking-detail__action {
+  width: fit-content;
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 999px;
+  background: #7d2f27;
+  color: #fffaf7;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.smartplanner-booking-detail__action--danger {
+  background: #8a2323;
+}
+
 @media (max-width: 960px) {
   .smartplanner-booking-detail__header,
   .smartplanner-booking-detail__grid {
@@ -140,5 +209,9 @@
 
   .smartplanner-booking-detail__panel {
     padding: 22px 18px;
+  }
+
+  .smartplanner-booking-detail__form {
+    grid-template-columns: 1fr;
   }
 }

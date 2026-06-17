@@ -1,0 +1,165 @@
+.weddchance-page {
+  min-height: calc(100vh - 92px);
+  padding: 32px;
+  background:
+    radial-gradient(circle at top right, rgba(141, 58, 45, 0.08), transparent 28%),
+    linear-gradient(180deg, rgba(255, 249, 242, 0.9), rgba(250, 241, 232, 0.72));
+}
+
+.weddchance-page__hero,
+.weddchance-page__summary,
+.weddchance-page__list,
+.weddchance-page__notice,
+.weddchance-page__error {
+  width: min(1360px, 100%);
+  margin: 0 auto;
+}
+
+.weddchance-page__hero,
+.weddchance-page__summary,
+.weddchance-page__card,
+.weddchance-page__notice {
+  border: 1px solid rgba(100, 66, 45, 0.14);
+  border-radius: 18px;
+  background: rgba(255, 252, 247, 0.96);
+  box-shadow: 0 14px 34px rgba(55, 31, 19, 0.08);
+}
+
+.weddchance-page__hero {
+  padding: 28px 32px;
+}
+
+.weddchance-page__eyebrow {
+  display: inline-block;
+  margin-bottom: 12px;
+  color: #8d3a2d;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.weddchance-page__hero h1,
+.weddchance-page__topline h2 {
+  margin: 0;
+  color: #241712;
+}
+
+.weddchance-page__hero p,
+.weddchance-page__topline p,
+.weddchance-page__description,
+.weddchance-page__meta span {
+  color: #5b4a41;
+}
+
+.weddchance-page__summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+  padding: 20px 24px;
+}
+
+.weddchance-page__summary article {
+  display: grid;
+  gap: 8px;
+}
+
+.weddchance-page__summary strong {
+  color: #241712;
+  font-size: 2rem;
+}
+
+.weddchance-page__list {
+  display: grid;
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.weddchance-page__card {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 20px;
+  padding: 20px;
+}
+
+.weddchance-page__media img,
+.weddchance-page__media-fallback {
+  width: 100%;
+  height: 200px;
+  border-radius: 14px;
+  object-fit: cover;
+  background: rgba(100, 66, 45, 0.08);
+}
+
+.weddchance-page__media-fallback {
+  display: grid;
+  place-items: center;
+  color: #7d2f27;
+  font-weight: 700;
+}
+
+.weddchance-page__topline {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.weddchance-page__badge {
+  display: inline-flex;
+  margin-bottom: 10px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(125, 47, 39, 0.12);
+  color: #7d2f27;
+  font-weight: 700;
+}
+
+.weddchance-page__pricing {
+  display: grid;
+  text-align: right;
+}
+
+.weddchance-page__pricing strong {
+  color: #241712;
+  font-size: 1.2rem;
+}
+
+.weddchance-page__pricing span {
+  color: #8f7a6d;
+}
+
+.weddchance-page__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin-top: 12px;
+}
+
+.weddchance-page__description {
+  margin: 14px 0 0;
+  line-height: 1.6;
+}
+
+.weddchance-page__notice,
+.weddchance-page__error {
+  margin-top: 24px;
+  padding: 18px 20px;
+}
+
+.weddchance-page__error {
+  border: 1px solid rgba(159, 43, 43, 0.2);
+  border-radius: 18px;
+  background: rgba(159, 43, 43, 0.08);
+  color: #7a1d1d;
+}
+
+@media (max-width: 960px) {
+  .weddchance-page__card {
+    grid-template-columns: 1fr;
+  }
+
+  .weddchance-page__summary {
+    grid-template-columns: 1fr;
+  }
+}
