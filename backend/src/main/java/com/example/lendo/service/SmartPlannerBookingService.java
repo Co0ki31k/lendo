@@ -312,10 +312,10 @@ public class SmartPlannerBookingService {
         }
 
         boolean allowAdjustment = Boolean.TRUE.equals(request.allowGuestCountAdjustment());
-        Integer minGuestCount = allowAdjustment ? request.minGuestCount() : booking.getEstimatedGuests();
-        Integer maxGuestCount = allowAdjustment ? request.maxGuestCount() : booking.getEstimatedGuests();
+        Integer minGuestCount = allowAdjustment ? request.minGuestCount() : null;
+        Integer maxGuestCount = allowAdjustment ? request.maxGuestCount() : null;
 
-        if (minGuestCount == null || maxGuestCount == null || minGuestCount > maxGuestCount) {
+        if (allowAdjustment && (minGuestCount == null || maxGuestCount == null || minGuestCount > maxGuestCount)) {
             throw new RuntimeException("Zakres liczby gosci dla WeddChance jest niepoprawny");
         }
 
