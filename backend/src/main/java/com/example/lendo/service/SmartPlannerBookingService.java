@@ -25,6 +25,7 @@ import com.example.lendo.repository.VenueRepository;
 import com.example.lendo.repository.WeddDealRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
@@ -58,6 +59,7 @@ public class SmartPlannerBookingService {
     private final ContractRepository contractRepository;
     private final WeddDealRepository weddDealRepository;
     private final ObjectMapper objectMapper;
+    private final EntityManager entityManager;
 
     @Transactional
     public SmartPlannerBookingResponse createBooking(User user, CreateSmartPlannerBookingRequest request) {
@@ -294,7 +296,7 @@ public class SmartPlannerBookingService {
         booking.setDecidedAt(LocalDateTime.now());
 
         SmartPlannerBookingResponse response = toBookingResponse(booking, dietLogistics);
-        deleteBookingTraces(booking);
+        deleteBookingTraces(booking, dietLogistics);
         return response;
     }
 
@@ -335,9 +337,18 @@ public class SmartPlannerBookingService {
         );
     }
 
-    private void deleteBookingTraces(Booking booking) {
+    private void deleteBookingTraces(Booking booking, GuestDietLogistics dietLogistics) {
         contractRepository.findByBookingId(booking.getId()).ifPresent(contractRepository::delete);
-        bookingRepository.delete(booking);
+        entityManager.flush();
+
+        entityManager.detach(dietLogistics);
+        entityManager.detach(booking);
+
+        guestDietLogisticsRepository.deleteByBookingId(booking.getId());
+        guestDietLogisticsRepository.flush();
+
+        bookingRepository.deleteById(booking.getId());
+        bookingRepository.flush();
     }
 
     private void applyPendingChange(Booking booking, GuestDietLogistics dietLogistics, PendingChangePayload payload) {
