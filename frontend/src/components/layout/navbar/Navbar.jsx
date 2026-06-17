@@ -18,8 +18,14 @@ function Navbar() {
         <nav className="navbar__center" aria-label="Glowna nawigacja">
           <NavLink to="/" className={({ isActive }) => `navbar__link${isActive ? ' navbar__link--active' : ''}`}>Katalog sal</NavLink>
           <span className="navbar__dot" aria-hidden="true">|</span>
-          <button type="button" className="navbar__link">SmartPlaner</button>
+          <NavLink to="/smartplanner" className={({ isActive }) => `navbar__link${isActive ? ' navbar__link--active' : ''}`}>SmartPlanner</NavLink>
           <span className="navbar__dot" aria-hidden="true">|</span>
+          {isAuthenticated && isClient ? (
+            <>
+              <NavLink to="/smartplanner/bookings" className={({ isActive }) => `navbar__link${isActive ? ' navbar__link--active' : ''}`}>Moje zgloszenia</NavLink>
+              <span className="navbar__dot" aria-hidden="true">|</span>
+            </>
+          ) : null}
           <button type="button" className="navbar__link">WeddChance</button>
           <span className="navbar__dot" aria-hidden="true">|</span>
           <NavLink to="/favorites" className={({ isActive }) => `navbar__link${isActive ? ' navbar__link--active' : ''}`}>Ulubione</NavLink>
@@ -32,6 +38,11 @@ function Navbar() {
             {(isClient || isManager) ? (
               <Link to="/partner" className="navbar__button navbar__button--secondary">
                 Strefa partnera
+              </Link>
+            ) : null}
+            {isManager ? (
+              <Link to="/partner/smartplanner/bookings" className="navbar__button navbar__button--secondary">
+                Bookingi SmartPlanner
               </Link>
             ) : null}
             <span className="navbar__status">

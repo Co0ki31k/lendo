@@ -79,3 +79,18 @@ export async function updateVenueImageOrder(venueId, items) {
   })
   return response.data
 }
+
+export async function getSmartPlannerBookings(params = {}) {
+  const response = await api.get('/api/partner/smart-planner/bookings', { params })
+  return response.data
+}
+
+export async function getSmartPlannerBookingDetails(bookingId) {
+  const response = await api.get(`/api/partner/smart-planner/bookings/${bookingId}`)
+  return response.data
+}
+
+export async function decideSmartPlannerBooking(bookingId, payload) {
+  const response = await api.patch(`/api/partner/smart-planner/bookings/${bookingId}/decision`, payload)
+  return response.data
+}

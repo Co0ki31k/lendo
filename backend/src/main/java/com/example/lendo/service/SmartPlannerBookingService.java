@@ -1,0 +1,382 @@
+package com.example.lendo.service;
+
+import com.example.lendo.dto.CreateSmartPlannerBookingRequest;
+import com.example.lendo.dto.SmartPlannerBookingDecisionRequest;
+import com.example.lendo.dto.SmartPlannerBookingListFilter;
+import com.example.lendo.dto.SmartPlannerBookingListResponse;
+import com.example.lendo.dto.SmartPlannerBookingResponse;
+import com.example.lendo.model.Booking;
+import com.example.lendo.model.BookingRequestStatus;
+import com.example.lendo.model.BookingStatus;
+import com.example.lendo.model.GuestDietLogistics;
+import com.example.lendo.model.User;
+import com.example.lendo.model.Venue;
+import com.example.lendo.model.VenueCalendar;
+import com.example.lendo.model.VenueStatus;
+import com.example.lendo.repository.BookingRepository;
+import com.example.lendo.repository.BookingStatusRepository;
+import com.example.lendo.repository.GuestDietLogisticsRepository;
+import com.example.lendo.repository.VenueCalendarRepository;
+import com.example.lendo.repository.VenueRepository;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Locale;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class SmartPlannerBookingService {
+    private static final String AVAILABLE = "AVAILABLE";
+    private static final String PROVISIONAL = "PROVISIONAL";
+    private static final String CONFIRMED = "CONFIRMED";
+    private static final long PROVISIONAL_HOLD_HOURS = 48;
+
+    private final VenueRepository venueRepository;
+    private final VenueCalendarRepository venueCalendarRepository;
+    private final BookingStatusRepository bookingStatusRepository;
+    private final BookingRepository bookingRepository;
+    private final GuestDietLogisticsRepository guestDietLogisticsRepository;
+
+    @Transactional
+    public SmartPlannerBookingResponse createBooking(User user, CreateSmartPlannerBookingRequest request) {
+        Venue venue = venueRepository.findByIdAndStatus(request.venueId(), VenueStatus.APPROVED)
+                .filter(Venue::isVerified)
+                .orElseThrow(() -> new RuntimeException("Obiekt nie istnieje"));
+
+        validateBookingRequest(venue, request);
+
+        BookingStatus availableStatus = resolveCalendarStatus(AVAILABLE);
+        BookingStatus provisionalStatus = resolveCalendarStatus(PROVISIONAL);
+
+        VenueCalendar calendar = venueCalendarRepository.findByVenueIdAndEventDate(venue.getId(), request.eventDate())
+                .map(existing -> prepareCalendarForSubmission(existing, availableStatus, provisionalStatus))
+                .orElseGet(() -> venueCalendarRepository.save(
+                        VenueCalendar.builder()
+                                .venue(venue)
+                                .eventDate(request.eventDate())
+                                .status(provisionalStatus)
+                                .provisionalExpiresAt(LocalDateTime.now().plusHours(PROVISIONAL_HOLD_HOURS))
+                                .build()
+                ));
+
+        BigDecimal pricePerGuest = venue.getBasePricePerGuest();
+        BigDecimal totalEstimatedCost = pricePerGuest.multiply(BigDecimal.valueOf(request.estimatedGuests()));
+
+        Booking booking = bookingRepository.save(
+                Booking.builder()
+                        .client(user)
+                        .venue(venue)
+                        .calendar(calendar)
+                        .estimatedGuests(request.estimatedGuests())
+                        .pricePerGuest(pricePerGuest)
+                        .maxPricePerGuest(request.maxPricePerGuest())
+                        .totalEstimatedCost(totalEstimatedCost)
+                        .fullService(Boolean.TRUE.equals(request.fullService()))
+                        .serviceNotes(normalizeOptionalText(request.serviceNotes()))
+                        .status(BookingRequestStatus.SUBMITTED)
+                        .build()
+        );
+
+        GuestDietLogistics dietLogistics = guestDietLogisticsRepository.save(
+                GuestDietLogistics.builder()
+                        .booking(booking)
+                        .menuStandardCount(request.menuStandardCount())
+                        .menuVegetarianCount(request.menuVegetarianCount())
+                        .menuVeganCount(request.menuVeganCount())
+                        .menuGlutenFreeCount(request.menuGlutenFreeCount())
+                        .allergiesNotes(normalizeOptionalText(request.allergiesNotes()))
+                        .build()
+        );
+
+        return SmartPlannerBookingResponse.from(booking, dietLogistics);
+    }
+
+    @Transactional
+    public SmartPlannerBookingListResponse getClientBookings(User user, SmartPlannerBookingListFilter filter) {
+        return toBookingListResponse(bookingRepository.findAll(buildClientBookingSpecification(user, filter)));
+    }
+
+    @Transactional
+    public SmartPlannerBookingResponse getBookingDetails(User user, Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking nie istnieje"));
+
+        boolean isAdmin = "ADMIN".equals(user.getRoleName());
+        boolean isClient = booking.getClient().getId().equals(user.getId());
+        boolean isManager = booking.getVenue().getManager().getId().equals(user.getId());
+
+        if (!isAdmin && !isClient && !isManager) {
+            throw new AccessDeniedException("Nie masz dostepu do tego bookingu");
+        }
+
+        expireIfNeeded(booking, resolveCalendarStatus(AVAILABLE));
+
+        GuestDietLogistics dietLogistics = guestDietLogisticsRepository.findById(booking.getId())
+                .orElseThrow(() -> new IllegalStateException("Brak danych logistycznych dla bookingu " + booking.getId()));
+
+        return SmartPlannerBookingResponse.from(booking, dietLogistics);
+    }
+
+    @Transactional
+    public SmartPlannerBookingListResponse getManagerBookings(User user, SmartPlannerBookingListFilter filter) {
+        if ("ADMIN".equals(user.getRoleName())) {
+            return toBookingListResponse(bookingRepository.findAll(buildAdminBookingSpecification(filter)));
+        }
+        return toBookingListResponse(bookingRepository.findAll(buildManagerBookingSpecification(user, filter)));
+    }
+
+    @Transactional
+    public SmartPlannerBookingResponse decideBooking(User user, Long bookingId, SmartPlannerBookingDecisionRequest request) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking nie istnieje"));
+
+        if (!"ADMIN".equals(user.getRoleName())
+                && !booking.getVenue().getManager().getId().equals(user.getId())) {
+            throw new AccessDeniedException("Nie masz dostepu do tego bookingu");
+        }
+
+        expireIfNeeded(booking, resolveCalendarStatus(AVAILABLE));
+
+        if (booking.getStatus() != BookingRequestStatus.SUBMITTED) {
+            throw new RuntimeException("Tylko booking oczekujacy moze zostac rozpatrzony");
+        }
+
+        BookingRequestStatus decision = parseDecision(request.decision());
+        BookingStatus availableStatus = resolveCalendarStatus(AVAILABLE);
+        BookingStatus confirmedStatus = resolveCalendarStatus(CONFIRMED);
+
+        booking.setStatus(decision);
+        booking.setDecisionComment(normalizeOptionalText(request.comment()));
+        booking.setDecidedAt(LocalDateTime.now());
+
+        if (decision == BookingRequestStatus.APPROVED) {
+            booking.getCalendar().setStatus(confirmedStatus);
+            booking.getCalendar().setProvisionalExpiresAt(null);
+        } else {
+            booking.getCalendar().setStatus(availableStatus);
+            booking.getCalendar().setProvisionalExpiresAt(null);
+        }
+
+        GuestDietLogistics dietLogistics = guestDietLogisticsRepository.findById(booking.getId())
+                .orElseThrow(() -> new IllegalStateException("Brak danych logistycznych dla bookingu " + booking.getId()));
+
+        return SmartPlannerBookingResponse.from(booking, dietLogistics);
+    }
+
+    private SmartPlannerBookingListResponse toBookingListResponse(List<Booking> bookings) {
+        List<Long> bookingIds = bookings.stream()
+                .map(Booking::getId)
+                .toList();
+        Map<Long, GuestDietLogistics> dietLogisticsByBookingId = guestDietLogisticsRepository.findAllByBookingIdIn(bookingIds).stream()
+                .collect(Collectors.toMap(GuestDietLogistics::getBookingId, logistics -> logistics));
+
+        List<SmartPlannerBookingResponse> items = bookings.stream()
+                .map(booking -> SmartPlannerBookingResponse.from(
+                        booking,
+                        requireDietLogistics(dietLogisticsByBookingId, booking.getId())
+                ))
+                .toList();
+
+        Map<BookingRequestStatus, Long> counters = new EnumMap<>(BookingRequestStatus.class);
+        for (BookingRequestStatus status : BookingRequestStatus.values()) {
+            counters.put(status, 0L);
+        }
+        for (Booking booking : bookings) {
+            counters.computeIfPresent(booking.getStatus(), (key, value) -> value + 1);
+        }
+
+        return new SmartPlannerBookingListResponse(
+                items,
+                new SmartPlannerBookingListResponse.Summary(
+                        bookings.size(),
+                        counters.get(BookingRequestStatus.SUBMITTED),
+                        counters.get(BookingRequestStatus.APPROVED),
+                        counters.get(BookingRequestStatus.REJECTED),
+                        counters.get(BookingRequestStatus.EXPIRED),
+                        counters.get(BookingRequestStatus.CANCELLED)
+                )
+        );
+    }
+
+    private GuestDietLogistics requireDietLogistics(Map<Long, GuestDietLogistics> dietLogisticsByBookingId, Long bookingId) {
+        GuestDietLogistics dietLogistics = dietLogisticsByBookingId.get(bookingId);
+        if (dietLogistics == null) {
+            throw new IllegalStateException("Brak danych logistycznych dla bookingu " + bookingId);
+        }
+        return dietLogistics;
+    }
+
+    private void validateBookingRequest(Venue venue, CreateSmartPlannerBookingRequest request) {
+        int configuredMenus = request.menuStandardCount()
+                + request.menuVegetarianCount()
+                + request.menuVeganCount()
+                + request.menuGlutenFreeCount();
+
+        if (configuredMenus <= 0) {
+            throw new RuntimeException("Musisz podac co najmniej jedno menu");
+        }
+
+        if (configuredMenus > request.estimatedGuests()) {
+            throw new RuntimeException("Suma menu nie moze przekraczac liczby gosci");
+        }
+
+        if (request.estimatedGuests() < venue.getCapacityMin() || request.estimatedGuests() > venue.getCapacityMax()) {
+            throw new RuntimeException("Liczba gosci jest poza zakresem pojemnosci obiektu");
+        }
+
+        if (venue.getBasePricePerGuest().compareTo(request.maxPricePerGuest()) > 0) {
+            throw new RuntimeException("Obiekt przekracza maksymalna cene za osobe");
+        }
+    }
+
+    private VenueCalendar prepareCalendarForSubmission(
+            VenueCalendar calendar,
+            BookingStatus availableStatus,
+            BookingStatus provisionalStatus
+    ) {
+        expireIfNeeded(calendar, availableStatus);
+
+        String statusName = calendar.getStatus().getStatusName();
+        if (!AVAILABLE.equals(statusName)) {
+            throw new RuntimeException("Wybrany termin nie jest dostepny");
+        }
+
+        if (bookingRepository.existsByCalendarIdAndStatusIn(
+                calendar.getId(),
+                List.of(BookingRequestStatus.SUBMITTED, BookingRequestStatus.APPROVED)
+        )) {
+            throw new RuntimeException("Dla tego terminu istnieje juz aktywne zgloszenie");
+        }
+
+        calendar.setStatus(provisionalStatus);
+        calendar.setProvisionalExpiresAt(LocalDateTime.now().plusHours(PROVISIONAL_HOLD_HOURS));
+        return calendar;
+    }
+
+    private void expireIfNeeded(Booking booking, BookingStatus availableStatus) {
+        expireIfNeeded(booking.getCalendar(), availableStatus);
+        if (booking.getStatus() == BookingRequestStatus.SUBMITTED
+                && booking.getCalendar().getStatus().getStatusName().equals(AVAILABLE)) {
+            booking.setStatus(BookingRequestStatus.EXPIRED);
+            booking.setDecisionComment("Wstepna rezerwacja wygasla");
+            booking.setDecidedAt(LocalDateTime.now());
+        }
+    }
+
+    private void expireIfNeeded(VenueCalendar calendar, BookingStatus availableStatus) {
+        if (!PROVISIONAL.equals(calendar.getStatus().getStatusName())) {
+            return;
+        }
+
+        if (calendar.getProvisionalExpiresAt() != null && calendar.getProvisionalExpiresAt().isAfter(LocalDateTime.now())) {
+            return;
+        }
+
+        calendar.setStatus(availableStatus);
+        calendar.setProvisionalExpiresAt(null);
+
+        List<Booking> expiredBookings = bookingRepository.findAllByCalendarIdAndStatusIn(
+                calendar.getId(),
+                List.of(BookingRequestStatus.SUBMITTED)
+        );
+        for (Booking expiredBooking : expiredBookings) {
+            expiredBooking.setStatus(BookingRequestStatus.EXPIRED);
+            expiredBooking.setDecisionComment("Wstepna rezerwacja wygasla");
+            expiredBooking.setDecidedAt(LocalDateTime.now());
+        }
+    }
+
+    private BookingRequestStatus parseDecision(String rawDecision) {
+        try {
+            BookingRequestStatus decision = BookingRequestStatus.valueOf(rawDecision.trim().toUpperCase());
+            if (decision != BookingRequestStatus.APPROVED && decision != BookingRequestStatus.REJECTED) {
+                throw new IllegalArgumentException("unsupported");
+            }
+            return decision;
+        } catch (IllegalArgumentException ex) {
+            throw new RuntimeException("Decyzja musi miec wartosc APPROVED albo REJECTED");
+        }
+    }
+
+    private BookingStatus resolveCalendarStatus(String statusName) {
+        return bookingStatusRepository.findByStatusName(statusName)
+                .orElseThrow(() -> new RuntimeException("Brak statusu " + statusName + " w systemie"));
+    }
+
+    private String normalizeOptionalText(String value) {
+        return value != null && !value.isBlank() ? value.trim() : null;
+    }
+
+    private org.springframework.data.jpa.domain.Specification<Booking> buildClientBookingSpecification(
+            User user,
+            SmartPlannerBookingListFilter filter
+    ) {
+        return (root, query, cb) -> cb.and(
+                cb.equal(root.get("client").get("id"), user.getId()),
+                buildFilterPredicate(root, cb, filter)
+        );
+    }
+
+    private org.springframework.data.jpa.domain.Specification<Booking> buildManagerBookingSpecification(
+            User user,
+            SmartPlannerBookingListFilter filter
+    ) {
+        return (root, query, cb) -> cb.and(
+                cb.equal(root.get("venue").get("manager").get("id"), user.getId()),
+                buildFilterPredicate(root, cb, filter)
+        );
+    }
+
+    private org.springframework.data.jpa.domain.Specification<Booking> buildAdminBookingSpecification(
+            SmartPlannerBookingListFilter filter
+    ) {
+        return (root, query, cb) -> buildFilterPredicate(root, cb, filter);
+    }
+
+    private jakarta.persistence.criteria.Predicate buildFilterPredicate(
+            jakarta.persistence.criteria.Root<Booking> root,
+            jakarta.persistence.criteria.CriteriaBuilder cb,
+            SmartPlannerBookingListFilter filter
+    ) {
+        List<jakarta.persistence.criteria.Predicate> predicates = new java.util.ArrayList<>();
+
+        if (filter != null && filter.status() != null && !filter.status().isBlank()) {
+            predicates.add(cb.equal(
+                    root.get("status"),
+                    parseBookingStatus(filter.status())
+            ));
+        }
+
+        if (filter != null && filter.eventDateFrom() != null) {
+            predicates.add(cb.greaterThanOrEqualTo(
+                    root.get("calendar").get("eventDate"),
+                    filter.eventDateFrom()
+            ));
+        }
+
+        if (filter != null && filter.eventDateTo() != null) {
+            predicates.add(cb.lessThanOrEqualTo(
+                    root.get("calendar").get("eventDate"),
+                    filter.eventDateTo()
+            ));
+        }
+
+        return cb.and(predicates.toArray(jakarta.persistence.criteria.Predicate[]::new));
+    }
+
+    private BookingRequestStatus parseBookingStatus(String rawStatus) {
+        try {
+            return BookingRequestStatus.valueOf(rawStatus.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ex) {
+            throw new RuntimeException("Nieobslugiwany status bookingu");
+        }
+    }
+}

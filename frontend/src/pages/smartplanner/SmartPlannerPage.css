@@ -1,0 +1,434 @@
+.smartplanner-page {
+  min-height: calc(100vh - 92px);
+  padding: 32px;
+  background:
+    radial-gradient(circle at top right, rgba(141, 58, 45, 0.08), transparent 28%),
+    linear-gradient(180deg, rgba(255, 249, 242, 0.92), rgba(248, 239, 230, 0.84));
+}
+
+.smartplanner-page__hero,
+.smartplanner-page__layout {
+  width: min(1360px, 100%);
+  margin: 0 auto;
+}
+
+.smartplanner-page__hero {
+  margin-bottom: 24px;
+  padding: 28px 32px;
+  border: 1px solid rgba(100, 66, 45, 0.14);
+  border-radius: 18px;
+  background: rgba(255, 252, 247, 0.96);
+  box-shadow: 0 18px 54px rgba(55, 31, 19, 0.1);
+}
+
+.smartplanner-page__eyebrow {
+  display: inline-block;
+  margin-bottom: 12px;
+  color: #8d3a2d;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.smartplanner-page__title {
+  margin: 0;
+  color: #241712;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  line-height: 1.05;
+}
+
+.smartplanner-page__text,
+.smartplanner-page__notice,
+.smartplanner-page__summary-card p {
+  color: #5b4a41;
+}
+
+.smartplanner-page__text {
+  margin: 12px 0 0;
+  max-width: 54rem;
+  line-height: 1.7;
+}
+
+.smartplanner-page__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) 360px;
+  gap: 24px;
+  align-items: start;
+}
+
+.smartplanner-page__wizard,
+.smartplanner-page__summary-card {
+  border: 1px solid rgba(100, 66, 45, 0.14);
+  border-radius: 18px;
+  background: rgba(255, 252, 247, 0.96);
+  box-shadow: 0 14px 34px rgba(55, 31, 19, 0.08);
+}
+
+.smartplanner-page__steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  padding: 18px;
+  border-bottom: 1px solid rgba(100, 66, 45, 0.12);
+}
+
+.smartplanner-page__step {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  min-height: 96px;
+  padding: 14px;
+  border: 1px solid rgba(125, 47, 39, 0.12);
+  border-radius: 12px;
+  background: #fffaf5;
+  color: #8f7a6d;
+  text-align: left;
+}
+
+.smartplanner-page__step span {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: rgba(125, 47, 39, 0.08);
+  color: #7d2f27;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.smartplanner-page__step strong {
+  color: inherit;
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
+.smartplanner-page__step:disabled {
+  cursor: default;
+}
+
+.smartplanner-page__step--visited {
+  color: #5b4a41;
+}
+
+.smartplanner-page__step--active {
+  border-color: rgba(125, 47, 39, 0.28);
+  background: rgba(125, 47, 39, 0.08);
+  color: #241712;
+}
+
+.smartplanner-page__panel {
+  padding: 28px;
+}
+
+.smartplanner-page__section-header h2,
+.smartplanner-page__summary-card h2,
+.smartplanner-page__calendar-header h3 {
+  margin: 0;
+  color: #241712;
+}
+
+.smartplanner-page__field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 20px;
+}
+
+.smartplanner-page__field {
+  display: grid;
+  gap: 10px;
+}
+
+.smartplanner-page__field--full {
+  margin-top: 18px;
+}
+
+.smartplanner-page__field span {
+  color: #241712;
+  font-weight: 600;
+}
+
+.smartplanner-page__field input,
+.smartplanner-page__field select,
+.smartplanner-page__field textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid rgba(125, 47, 39, 0.14);
+  border-radius: 12px;
+  background: #fffdf9;
+  color: #241712;
+  font: inherit;
+}
+
+.smartplanner-page__metric,
+.smartplanner-page__selected-offer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-top: 22px;
+  padding: 18px 20px;
+  border: 1px solid rgba(125, 47, 39, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 248, 241, 0.84);
+}
+
+.smartplanner-page__metric strong,
+.smartplanner-page__selected-offer strong {
+  color: #7d2f27;
+  font-size: 1.2rem;
+}
+
+.smartplanner-page__offers {
+  display: grid;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.smartplanner-page__offer {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 18px;
+  padding: 18px;
+  border: 1px solid rgba(100, 66, 45, 0.14);
+  border-radius: 16px;
+  background: #fffdf9;
+  text-align: left;
+}
+
+.smartplanner-page__offer--selected {
+  border-color: rgba(125, 47, 39, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(125, 47, 39, 0.18);
+}
+
+.smartplanner-page__offer-media img,
+.smartplanner-page__offer-fallback {
+  width: 100%;
+  height: 140px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: rgba(100, 66, 45, 0.08);
+}
+
+.smartplanner-page__offer-fallback {
+  display: grid;
+  place-items: center;
+  color: #7d2f27;
+  font-weight: 600;
+}
+
+.smartplanner-page__offer-topline {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: start;
+}
+
+.smartplanner-page__offer-topline h3,
+.smartplanner-page__picked-venue strong {
+  margin: 0;
+  color: #241712;
+}
+
+.smartplanner-page__offer-topline strong {
+  color: #7d2f27;
+  white-space: nowrap;
+}
+
+.smartplanner-page__offer-body p,
+.smartplanner-page__picked-venue span {
+  margin: 8px 0 0;
+  color: #5b4a41;
+}
+
+.smartplanner-page__offer-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.smartplanner-page__offer-tags span {
+  padding: 7px 10px;
+  border: 1px solid rgba(125, 47, 39, 0.12);
+  border-radius: 999px;
+  color: #6a5347;
+  font-size: 0.88rem;
+}
+
+.smartplanner-page__calendar-block {
+  margin-top: 20px;
+}
+
+.smartplanner-page__calendar-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.smartplanner-page__date-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.smartplanner-page__date-button,
+.smartplanner-page__nav-button {
+  padding: 12px 16px;
+  border: 1px solid rgba(125, 47, 39, 0.14);
+  border-radius: 12px;
+  background: #7d2f27;
+  color: #fffaf7;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.smartplanner-page__date-button {
+  background: #fffdf9;
+  color: #7d2f27;
+  text-align: left;
+}
+
+.smartplanner-page__date-button--active {
+  border-color: rgba(125, 47, 39, 0.28);
+  background: rgba(125, 47, 39, 0.12);
+}
+
+.smartplanner-page__footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 28px 28px;
+}
+
+.smartplanner-page__nav-button--secondary {
+  background: #fffdf9;
+  color: #7d2f27;
+}
+
+.smartplanner-page__nav-button:disabled {
+  opacity: 0.48;
+  cursor: default;
+}
+
+.smartplanner-page__sidebar {
+  position: sticky;
+  top: 110px;
+  display: grid;
+  gap: 18px;
+}
+
+.smartplanner-page__summary-card {
+  padding: 22px;
+}
+
+.smartplanner-page__summary-list {
+  display: grid;
+  gap: 12px;
+}
+
+.smartplanner-page__summary-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(100, 66, 45, 0.1);
+}
+
+.smartplanner-page__summary-item:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.smartplanner-page__summary-item span {
+  color: #6a5347;
+}
+
+.smartplanner-page__summary-item strong {
+  color: #241712;
+  text-align: right;
+}
+
+.smartplanner-page__summary-item--muted span,
+.smartplanner-page__summary-item--muted strong {
+  color: #b0a095;
+}
+
+.smartplanner-page__picked-venue {
+  display: grid;
+  gap: 6px;
+}
+
+.smartplanner-page__error,
+.smartplanner-page__success {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-radius: 12px;
+}
+
+.smartplanner-page__error {
+  border: 1px solid rgba(159, 43, 43, 0.2);
+  background: rgba(159, 43, 43, 0.08);
+  color: #7a1d1d;
+}
+
+.smartplanner-page__success {
+  border: 1px solid rgba(60, 121, 72, 0.2);
+  background: rgba(60, 121, 72, 0.1);
+  color: #275436;
+}
+
+.smartplanner-page__success-link {
+  display: inline-flex;
+  margin-top: 10px;
+  color: #275436;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+@media (max-width: 1100px) {
+  .smartplanner-page__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .smartplanner-page__sidebar {
+    position: static;
+  }
+}
+
+@media (max-width: 780px) {
+  .smartplanner-page__steps,
+  .smartplanner-page__field-grid,
+  .smartplanner-page__date-grid,
+  .smartplanner-page__offer {
+    grid-template-columns: 1fr;
+  }
+
+  .smartplanner-page__offer-media img,
+  .smartplanner-page__offer-fallback {
+    height: 180px;
+  }
+}
+
+@media (max-width: 640px) {
+  .smartplanner-page {
+    padding: 20px;
+  }
+
+  .smartplanner-page__hero,
+  .smartplanner-page__panel,
+  .smartplanner-page__summary-card {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .smartplanner-page__footer {
+    flex-direction: column;
+    padding: 0 18px 18px;
+  }
+}

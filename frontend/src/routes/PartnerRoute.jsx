@@ -2,7 +2,7 @@ import { Navigate } from 'react-router-dom'
 import { useAuth } from '../features/auth'
 import PartnerZonePage from '../pages/partner/PartnerZonePage.jsx'
 
-function PartnerRoute() {
+function PartnerRoute({ children }) {
   const { isAuthenticated, isInitializing, user } = useAuth()
 
   if (isInitializing) {
@@ -13,11 +13,15 @@ function PartnerRoute() {
     return <Navigate to="/login" replace />
   }
 
-  if (user?.role === 'ADMIN') {
-    return <Navigate to="/admin" replace />
+  if (children && user?.role !== 'MANAGER' && user?.role !== 'ADMIN') {
+    return <Navigate to="/" replace />
   }
 
-  return <PartnerZonePage />
+  if (user?.role === 'ADMIN') {
+    return children ?? <Navigate to="/admin" replace />
+  }
+
+  return children ?? <PartnerZonePage />
 }
 
 export default PartnerRoute

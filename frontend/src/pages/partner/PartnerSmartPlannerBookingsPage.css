@@ -1,0 +1,215 @@
+.partner-smartplanner {
+  min-height: calc(100vh - 92px);
+  padding: 32px;
+  background:
+    radial-gradient(circle at top right, rgba(141, 58, 45, 0.08), transparent 28%),
+    linear-gradient(180deg, rgba(255, 249, 242, 0.9), rgba(250, 241, 232, 0.72));
+}
+
+.partner-smartplanner__hero,
+.partner-smartplanner__layout {
+  width: min(1360px, 100%);
+  margin: 0 auto;
+}
+
+.partner-smartplanner__hero,
+.partner-smartplanner__filters,
+.partner-smartplanner__summary,
+.partner-smartplanner__card {
+  border: 1px solid rgba(100, 66, 45, 0.14);
+  background: rgba(255, 252, 247, 0.96);
+  box-shadow: 0 14px 34px rgba(55, 31, 19, 0.08);
+}
+
+.partner-smartplanner__hero {
+  margin-bottom: 24px;
+  padding: 28px 32px;
+  border-radius: 18px;
+}
+
+.partner-smartplanner__eyebrow {
+  display: inline-block;
+  margin-bottom: 12px;
+  color: #8d3a2d;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.partner-smartplanner__hero h1,
+.partner-smartplanner__filters-header h2,
+.partner-smartplanner__card-heading h2 {
+  margin: 0;
+  color: #241712;
+}
+
+.partner-smartplanner__hero p,
+.partner-smartplanner__empty,
+.partner-smartplanner__meta {
+  color: #5b4a41;
+}
+
+.partner-smartplanner__layout {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 24px;
+}
+
+.partner-smartplanner__filters {
+  align-self: start;
+  padding: 24px;
+  border-radius: 18px;
+}
+
+.partner-smartplanner__field {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.partner-smartplanner__field span {
+  color: #241712;
+  font-weight: 600;
+}
+
+.partner-smartplanner__field input,
+.partner-smartplanner__field select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid rgba(125, 47, 39, 0.14);
+  border-radius: 12px;
+  background: #fffdf9;
+  color: #241712;
+  font: inherit;
+}
+
+.partner-smartplanner__summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  padding: 18px;
+  border-radius: 18px;
+}
+
+.partner-smartplanner__summary article {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 12px;
+  background: rgba(255, 248, 241, 0.84);
+}
+
+.partner-smartplanner__summary span { color: #6a5347; }
+.partner-smartplanner__summary strong { color: #241712; font-size: 1.5rem; }
+
+.partner-smartplanner__list {
+  display: grid;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.partner-smartplanner__card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 170px;
+  gap: 20px;
+  padding: 22px;
+  border-radius: 18px;
+}
+
+.partner-smartplanner__card-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: start;
+}
+
+.partner-smartplanner__badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.partner-smartplanner__badge--submitted { background: rgba(164, 109, 36, 0.12); color: #8d5e15; }
+.partner-smartplanner__badge--approved { background: rgba(46, 113, 69, 0.12); color: #2f6b44; }
+.partner-smartplanner__badge--rejected { background: rgba(159, 43, 43, 0.1); color: #8a2323; }
+.partner-smartplanner__badge--expired,
+.partner-smartplanner__badge--cancelled { background: rgba(91, 74, 65, 0.12); color: #5b4a41; }
+
+.partner-smartplanner__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin-top: 12px;
+}
+
+.partner-smartplanner__card-side {
+  display: grid;
+  align-content: end;
+}
+
+.partner-smartplanner__link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid rgba(125, 47, 39, 0.14);
+  border-radius: 999px;
+  background: #fffdf9;
+  color: #7d2f27;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.partner-smartplanner__loading,
+.partner-smartplanner__error {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-radius: 12px;
+}
+
+.partner-smartplanner__loading {
+  border: 1px solid rgba(125, 47, 39, 0.14);
+  background: rgba(255, 252, 247, 0.96);
+  color: #5b4a41;
+}
+
+.partner-smartplanner__error {
+  border: 1px solid rgba(159, 43, 43, 0.2);
+  background: rgba(159, 43, 43, 0.08);
+  color: #7a1d1d;
+}
+
+@media (max-width: 960px) {
+  .partner-smartplanner__layout,
+  .partner-smartplanner__card {
+    grid-template-columns: 1fr;
+  }
+
+  .partner-smartplanner__summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .partner-smartplanner {
+    padding: 20px;
+  }
+
+  .partner-smartplanner__hero,
+  .partner-smartplanner__filters,
+  .partner-smartplanner__card {
+    padding: 22px 18px;
+  }
+
+  .partner-smartplanner__summary {
+    grid-template-columns: 1fr;
+  }
+}
