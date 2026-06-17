@@ -8,7 +8,8 @@ function Navbar() {
   const homePath = getDefaultRouteForUser(user)
   const isClient = user?.role === 'CLIENT'
   const isManager = user?.role === 'MANAGER'
-  const shouldShowClientNav = !isAuthenticated || isClient
+  const isAdmin = user?.role === 'ADMIN'
+  const shouldShowClientNav = !isAuthenticated || (!isManager && !isAdmin)
 
   return (
     <header className="navbar">
@@ -26,7 +27,7 @@ function Navbar() {
               <span className="navbar__dot" aria-hidden="true">|</span>
             </>
           ) : null}
-          <button type="button" className="navbar__link">WeddChance</button>
+          <NavLink to="/" className={({ isActive }) => `navbar__link${isActive ? ' navbar__link--active' : ''}`}>WeddChance</NavLink>
           <span className="navbar__dot" aria-hidden="true">|</span>
           <NavLink to="/favorites" className={({ isActive }) => `navbar__link${isActive ? ' navbar__link--active' : ''}`}>Ulubione</NavLink>
         </nav>
@@ -38,11 +39,6 @@ function Navbar() {
             {(isClient || isManager) ? (
               <Link to="/partner" className="navbar__button navbar__button--secondary">
                 Strefa partnera
-              </Link>
-            ) : null}
-            {isManager ? (
-              <Link to="/partner/smartplanner/bookings" className="navbar__button navbar__button--secondary">
-                Bookingi SmartPlanner
               </Link>
             ) : null}
             <span className="navbar__status">

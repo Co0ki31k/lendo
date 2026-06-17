@@ -8,6 +8,7 @@ import PartnerDashboardHeader from './dashboard/PartnerDashboardHeader.jsx'
 import PartnerDashboardSidebar from './dashboard/PartnerDashboardSidebar.jsx'
 import SelectVenueView from './dashboard/SelectVenueView.jsx'
 import StatsView from './dashboard/StatsView.jsx'
+import SmartPlannerRequestsView from './dashboard/SmartPlannerRequestsView.jsx'
 import { INITIAL_VENUE_FORM_VALUES } from './dashboard/constants.js'
 import { buildAccountName } from './dashboard/utils.js'
 import { buildVenuePayload } from './dashboard/venueForm.js'
@@ -283,6 +284,10 @@ function PartnerDashboardPage() {
           onRefresh={() => void loadVenueList(venueQuery, { silent: true })}
         />
       )
+    }
+
+    if (managerView === 'smartplanner') {
+      return <SmartPlannerRequestsView />
     }
 
     return (

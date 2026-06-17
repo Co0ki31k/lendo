@@ -41,6 +41,13 @@ function PartnerDashboardSidebar({
           >
             Wybor obiektu
           </button>
+          <button
+            type="button"
+            className={`partner-dashboard__nav-button${managerView === 'smartplanner' ? ' partner-dashboard__nav-button--active' : ''}`}
+            onClick={() => onManagerViewChange('smartplanner')}
+          >
+            Zgloszenia SmartPlanner
+          </button>
         </div>
       </section>
 
