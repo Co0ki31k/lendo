@@ -194,6 +194,10 @@
   margin-top: 24px;
 }
 
+.partner-dashboard__toolbar--calendar {
+  grid-template-columns: repeat(2, minmax(0, 220px));
+}
+
 .partner-dashboard__input,
 .partner-dashboard__select {
   width: 100%;
@@ -218,6 +222,19 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
   margin-top: 24px;
+}
+
+.partner-dashboard__stats-grid--calendar {
+  margin-bottom: 24px;
+}
+
+.partner-dashboard__calendar-card {
+  margin-top: 24px;
+  padding: 22px;
+  border: 1px solid rgba(100, 66, 45, 0.14);
+  border-radius: 14px;
+  background: rgba(255, 250, 244, 0.9);
+  box-shadow: 0 10px 24px rgba(55, 31, 19, 0.05);
 }
 
 .partner-dashboard__stat-card {

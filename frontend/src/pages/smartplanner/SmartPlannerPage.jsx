@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { catalogApi, smartPlannerApi } from '../../api'
+import StatusCalendar from '../../components/calendar/StatusCalendar.jsx'
 import './SmartPlannerPage.css'
 
 const STEP_LABELS = [
@@ -39,6 +40,21 @@ const VOIVODESHIP_OPTIONS = [
   'Warminsko-Mazurskie',
   'Wielkopolskie',
   'Zachodniopomorskie',
+]
+
+const MONTH_OPTIONS = [
+  { value: 1, label: 'Styczen' },
+  { value: 2, label: 'Luty' },
+  { value: 3, label: 'Marzec' },
+  { value: 4, label: 'Kwiecien' },
+  { value: 5, label: 'Maj' },
+  { value: 6, label: 'Czerwiec' },
+  { value: 7, label: 'Lipiec' },
+  { value: 8, label: 'Sierpien' },
+  { value: 9, label: 'Wrzesien' },
+  { value: 10, label: 'Pazdziernik' },
+  { value: 11, label: 'Listopad' },
+  { value: 12, label: 'Grudzien' },
 ]
 
 function formatCurrency(value) {
@@ -136,9 +152,9 @@ function SmartPlannerPage() {
     ? calendarState
     : { status: 'idle', error: '', days: [] }
 
-  const availableDays = useMemo(
-    () => effectiveCalendarState.days.filter((day) => day.status === 'AVAILABLE'),
-    [effectiveCalendarState.days],
+  const monthLabel = useMemo(
+    () => MONTH_OPTIONS.find((option) => option.value === Number(form.month))?.label ?? form.month,
+    [form.month],
   )
 
   useEffect(() => {
@@ -481,13 +497,14 @@ function SmartPlannerPage() {
 
                   <label className="smartplanner-page__field">
                     <span>Miesiac</span>
-                    <input
-                      type="number"
-                      min="1"
-                      max="12"
+                    <select
                       value={form.month}
                       onChange={(event) => handleFieldChange('month', Number(event.target.value))}
-                    />
+                    >
+                      {MONTH_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
                   </label>
                 </div>
               </div>
@@ -562,22 +579,24 @@ function SmartPlannerPage() {
                     <div className="smartplanner-page__calendar-block">
                       <div className="smartplanner-page__calendar-header">
                         <h3>Dostepne terminy</h3>
-                        <span>{form.month}/{form.year}</span>
+                        <span>{monthLabel} {form.year}</span>
                       </div>
                       {effectiveCalendarState.status === 'loading' ? <p className="smartplanner-page__notice">Ladowanie terminow...</p> : null}
                       {effectiveCalendarState.status === 'error' ? <p className="smartplanner-page__error">{effectiveCalendarState.error}</p> : null}
-                      <div className="smartplanner-page__date-grid">
-                        {availableDays.map((day) => (
-                          <button
-                            key={day.date}
-                            type="button"
-                            className={`smartplanner-page__date-button${form.selectedDate === day.date ? ' smartplanner-page__date-button--active' : ''}`}
-                            onClick={() => handleFieldChange('selectedDate', day.date)}
-                          >
-                            {formatDate(day.date)}
-                          </button>
-                        ))}
-                      </div>
+                      {effectiveCalendarState.status === 'ready' ? (
+                        <StatusCalendar
+                          year={Number(form.year)}
+                          month={Number(form.month)}
+                          days={effectiveCalendarState.days}
+                          selectedDate={form.selectedDate}
+                          onSelectDate={(date) => handleFieldChange('selectedDate', date)}
+                          selectableStatuses={['AVAILABLE']}
+                          emptyLabel="Brak statusu"
+                        />
+                      ) : null}
+                      {effectiveCalendarState.status === 'ready' && !effectiveCalendarState.days.some((day) => day.status === 'AVAILABLE') ? (
+                        <p className="smartplanner-page__notice">W tym miesiacu nie ma juz dostepnych terminow dla wybranego obiektu.</p>
+                      ) : null}
                     </div>
 
                     <div className="smartplanner-page__field-grid">
