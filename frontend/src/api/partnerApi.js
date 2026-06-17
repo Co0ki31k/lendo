@@ -25,6 +25,11 @@ export async function getVenue(venueId) {
   return response.data
 }
 
+export async function getVenueCalendar(venueId, params = {}) {
+  const response = await api.get(`/api/partner/venues/${venueId}/calendar`, { params })
+  return response.data
+}
+
 export async function updateVenue(venueId, payload) {
   const response = await api.put(`/api/partner/venues/${venueId}`, payload)
   return response.data

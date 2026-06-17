@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { catalogApi } from '../../../api'
+import { partnerApi } from '../../../api'
 import StatusCalendar from '../../../components/calendar/StatusCalendar.jsx'
 
 const MONTH_OPTIONS = [
@@ -45,7 +45,7 @@ function VenueCalendarView({ selectedVenue }) {
       setCalendarState({ status: 'loading', error: '', days: [] })
 
       try {
-        const response = await catalogApi.getVenueCalendar(selectedVenue.id, { from, to })
+        const response = await partnerApi.getVenueCalendar(selectedVenue.id, { from, to })
 
         if (!isMounted) {
           return

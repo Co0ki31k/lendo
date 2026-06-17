@@ -2,6 +2,7 @@ package com.example.lendo.service;
 
 import com.example.lendo.dto.VenueCalendarDayResponse;
 import com.example.lendo.dto.VenueCalendarResponse;
+import com.example.lendo.model.User;
 import com.example.lendo.model.Venue;
 import com.example.lendo.model.VenueCalendar;
 import com.example.lendo.model.VenueStatus;
@@ -34,6 +35,23 @@ public class VenueCalendarCatalogService {
         Venue venue = venueRepository.findByIdAndStatus(venueId, VenueStatus.APPROVED)
                 .filter(Venue::isVerified)
                 .orElseThrow(() -> new RuntimeException("Obiekt nie istnieje"));
+
+        return buildVenueCalendarResponse(venue, from, to);
+    }
+
+    @Transactional
+    public VenueCalendarResponse getManagedVenueCalendar(User user, Long venueId, LocalDate from, LocalDate to) {
+        Venue venue = venueRepository.findById(venueId)
+                .orElseThrow(() -> new RuntimeException("Obiekt nie istnieje"));
+
+        if (!"ADMIN".equals(user.getRoleName()) && !venue.getManager().getId().equals(user.getId())) {
+            throw new RuntimeException("Nie masz dostepu do tego obiektu");
+        }
+
+        return buildVenueCalendarResponse(venue, from, to);
+    }
+
+    private VenueCalendarResponse buildVenueCalendarResponse(Venue venue, LocalDate from, LocalDate to) {
 
         DateRange dateRange = resolveDateRange(from, to);
 

@@ -57,8 +57,8 @@ function PartnerDashboardSidebar({
           <button
             type="button"
             className={`partner-dashboard__nav-button${managerView === 'object' && objectView === 'calendar' ? ' partner-dashboard__nav-button--active' : ''}`}
-            onClick={() => hasApprovedVenue && onObjectViewChange('calendar')}
-            disabled={!hasApprovedVenue}
+            onClick={() => hasSelectedVenue && onObjectViewChange('calendar')}
+            disabled={!hasSelectedVenue}
           >
             Kalendarz
           </button>

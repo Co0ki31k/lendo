@@ -5,11 +5,13 @@ import com.example.lendo.dto.PartnerVenueListResponse;
 import com.example.lendo.dto.SetPrimaryVenueImageRequest;
 import com.example.lendo.dto.UpdateVenueRequest;
 import com.example.lendo.dto.UpdateVenueImageOrderRequest;
+import com.example.lendo.dto.VenueCalendarResponse;
 import com.example.lendo.dto.VenueImageResponse;
 import com.example.lendo.dto.VenueInquiryResponse;
 import com.example.lendo.dto.VenueResponse;
 import com.example.lendo.model.User;
 import com.example.lendo.service.PartnerVenueService;
+import com.example.lendo.service.VenueCalendarCatalogService;
 import com.example.lendo.service.VenueInquiryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -31,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -41,6 +44,7 @@ import java.util.List;
 public class PartnerVenueController {
     private final PartnerVenueService partnerVenueService;
     private final VenueInquiryService venueInquiryService;
+    private final VenueCalendarCatalogService venueCalendarCatalogService;
 
     @PostMapping
     @Operation(summary = "Create a venue for current partner")
@@ -109,6 +113,17 @@ public class PartnerVenueController {
             @PathVariable Long venueId
     ) {
         return ResponseEntity.ok(partnerVenueService.getVenueImages(user, venueId));
+    }
+
+    @GetMapping("/{venueId}/calendar")
+    @Operation(summary = "Get calendar for current partner venue")
+    public ResponseEntity<VenueCalendarResponse> getVenueCalendar(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long venueId,
+            @RequestParam(required = false) LocalDate from,
+            @RequestParam(required = false) LocalDate to
+    ) {
+        return ResponseEntity.ok(venueCalendarCatalogService.getManagedVenueCalendar(user, venueId, from, to));
     }
 
     @GetMapping("/{venueId}/inquiries")
