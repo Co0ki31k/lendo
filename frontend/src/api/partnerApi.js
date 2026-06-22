@@ -187,6 +187,20 @@ export async function getSmartPlannerBookingDetails(bookingId) {
   return response.data
 }
 
+export async function downloadSmartPlannerShoppingListCsv(bookingId) {
+  const response = await api.get(`/api/partner/smart-planner/bookings/${bookingId}/shopping-list.csv`, {
+    responseType: 'blob',
+  })
+
+  const contentDisposition = response.headers['content-disposition'] ?? ''
+  const fileNameMatch = contentDisposition.match(/filename="([^"]+)"/i)
+
+  return {
+    blob: response.data,
+    fileName: fileNameMatch?.[1] ?? `shopping-list-booking-${bookingId}.csv`,
+  }
+}
+
 export async function decideSmartPlannerBooking(bookingId, payload) {
   const response = await api.patch(`/api/partner/smart-planner/bookings/${bookingId}/decision`, payload)
   return response.data

@@ -53,6 +53,7 @@ function SmartPlannerShoppingView() {
     error: '',
     booking: null,
   })
+  const [isDownloadingCsv, setIsDownloadingCsv] = useState(false)
 
   const loadBookings = useCallback(async (preserveSelection = true) => {
     setListState({ status: 'loading', error: '', data: null })
@@ -135,6 +136,34 @@ function SmartPlannerShoppingView() {
       + detailState.booking.dietLogistics.menuVeganCount
       + detailState.booking.dietLogistics.menuGlutenFreeCount
     : 0
+
+  const handleDownloadCsv = useCallback(async () => {
+    if (!detailState.booking || isDownloadingCsv) {
+      return
+    }
+
+    setIsDownloadingCsv(true)
+
+    try {
+      const { blob, fileName } = await partnerApi.downloadSmartPlannerShoppingListCsv(detailState.booking.bookingId)
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+
+      link.href = url
+      link.download = fileName
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch (requestError) {
+      setDetailState((current) => ({
+        ...current,
+        error: requestError.response?.data?.message ?? 'Nie udalo sie pobrac pliku CSV listy zakupow.',
+      }))
+    } finally {
+      setIsDownloadingCsv(false)
+    }
+  }, [detailState.booking, isDownloadingCsv])
 
   return (
     <section className="partner-dashboard__workspace">
@@ -226,9 +255,19 @@ function SmartPlannerShoppingView() {
                     <h2>{detailState.booking.venueName}</h2>
                     <p>{formatDate(detailState.booking.eventDate)} | {detailState.booking.clientFirstName || '-'} {detailState.booking.clientLastName || ''}</p>
                   </div>
-                  <span className={`partner-dashboard__status-badge partner-dashboard__status-badge--${detailState.booking.status.toLowerCase()}`}>
-                    {formatSmartPlannerStatus(detailState.booking.status)}
-                  </span>
+                  <div className="partner-dashboard__smartplanner-actions">
+                    <button
+                      type="button"
+                      className="partner-dashboard__secondary-action"
+                      onClick={() => void handleDownloadCsv()}
+                      disabled={isDownloadingCsv || !detailState.booking.fullService}
+                    >
+                      {isDownloadingCsv ? 'Pobieranie CSV...' : 'Pobierz CSV'}
+                    </button>
+                    <span className={`partner-dashboard__status-badge partner-dashboard__status-badge--${detailState.booking.status.toLowerCase()}`}>
+                      {formatSmartPlannerStatus(detailState.booking.status)}
+                    </span>
+                  </div>
                 </div>
               </article>
 

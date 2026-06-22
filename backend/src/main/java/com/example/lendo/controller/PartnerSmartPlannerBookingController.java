@@ -5,11 +5,14 @@ import com.example.lendo.dto.SmartPlannerBookingListFilter;
 import com.example.lendo.dto.SmartPlannerBookingListResponse;
 import com.example.lendo.dto.SmartPlannerBookingResponse;
 import com.example.lendo.model.User;
+import com.example.lendo.service.ShoppingListService;
 import com.example.lendo.service.SmartPlannerBookingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -31,6 +34,7 @@ import java.time.LocalDate;
 @Tag(name = "Partner Smart Planner Bookings", description = "Partner review APIs for smart planner bookings")
 public class PartnerSmartPlannerBookingController {
     private final SmartPlannerBookingService smartPlannerBookingService;
+    private final ShoppingListService shoppingListService;
 
     @GetMapping
     @Operation(summary = "List smart planner bookings for current partner")
@@ -53,6 +57,20 @@ public class PartnerSmartPlannerBookingController {
             @PathVariable Long bookingId
     ) {
         return ResponseEntity.ok(smartPlannerBookingService.getBookingDetails(user, bookingId));
+    }
+
+    @GetMapping("/{bookingId}/shopping-list.csv")
+    @Operation(summary = "Download aggregated shopping list CSV for booking")
+    public ResponseEntity<byte[]> downloadShoppingListCsv(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long bookingId
+    ) {
+        byte[] csvBytes = shoppingListService.generateShoppingListCsv(user, bookingId);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"shopping-list-booking-" + bookingId + ".csv\"")
+                .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
+                .body(csvBytes);
     }
 
     @PatchMapping("/{bookingId}/decision")

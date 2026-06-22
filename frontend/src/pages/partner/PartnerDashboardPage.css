@@ -434,6 +434,12 @@
   box-shadow: 0 10px 24px rgba(55, 31, 19, 0.05);
 }
 
+.partner-dashboard__smartplanner-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .partner-dashboard__venue-meta--expanded {
   margin-top: 24px;
 }
@@ -929,6 +935,12 @@
   .partner-dashboard__menu-detail-header,
   .partner-dashboard__menu-dish-card {
     flex-direction: column;
+  }
+
+  .partner-dashboard__smartplanner-actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .partner-dashboard__stats-grid,
