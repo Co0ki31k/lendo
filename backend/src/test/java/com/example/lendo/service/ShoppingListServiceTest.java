@@ -105,7 +105,7 @@ class ShoppingListServiceTest {
 
         String body = new String(csv, StandardCharsets.UTF_8);
         assertTrue(body.contains("Nazwa skladnika;Kategoria;Ilosc calkowita;Jednostka"));
-        assertTrue(body.contains("Zolty ser;NABIAL;1234.50;G"));
+        assertTrue(body.contains("Zolty ser;NABIAL;1.23;kg"));
     }
 
     @Test

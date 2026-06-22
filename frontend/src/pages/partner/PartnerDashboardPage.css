@@ -440,6 +440,11 @@
   gap: 12px;
 }
 
+.partner-dashboard__smartplanner-actions--footer {
+  margin-top: 20px;
+  justify-content: flex-end;
+}
+
 .partner-dashboard__venue-meta--expanded {
   margin-top: 24px;
 }
@@ -459,6 +464,15 @@
 .partner-dashboard__venue-card-button--active {
   border-color: rgba(125, 47, 39, 0.28);
   box-shadow: 0 16px 36px rgba(125, 47, 39, 0.1);
+}
+
+.partner-dashboard__venue-card-button--static {
+  cursor: default;
+}
+
+.partner-dashboard__venue-card-button--static:hover,
+.partner-dashboard__venue-card-button--static:focus-visible {
+  transform: none;
 }
 
 .partner-dashboard__venue-card-button--disabled {

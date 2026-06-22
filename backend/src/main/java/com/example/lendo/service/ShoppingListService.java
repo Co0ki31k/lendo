@@ -86,12 +86,13 @@ public class ShoppingListService {
             try (Writer writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)) {
                 writeCsvLine(writer, "Nazwa skladnika", "Kategoria", "Ilosc calkowita", "Jednostka");
                 for (ShoppingItemDTO item : shoppingItems) {
+                    CsvShoppingItem csvItem = normalizeForCsv(item);
                     writeCsvLine(
                             writer,
-                            item.ingredientName(),
-                            item.category().name(),
-                            formatQuantity(item.totalQuantity()),
-                            formatUnit(item.unit())
+                            csvItem.ingredientName(),
+                            csvItem.category(),
+                            formatQuantity(csvItem.totalQuantity()),
+                            csvItem.unit()
                     );
                 }
                 writer.flush();
@@ -178,8 +179,12 @@ public class ShoppingListService {
         return String.format(java.util.Locale.US, "%.2f", value);
     }
 
-    private String formatUnit(UnitOfMeasure unit) {
-        return unit.name();
+    private CsvShoppingItem normalizeForCsv(ShoppingItemDTO item) {
+        return switch (item.unit()) {
+            case G -> new CsvShoppingItem(item.ingredientName(), item.category().name(), item.totalQuantity() / 1000.0, "kg");
+            case ML -> new CsvShoppingItem(item.ingredientName(), item.category().name(), item.totalQuantity() / 1000.0, "L");
+            case SZT -> new CsvShoppingItem(item.ingredientName(), item.category().name(), item.totalQuantity(), "SZT");
+        };
     }
 
     private int defaultIfNull(Integer value) {
@@ -192,5 +197,8 @@ public class ShoppingListService {
             Objects.requireNonNull(category);
             Objects.requireNonNull(unit);
         }
+    }
+
+    private record CsvShoppingItem(String ingredientName, String category, double totalQuantity, String unit) {
     }
 }

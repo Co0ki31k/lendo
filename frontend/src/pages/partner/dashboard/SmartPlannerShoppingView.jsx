@@ -248,55 +248,37 @@ function SmartPlannerShoppingView() {
 
           {detailState.status === 'ready' && detailState.booking ? (
             <>
-              <article className="partner-dashboard__smartplanner-card">
-                <div className="partner-dashboard__workspace-header">
+              <article className="partner-dashboard__venue-card-button partner-dashboard__venue-card-button--static">
+                <div className="partner-dashboard__venue-top">
                   <div>
-                    <span className="partner-dashboard__workspace-eyebrow">Wybrane wydarzenie</span>
-                    <h2>{detailState.booking.venueName}</h2>
-                    <p>{formatDate(detailState.booking.eventDate)} | {detailState.booking.clientFirstName || '-'} {detailState.booking.clientLastName || ''}</p>
-                  </div>
-                  <div className="partner-dashboard__smartplanner-actions">
-                    <button
-                      type="button"
-                      className="partner-dashboard__secondary-action"
-                      onClick={() => void handleDownloadCsv()}
-                      disabled={isDownloadingCsv || !detailState.booking.fullService}
-                    >
-                      {isDownloadingCsv ? 'Pobieranie CSV...' : 'Pobierz CSV'}
-                    </button>
                     <span className={`partner-dashboard__status-badge partner-dashboard__status-badge--${detailState.booking.status.toLowerCase()}`}>
                       {formatSmartPlannerStatus(detailState.booking.status)}
                     </span>
+                    <h3>{detailState.booking.venueName}</h3>
+                    <p>{formatDate(detailState.booking.eventDate)} | {detailState.booking.clientFirstName || '-'} {detailState.booking.clientLastName || ''}</p>
                   </div>
-                </div>
-              </article>
-
-              <div className="partner-dashboard__stats-grid partner-dashboard__stats-grid--calendar">
-                <article className="partner-dashboard__stat-card">
-                  <span>Porcje lacznie</span>
-                  <strong>{totalPortions}</strong>
-                </article>
-                <article className="partner-dashboard__stat-card">
-                  <span>Pozycje zakupowe</span>
-                  <strong>{shoppingItems.length}</strong>
-                </article>
-                <article className="partner-dashboard__stat-card">
-                  <span>Service</span>
-                  <strong>{detailState.booking.fullService ? 'Tak' : 'Nie'}</strong>
-                </article>
-                <article className="partner-dashboard__stat-card">
-                  <span>Gosci</span>
                   <strong>{detailState.booking.estimatedGuests}</strong>
-                </article>
-              </div>
+                </div>
 
-              <article className="partner-dashboard__smartplanner-card">
-                <dl className="partner-dashboard__venue-meta partner-dashboard__venue-meta--flush">
+                <dl className="partner-dashboard__venue-meta partner-dashboard__venue-meta--expanded">
                   <div><dt>Standard</dt><dd>{detailState.booking.dietLogistics.menuStandardCount}</dd></div>
                   <div><dt>Vegetarian</dt><dd>{detailState.booking.dietLogistics.menuVegetarianCount}</dd></div>
                   <div><dt>Vegan</dt><dd>{detailState.booking.dietLogistics.menuVeganCount}</dd></div>
                   <div><dt>Gluten free</dt><dd>{detailState.booking.dietLogistics.menuGlutenFreeCount}</dd></div>
+                  <div><dt>Porcje lacznie</dt><dd>{totalPortions}</dd></div>
+                  <div><dt>Service</dt><dd>{detailState.booking.fullService ? 'Tak' : 'Nie'}</dd></div>
                 </dl>
+
+                <div className="partner-dashboard__smartplanner-actions partner-dashboard__smartplanner-actions--footer">
+                  <button
+                    type="button"
+                    className="partner-dashboard__secondary-action"
+                    onClick={() => void handleDownloadCsv()}
+                    disabled={isDownloadingCsv || !detailState.booking.fullService}
+                  >
+                    {isDownloadingCsv ? 'Pobieranie CSV...' : 'Pobierz CSV'}
+                  </button>
+                </div>
               </article>
 
               {detailState.booking.fullService ? (
