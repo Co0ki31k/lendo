@@ -41,3 +41,22 @@ export async function updateVenueStatus(venueId, status, comment = '') {
 export async function deleteVenue(venueId) {
   await api.delete(`/api/admin/venues/${venueId}`)
 }
+
+export async function getIngredients() {
+  const response = await api.get('/api/admin/ingredients')
+  return response.data
+}
+
+export async function createIngredient(payload) {
+  const response = await api.post('/api/admin/ingredients', payload)
+  return response.data
+}
+
+export async function updateIngredient(ingredientId, payload) {
+  const response = await api.put(`/api/admin/ingredients/${ingredientId}`, payload)
+  return response.data
+}
+
+export async function deleteIngredient(ingredientId) {
+  await api.delete(`/api/admin/ingredients/${ingredientId}`)
+}

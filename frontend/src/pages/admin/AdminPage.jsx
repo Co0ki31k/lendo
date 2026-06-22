@@ -82,6 +82,34 @@ const USER_ROLE_LABELS = {
   ADMIN: 'Admin',
 }
 
+const INGREDIENT_CATEGORY_LABELS = {
+  MIESO: 'Mieso',
+  NABIAL: 'Nabial',
+  WARZYWA_OWOCE: 'Warzywa i owoce',
+  SUCHE: 'Suche',
+}
+
+const UNIT_LABELS = {
+  G: 'g',
+  ML: 'ml',
+  SZT: 'szt.',
+}
+
+const EMPTY_INGREDIENT_FORM = {
+  name: '',
+  category: 'MIESO',
+  defaultUnit: 'G',
+  wastePercentage: '0.00',
+}
+
+function formatWastePercentage(value) {
+  if (value == null || Number.isNaN(Number(value))) {
+    return '-'
+  }
+
+  return `${Math.round(Number(value) * 100)}%`
+}
+
 function formatDateTime(value) {
   if (!value) {
     return '-'
@@ -183,9 +211,15 @@ function AdminPage() {
     venues: EMPTY_VENUE_RESPONSE.summary,
     users: EMPTY_USER_RESPONSE.summary,
   })
+  const [ingredients, setIngredients] = useState([])
+  const [ingredientSearch, setIngredientSearch] = useState('')
+  const [ingredientCategoryFilter, setIngredientCategoryFilter] = useState('all')
+  const [ingredientForm, setIngredientForm] = useState(EMPTY_INGREDIENT_FORM)
+  const [editingIngredientId, setEditingIngredientId] = useState(null)
   const [isLoadingPartners, setIsLoadingPartners] = useState(true)
   const [isLoadingVenues, setIsLoadingVenues] = useState(true)
   const [isLoadingUsers, setIsLoadingUsers] = useState(true)
+  const [isLoadingIngredients, setIsLoadingIngredients] = useState(true)
   const [error, setError] = useState('')
   const [activeRequests, setActiveRequests] = useState({})
   const [expandedVenues, setExpandedVenues] = useState({})
@@ -234,6 +268,19 @@ function AdminPage() {
       setError(loadError.response?.data?.message ?? 'Nie udalo sie pobrac listy uzytkownikow.')
     } finally {
       setIsLoadingUsers(false)
+    }
+  }, [])
+
+  const loadIngredients = useCallback(async () => {
+    setIsLoadingIngredients(true)
+
+    try {
+      const response = await adminApi.getIngredients()
+      setIngredients(response)
+    } catch (loadError) {
+      setError(loadError.response?.data?.message ?? 'Nie udalo sie pobrac listy skladnikow.')
+    } finally {
+      setIsLoadingIngredients(false)
     }
   }, [])
 
@@ -296,6 +343,16 @@ function AdminPage() {
   }, [loadUsers, userQuery])
 
   useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void loadIngredients()
+    }, 0)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [loadIngredients])
+
+  useEffect(() => {
     if (!error) {
       return undefined
     }
@@ -349,6 +406,7 @@ function AdminPage() {
       loadPartners(partnerQuery),
       loadVenues(venueQuery),
       loadUsers(userQuery),
+      loadIngredients(),
     ])
   }
 
@@ -448,6 +506,70 @@ function AdminPage() {
     }
   }
 
+  async function handleIngredientSubmit(event) {
+    event.preventDefault()
+    const requestKey = editingIngredientId == null ? 'ingredient-create' : `ingredient-update:${editingIngredientId}`
+    setActiveRequests((current) => ({ ...current, [requestKey]: true }))
+
+    try {
+      const payload = {
+        name: ingredientForm.name.trim(),
+        category: ingredientForm.category,
+        defaultUnit: ingredientForm.defaultUnit,
+        wastePercentage: Number(ingredientForm.wastePercentage),
+      }
+
+      if (editingIngredientId == null) {
+        await adminApi.createIngredient(payload)
+      } else {
+        await adminApi.updateIngredient(editingIngredientId, payload)
+      }
+
+      setIngredientForm(EMPTY_INGREDIENT_FORM)
+      setEditingIngredientId(null)
+      await loadIngredients()
+    } catch (requestError) {
+      setError(requestError.response?.data?.message ?? 'Nie udalo sie zapisac skladnika.')
+    } finally {
+      setActiveRequests((current) => ({ ...current, [requestKey]: false }))
+    }
+  }
+
+  async function handleIngredientDelete(ingredientId) {
+    const requestKey = `ingredient-delete:${ingredientId}`
+    setActiveRequests((current) => ({ ...current, [requestKey]: true }))
+
+    try {
+      await adminApi.deleteIngredient(ingredientId)
+      if (editingIngredientId === ingredientId) {
+        setEditingIngredientId(null)
+        setIngredientForm(EMPTY_INGREDIENT_FORM)
+      }
+      await loadIngredients()
+    } catch (requestError) {
+      setError(requestError.response?.data?.message ?? 'Nie udalo sie usunac skladnika.')
+    } finally {
+      setActiveRequests((current) => ({ ...current, [requestKey]: false }))
+    }
+  }
+
+  function startIngredientEdit(ingredient) {
+    setEditingIngredientId(ingredient.id)
+    setIngredientForm({
+      name: ingredient.name,
+      category: ingredient.category,
+      defaultUnit: ingredient.defaultUnit,
+      wastePercentage: Number(ingredient.wastePercentage).toFixed(2),
+    })
+    resetError()
+  }
+
+  function resetIngredientForm() {
+    setEditingIngredientId(null)
+    setIngredientForm(EMPTY_INGREDIENT_FORM)
+    resetError()
+  }
+
   function toggleVenueDetails(venueId) {
     setExpandedVenues((current) => ({
       ...current,
@@ -490,6 +612,16 @@ function AdminPage() {
     { value: 'APPROVED', label: 'Zaakceptowane' },
     { value: 'REJECTED', label: 'Odrzucone' },
   ], [])
+
+  const filteredIngredients = useMemo(() => {
+    const normalizedSearch = ingredientSearch.trim().toLowerCase()
+
+    return ingredients.filter((ingredient) => {
+      const matchesCategory = ingredientCategoryFilter === 'all' || ingredient.category === ingredientCategoryFilter
+      const matchesSearch = !normalizedSearch || ingredient.name.toLowerCase().includes(normalizedSearch)
+      return matchesCategory && matchesSearch
+    })
+  }, [ingredientCategoryFilter, ingredientSearch, ingredients])
 
   function renderPartnerView() {
     return (
@@ -1106,6 +1238,189 @@ function AdminPage() {
     )
   }
 
+  function renderIngredientsView() {
+    const isSubmittingIngredient = Boolean(activeRequests[editingIngredientId == null ? 'ingredient-create' : `ingredient-update:${editingIngredientId}`])
+
+    return (
+      <section className="admin-dashboard__workspace">
+        <div className="admin-dashboard__workspace-header">
+          <div>
+            <span className="admin-dashboard__workspace-eyebrow">Skladniki</span>
+            <h2>Globalna lista skladnikow</h2>
+            <p>Admin zarzadza wspolnym katalogiem skladnikow uzywanym pozniej w recepturach wszystkich obiektow.</p>
+          </div>
+        </div>
+
+        <div className="admin-dashboard__stats-grid">
+          <article className="admin-dashboard__stat-card">
+            <span>Wszystkie skladniki</span>
+            <strong>{ingredients.length}</strong>
+          </article>
+          <article className="admin-dashboard__stat-card">
+            <span>Mieso</span>
+            <strong>{ingredients.filter((item) => item.category === 'MIESO').length}</strong>
+          </article>
+          <article className="admin-dashboard__stat-card">
+            <span>Nabial</span>
+            <strong>{ingredients.filter((item) => item.category === 'NABIAL').length}</strong>
+          </article>
+          <article className="admin-dashboard__stat-card">
+            <span>Warzywa i owoce</span>
+            <strong>{ingredients.filter((item) => item.category === 'WARZYWA_OWOCE').length}</strong>
+          </article>
+        </div>
+
+        <div className="admin-dashboard__toolbar">
+          <input
+            type="search"
+            className="admin-dashboard__input"
+            value={ingredientSearch}
+            onChange={(event) => setIngredientSearch(event.target.value)}
+            placeholder="Szukaj skladnika po nazwie"
+          />
+          <select
+            className="admin-dashboard__select"
+            value={ingredientCategoryFilter}
+            onChange={(event) => setIngredientCategoryFilter(event.target.value)}
+          >
+            <option value="all">Wszystkie kategorie</option>
+            <option value="MIESO">Mieso</option>
+            <option value="NABIAL">Nabial</option>
+            <option value="WARZYWA_OWOCE">Warzywa i owoce</option>
+            <option value="SUCHE">Suche</option>
+          </select>
+          <button type="button" className="admin-dashboard__secondary-action" onClick={resetIngredientForm}>
+            {editingIngredientId == null ? 'Wyczysc formularz' : 'Anuluj edycje'}
+          </button>
+        </div>
+
+        <div className="admin-dashboard__ingredient-layout">
+          <form className="admin-dashboard__ingredient-form" onSubmit={handleIngredientSubmit}>
+            <h3>{editingIngredientId == null ? 'Nowy skladnik' : 'Edytuj skladnik'}</h3>
+
+            <label className="admin-dashboard__field">
+              <span>Nazwa</span>
+              <input
+                type="text"
+                className="admin-dashboard__input"
+                value={ingredientForm.name}
+                onChange={(event) => setIngredientForm((current) => ({ ...current, name: event.target.value }))}
+                placeholder="np. Smietana 30%"
+                required
+              />
+            </label>
+
+            <label className="admin-dashboard__field">
+              <span>Kategoria</span>
+              <select
+                className="admin-dashboard__select"
+                value={ingredientForm.category}
+                onChange={(event) => setIngredientForm((current) => ({ ...current, category: event.target.value }))}
+              >
+                <option value="MIESO">Mieso</option>
+                <option value="NABIAL">Nabial</option>
+                <option value="WARZYWA_OWOCE">Warzywa i owoce</option>
+                <option value="SUCHE">Suche</option>
+              </select>
+            </label>
+
+            <div className="admin-dashboard__ingredient-form-grid">
+              <label className="admin-dashboard__field">
+                <span>Jednostka</span>
+                <select
+                  className="admin-dashboard__select"
+                  value={ingredientForm.defaultUnit}
+                  onChange={(event) => setIngredientForm((current) => ({ ...current, defaultUnit: event.target.value }))}
+                >
+                  <option value="G">g</option>
+                  <option value="ML">ml</option>
+                  <option value="SZT">szt.</option>
+                </select>
+              </label>
+
+              <label className="admin-dashboard__field">
+                <span>Strata</span>
+                <input
+                  type="number"
+                  min="0"
+                  max="0.99"
+                  step="0.01"
+                  className="admin-dashboard__input"
+                  value={ingredientForm.wastePercentage}
+                  onChange={(event) => setIngredientForm((current) => ({ ...current, wastePercentage: event.target.value }))}
+                  required
+                />
+              </label>
+            </div>
+
+            <div className="admin-dashboard__actions">
+              <button type="submit" className="admin-dashboard__submit" disabled={isSubmittingIngredient}>
+                {isSubmittingIngredient ? 'Zapisywanie...' : editingIngredientId == null ? 'Dodaj skladnik' : 'Zapisz zmiany'}
+              </button>
+            </div>
+          </form>
+
+          <div className="admin-dashboard__ingredient-list">
+            {isLoadingIngredients ? (
+              <p className="admin-dashboard__empty">Ladowanie skladnikow...</p>
+            ) : filteredIngredients.length === 0 ? (
+              <p className="admin-dashboard__empty">Brak skladnikow dla wybranych filtrow.</p>
+            ) : (
+              filteredIngredients.map((ingredient) => {
+                const isDeleting = Boolean(activeRequests[`ingredient-delete:${ingredient.id}`])
+                const isEditingCurrent = editingIngredientId === ingredient.id
+
+                return (
+                  <article key={ingredient.id} className="admin-dashboard__ingredient-card">
+                    <div className="admin-dashboard__ingredient-top">
+                      <div>
+                        <h3>{ingredient.name}</h3>
+                        <p>{INGREDIENT_CATEGORY_LABELS[ingredient.category] ?? ingredient.category}</p>
+                      </div>
+                      <span className="admin-dashboard__status-badge">
+                        {UNIT_LABELS[ingredient.defaultUnit] ?? ingredient.defaultUnit}
+                      </span>
+                    </div>
+
+                    <dl className="admin-dashboard__details-grid admin-dashboard__details-grid--compact">
+                      <div>
+                        <dt>Jednostka</dt>
+                        <dd>{UNIT_LABELS[ingredient.defaultUnit] ?? ingredient.defaultUnit}</dd>
+                      </div>
+                      <div>
+                        <dt>Strata</dt>
+                        <dd>{formatWastePercentage(ingredient.wastePercentage)}</dd>
+                      </div>
+                    </dl>
+
+                    <div className="admin-dashboard__actions">
+                      <button
+                        type="button"
+                        className="admin-dashboard__secondary-action"
+                        onClick={() => startIngredientEdit(ingredient)}
+                        disabled={isDeleting}
+                      >
+                        {isEditingCurrent ? 'Edytujesz' : 'Edytuj'}
+                      </button>
+                      <button
+                        type="button"
+                        className="admin-dashboard__action admin-dashboard__action--reject"
+                        onClick={() => handleIngredientDelete(ingredient.id)}
+                        disabled={isDeleting}
+                      >
+                        {isDeleting ? 'Usuwanie...' : 'Usun'}
+                      </button>
+                    </div>
+                  </article>
+                )
+              })
+            )}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   function renderWorkspace() {
     if (adminView === 'stats') {
       return renderStatsView()
@@ -1117,6 +1432,10 @@ function AdminPage() {
 
     if (adminView === 'users') {
       return renderUsersView()
+    }
+
+    if (adminView === 'ingredients') {
+      return renderIngredientsView()
     }
 
     return renderVenueView()
@@ -1143,7 +1462,15 @@ function AdminPage() {
             <section className="admin-dashboard__sidebar-section">
               <span className="admin-dashboard__sidebar-label">Panel</span>
               <strong className="admin-dashboard__sidebar-title">
-                {adminView === 'stats' ? 'Statystyki' : adminView === 'partners' ? 'Partnerzy' : adminView === 'users' ? 'Uzytkownicy' : 'Obiekty'}
+                {adminView === 'stats'
+                  ? 'Statystyki'
+                  : adminView === 'partners'
+                    ? 'Partnerzy'
+                    : adminView === 'users'
+                      ? 'Uzytkownicy'
+                      : adminView === 'ingredients'
+                        ? 'Skladniki'
+                        : 'Obiekty'}
               </strong>
               <span className="admin-dashboard__sidebar-meta">
                 {adminView === 'stats'
@@ -1152,6 +1479,8 @@ function AdminPage() {
                   ? 'Weryfikacja partnerow i filtrowanie profili.'
                   : adminView === 'users'
                     ? 'Lista kont User i Admin z mozliwoscia zmiany roli albo usuniecia.'
+                    : adminView === 'ingredients'
+                      ? 'Globalny katalog skladnikow wykorzystywany w menu obiektow.'
                     : 'Review sal, komentarze i decyzje administracyjne.'}
               </span>
             </section>
@@ -1186,6 +1515,13 @@ function AdminPage() {
                   onClick={() => setAdminView('users')}
                 >
                   Uzytkownicy
+                </button>
+                <button
+                  type="button"
+                  className={`admin-dashboard__nav-button${adminView === 'ingredients' ? ' admin-dashboard__nav-button--active' : ''}`}
+                  onClick={() => setAdminView('ingredients')}
+                >
+                  Skladniki
                 </button>
               </div>
             </section>

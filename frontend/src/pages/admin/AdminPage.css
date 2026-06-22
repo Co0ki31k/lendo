@@ -423,6 +423,75 @@
   line-height: 1.6;
 }
 
+.admin-dashboard__ingredient-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  gap: 20px;
+  margin-top: 20px;
+  align-items: start;
+}
+
+.admin-dashboard__ingredient-form,
+.admin-dashboard__ingredient-card {
+  border: 1px solid rgba(100, 66, 45, 0.14);
+  border-radius: 14px;
+  background: rgba(255, 250, 244, 0.9);
+  box-shadow: 0 10px 24px rgba(55, 31, 19, 0.05);
+}
+
+.admin-dashboard__ingredient-form {
+  padding: 20px;
+}
+
+.admin-dashboard__ingredient-form h3,
+.admin-dashboard__ingredient-card h3 {
+  margin: 0;
+  color: #241712;
+}
+
+.admin-dashboard__ingredient-list {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-dashboard__ingredient-card {
+  padding: 18px;
+}
+
+.admin-dashboard__ingredient-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-dashboard__ingredient-top p {
+  margin: 8px 0 0;
+  color: #5b4a41;
+}
+
+.admin-dashboard__ingredient-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-dashboard__field {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.admin-dashboard__field span {
+  color: #5b4a41;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.admin-dashboard__details-grid--compact {
+  margin: 16px 0 0;
+}
+
 .admin-dashboard__actions {
   display: flex;
   flex-wrap: wrap;
@@ -585,12 +654,17 @@
   .admin-dashboard__stats-grid,
   .admin-dashboard__cards,
   .admin-dashboard__venue-meta,
-  .admin-dashboard__details-grid {
+  .admin-dashboard__details-grid,
+  .admin-dashboard__ingredient-form-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .admin-dashboard__toolbar {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-dashboard__ingredient-layout {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -613,7 +687,8 @@
   .admin-dashboard__cards,
   .admin-dashboard__venue-meta,
   .admin-dashboard__details-grid,
-  .admin-dashboard__toolbar {
+  .admin-dashboard__toolbar,
+  .admin-dashboard__ingredient-form-grid {
     grid-template-columns: 1fr;
   }
 
