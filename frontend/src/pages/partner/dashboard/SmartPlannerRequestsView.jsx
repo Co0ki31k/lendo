@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { partnerApi } from '../../../api'
 import { SMART_PLANNER_STATUS_OPTIONS, formatSmartPlannerStatus } from '../../../features/smartplanner/statusLabels.js'
 
@@ -55,56 +55,53 @@ function SmartPlannerRequestsView() {
     status: 'idle',
     error: '',
   })
+  const [deleteState, setDeleteState] = useState({
+    status: 'idle',
+    error: '',
+  })
+
   const canDecide = detailState.booking?.status === 'SUBMITTED' || detailState.booking?.status === 'CHANGE_REQUESTED'
   const isChangeRequest = detailState.booking?.status === 'CHANGE_REQUESTED'
+  const canDeleteBooking = detailState.booking && ['REJECTED', 'EXPIRED', 'CANCELLED'].includes(detailState.booking.status)
+
+  const loadBookings = useCallback(async (preserveSelection = true) => {
+    setListState({ status: 'loading', error: '', data: null })
+
+    try {
+      const response = await partnerApi.getSmartPlannerBookings({
+        status: filters.status || undefined,
+        eventDateFrom: filters.eventDateFrom || undefined,
+        eventDateTo: filters.eventDateTo || undefined,
+      })
+
+      setListState({
+        status: 'ready',
+        error: '',
+        data: response,
+      })
+      setSelectedBookingId((current) => (
+        preserveSelection && current && response.items.some((booking) => booking.bookingId === current)
+          ? current
+          : (response.items[0]?.bookingId ?? null)
+      ))
+    } catch (requestError) {
+      setListState({
+        status: 'error',
+        error: requestError.response?.data?.message ?? 'Nie udalo sie pobrac zgloszen smartplannera.',
+        data: null,
+      })
+    }
+  }, [filters.eventDateFrom, filters.eventDateTo, filters.status])
 
   useEffect(() => {
-    let isMounted = true
-
-    async function loadBookings() {
-      setListState({ status: 'loading', error: '', data: null })
-
-      try {
-        const response = await partnerApi.getSmartPlannerBookings({
-          status: filters.status || undefined,
-          eventDateFrom: filters.eventDateFrom || undefined,
-          eventDateTo: filters.eventDateTo || undefined,
-        })
-
-        if (!isMounted) {
-          return
-        }
-
-        setListState({
-          status: 'ready',
-          error: '',
-          data: response,
-        })
-
-        setSelectedBookingId((current) => (
-          current && response.items.some((booking) => booking.bookingId === current)
-            ? current
-            : (response.items[0]?.bookingId ?? null)
-        ))
-      } catch (requestError) {
-        if (!isMounted) {
-          return
-        }
-
-        setListState({
-          status: 'error',
-          error: requestError.response?.data?.message ?? 'Nie udalo sie pobrac zgłoszen smartplannera.',
-          data: null,
-        })
-      }
-    }
-
-    void loadBookings()
+    const timeoutId = window.setTimeout(() => {
+      void loadBookings()
+    }, 0)
 
     return () => {
-      isMounted = false
+      window.clearTimeout(timeoutId)
     }
-  }, [filters])
+  }, [loadBookings])
 
   useEffect(() => {
     if (!selectedBookingId) {
@@ -130,6 +127,7 @@ function SmartPlannerRequestsView() {
         })
         setComment(response.decisionComment ?? '')
         setSubmitState({ status: 'idle', error: '' })
+        setDeleteState({ status: 'idle', error: '' })
       } catch (requestError) {
         if (!isMounted) {
           return
@@ -137,7 +135,7 @@ function SmartPlannerRequestsView() {
 
         setDetailState({
           status: 'error',
-          error: requestError.response?.data?.message ?? 'Nie udalo sie pobrac szczegolow zgłoszenia.',
+          error: requestError.response?.data?.message ?? 'Nie udalo sie pobrac szczegolow zgloszenia.',
           booking: null,
         })
       }
@@ -155,7 +153,6 @@ function SmartPlannerRequestsView() {
     [listState.data],
   )
   const summary = listState.data?.summary
-
   const decision = decisionOverride || (detailState.booking?.status === 'CHANGE_REQUESTED' ? 'APPROVE_CHANGES' : 'APPROVED')
 
   async function handleDecisionSubmit(event) {
@@ -173,11 +170,11 @@ function SmartPlannerRequestsView() {
         comment: comment || null,
       })
 
-        setDetailState({
-          status: 'ready',
-          error: '',
-          booking: response,
-        })
+      setDetailState({
+        status: 'ready',
+        error: '',
+        booking: response,
+      })
       setDecisionOverride('')
       setComment(response.decisionComment ?? '')
       setSubmitState({ status: 'success', error: '' })
@@ -187,9 +184,7 @@ function SmartPlannerRequestsView() {
         }
 
         const nextItems = current.data.items.map((booking) => (
-          booking.bookingId === response.bookingId
-            ? response
-            : booking
+          booking.bookingId === response.bookingId ? response : booking
         ))
 
         const nextSummary = {
@@ -215,6 +210,29 @@ function SmartPlannerRequestsView() {
       setSubmitState({
         status: 'error',
         error: requestError.response?.data?.message ?? 'Nie udalo sie zapisac decyzji.',
+      })
+    }
+  }
+
+  async function handleDeleteBooking() {
+    if (!detailState.booking || !canDeleteBooking) {
+      return
+    }
+
+    setDeleteState({ status: 'loading', error: '' })
+
+    try {
+      await partnerApi.deleteSmartPlannerBooking(detailState.booking.bookingId)
+      setDetailState({ status: 'idle', error: '', booking: null })
+      setDecisionOverride('')
+      setComment('')
+      setSubmitState({ status: 'idle', error: '' })
+      await loadBookings(false)
+      setDeleteState({ status: 'success', error: '' })
+    } catch (requestError) {
+      setDeleteState({
+        status: 'error',
+        error: requestError.response?.data?.message ?? 'Nie udalo sie usunac bookingu smartplannera.',
       })
     }
   }
@@ -470,21 +488,33 @@ function SmartPlannerRequestsView() {
                       </label>
 
                       {submitState.error ? <p className="partner-dashboard__error">{submitState.error}</p> : null}
+                      {deleteState.error ? <p className="partner-dashboard__error">{deleteState.error}</p> : null}
                       {submitState.status === 'success' ? (
                         <p className="partner-dashboard__notice">Decyzja zostala zapisana.</p>
+                      ) : null}
+                      {deleteState.status === 'success' ? (
+                        <p className="partner-dashboard__notice">Booking zostal usuniety z listy smartplannera.</p>
                       ) : null}
 
                       <div className="partner-dashboard__edit-actions">
                         <button
                           type="submit"
                           className="partner-dashboard__submit"
-                          disabled={!canDecide || submitState.status === 'loading'}
+                          disabled={!canDecide || submitState.status === 'loading' || deleteState.status === 'loading'}
                         >
                           {submitState.status === 'loading'
                             ? 'Zapisywanie...'
                             : canDecide
                               ? 'Zapisz decyzje'
                               : 'Zgloszenie juz rozpatrzone'}
+                        </button>
+                        <button
+                          type="button"
+                          className="partner-dashboard__secondary-action partner-dashboard__secondary-action--danger"
+                          disabled={!canDeleteBooking || deleteState.status === 'loading' || submitState.status === 'loading'}
+                          onClick={() => void handleDeleteBooking()}
+                        >
+                          {deleteState.status === 'loading' ? 'Usuwanie...' : 'Usun booking'}
                         </button>
                       </div>
                     </form>

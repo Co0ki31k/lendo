@@ -37,6 +37,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
@@ -50,6 +51,11 @@ public class SmartPlannerBookingService {
     private static final String PROVISIONAL = "PROVISIONAL";
     private static final String CONFIRMED = "CONFIRMED";
     private static final long PROVISIONAL_HOLD_HOURS = 48;
+    private static final EnumSet<BookingRequestStatus> MANAGER_DELETABLE_STATUSES = EnumSet.of(
+            BookingRequestStatus.REJECTED,
+            BookingRequestStatus.EXPIRED,
+            BookingRequestStatus.CANCELLED
+    );
 
     private final VenueRepository venueRepository;
     private final VenueCalendarRepository venueCalendarRepository;
@@ -231,6 +237,26 @@ public class SmartPlannerBookingService {
             case CANCELLATION_REQUESTED -> decideCancellationRequest(booking, request);
             default -> throw new RuntimeException("Ten booking nie oczekuje na decyzje managera");
         };
+    }
+
+    @Transactional
+    public void deleteManagerBooking(User user, Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking nie istnieje"));
+
+        if (!"ADMIN".equals(user.getRoleName())
+                && !booking.getVenue().getManager().getId().equals(user.getId())) {
+            throw new AccessDeniedException("Nie masz dostepu do tego bookingu");
+        }
+
+        expireIfNeeded(booking, resolveCalendarStatus(AVAILABLE));
+
+        if (!MANAGER_DELETABLE_STATUSES.contains(booking.getStatus())) {
+            throw new RuntimeException("Mozna usuwac tylko zakonczone bookingi smartplannera");
+        }
+
+        GuestDietLogistics dietLogistics = requireDietLogistics(booking.getId());
+        deleteBookingTraces(booking, dietLogistics);
     }
 
     private SmartPlannerBookingResponse decideInitialSubmission(Booking booking, SmartPlannerBookingDecisionRequest request) {

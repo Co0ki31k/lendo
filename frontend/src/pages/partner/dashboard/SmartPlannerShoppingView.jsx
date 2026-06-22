@@ -1,33 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { partnerApi } from '../../../api'
 import { SMART_PLANNER_STATUS_OPTIONS, formatSmartPlannerStatus } from '../../../features/smartplanner/statusLabels.js'
-
-const MENU_INGREDIENTS = {
-  standard: [
-    { name: 'Filet z kurczaka', unit: 'kg', amount: 0.18 },
-    { name: 'Ziemniaki', unit: 'kg', amount: 0.25 },
-    { name: 'Warzywa sezonowe', unit: 'kg', amount: 0.12 },
-    { name: 'Sos smietanowy', unit: 'l', amount: 0.06 },
-  ],
-  vegetarian: [
-    { name: 'Halloumi', unit: 'kg', amount: 0.16 },
-    { name: 'Ryż arborio', unit: 'kg', amount: 0.09 },
-    { name: 'Warzywa sezonowe', unit: 'kg', amount: 0.14 },
-    { name: 'Ser feta', unit: 'kg', amount: 0.04 },
-  ],
-  vegan: [
-    { name: 'Tofu', unit: 'kg', amount: 0.18 },
-    { name: 'Ryż basmati', unit: 'kg', amount: 0.09 },
-    { name: 'Warzywa sezonowe', unit: 'kg', amount: 0.16 },
-    { name: 'Mleko kokosowe', unit: 'l', amount: 0.07 },
-  ],
-  glutenFree: [
-    { name: 'Filet z indyka', unit: 'kg', amount: 0.18 },
-    { name: 'Ryż basmati', unit: 'kg', amount: 0.1 },
-    { name: 'Warzywa sezonowe', unit: 'kg', amount: 0.14 },
-    { name: 'Sos ziolowy', unit: 'l', amount: 0.06 },
-  ],
-}
 
 function formatDate(value) {
   if (!value) {
@@ -55,28 +28,12 @@ function buildShoppingSummary(booking) {
     return []
   }
 
-  const totals = new Map()
-  const menuCounts = {
-    standard: booking.dietLogistics.menuStandardCount,
-    vegetarian: booking.dietLogistics.menuVegetarianCount,
-    vegan: booking.dietLogistics.menuVeganCount,
-    glutenFree: booking.dietLogistics.menuGlutenFreeCount,
-  }
-
-  Object.entries(menuCounts).forEach(([menuKey, count]) => {
-    if (!count || count <= 0) {
-      return
-    }
-
-    MENU_INGREDIENTS[menuKey].forEach((ingredient) => {
-      const mapKey = `${ingredient.name}:${ingredient.unit}`
-      const previous = totals.get(mapKey) ?? { ...ingredient, total: 0 }
-      previous.total += ingredient.amount * count
-      totals.set(mapKey, previous)
-    })
-  })
-
-  return Array.from(totals.values()).sort((left, right) => left.name.localeCompare(right.name, 'pl'))
+  return [
+    { name: 'Standard', unit: 'porcji', total: booking.dietLogistics.menuStandardCount },
+    { name: 'Vegetarian', unit: 'porcji', total: booking.dietLogistics.menuVegetarianCount },
+    { name: 'Vegan', unit: 'porcji', total: booking.dietLogistics.menuVeganCount },
+    { name: 'Gluten free', unit: 'porcji', total: booking.dietLogistics.menuGlutenFreeCount },
+  ].filter((item) => item.total > 0)
 }
 
 function SmartPlannerShoppingView() {
@@ -96,49 +53,47 @@ function SmartPlannerShoppingView() {
     error: '',
     booking: null,
   })
+  const [deleteState, setDeleteState] = useState({
+    status: 'idle',
+    error: '',
+  })
+
+  const canDeleteBooking = detailState.booking && ['REJECTED', 'EXPIRED', 'CANCELLED'].includes(detailState.booking.status)
+
+  const loadBookings = useCallback(async (preserveSelection = true) => {
+    setListState({ status: 'loading', error: '', data: null })
+
+    try {
+      const response = await partnerApi.getSmartPlannerBookings({
+        status: filters.status || undefined,
+        eventDateFrom: filters.eventDateFrom || undefined,
+        eventDateTo: filters.eventDateTo || undefined,
+      })
+
+      setListState({ status: 'ready', error: '', data: response })
+      setSelectedBookingId((current) => (
+        preserveSelection && current && response.items.some((booking) => booking.bookingId === current)
+          ? current
+          : (response.items[0]?.bookingId ?? null)
+      ))
+    } catch (requestError) {
+      setListState({
+        status: 'error',
+        error: requestError.response?.data?.message ?? 'Nie udalo sie pobrac listy wydarzen do zakupow.',
+        data: null,
+      })
+    }
+  }, [filters.eventDateFrom, filters.eventDateTo, filters.status])
 
   useEffect(() => {
-    let isMounted = true
-
-    async function loadBookings() {
-      setListState({ status: 'loading', error: '', data: null })
-
-      try {
-        const response = await partnerApi.getSmartPlannerBookings({
-          status: filters.status || undefined,
-          eventDateFrom: filters.eventDateFrom || undefined,
-          eventDateTo: filters.eventDateTo || undefined,
-        })
-
-        if (!isMounted) {
-          return
-        }
-
-        setListState({ status: 'ready', error: '', data: response })
-        setSelectedBookingId((current) => (
-          current && response.items.some((booking) => booking.bookingId === current)
-            ? current
-            : (response.items[0]?.bookingId ?? null)
-        ))
-      } catch (error) {
-        if (!isMounted) {
-          return
-        }
-
-        setListState({
-          status: 'error',
-          error: error.response?.data?.message ?? 'Nie udalo sie pobrac listy wydarzen do zakupow.',
-          data: null,
-        })
-      }
-    }
-
-    void loadBookings()
+    const timeoutId = window.setTimeout(() => {
+      void loadBookings()
+    }, 0)
 
     return () => {
-      isMounted = false
+      window.clearTimeout(timeoutId)
     }
-  }, [filters])
+  }, [loadBookings])
 
   useEffect(() => {
     if (!selectedBookingId) {
@@ -158,14 +113,15 @@ function SmartPlannerShoppingView() {
         }
 
         setDetailState({ status: 'ready', error: '', booking: response })
-      } catch (error) {
+        setDeleteState({ status: 'idle', error: '' })
+      } catch (requestError) {
         if (!isMounted) {
           return
         }
 
         setDetailState({
           status: 'error',
-          error: error.response?.data?.message ?? 'Nie udalo sie pobrac szczegolow wydarzenia.',
+          error: requestError.response?.data?.message ?? 'Nie udalo sie pobrac szczegolow wydarzenia.',
           booking: null,
         })
       }
@@ -186,6 +142,26 @@ function SmartPlannerShoppingView() {
       + detailState.booking.dietLogistics.menuVeganCount
       + detailState.booking.dietLogistics.menuGlutenFreeCount
     : 0
+
+  async function handleDeleteBooking() {
+    if (!detailState.booking || !canDeleteBooking) {
+      return
+    }
+
+    setDeleteState({ status: 'loading', error: '' })
+
+    try {
+      await partnerApi.deleteSmartPlannerBooking(detailState.booking.bookingId)
+      setDetailState({ status: 'idle', error: '', booking: null })
+      await loadBookings(false)
+      setDeleteState({ status: 'success', error: '' })
+    } catch (requestError) {
+      setDeleteState({
+        status: 'error',
+        error: requestError.response?.data?.message ?? 'Nie udalo sie usunac bookingu smartplannera.',
+      })
+    }
+  }
 
   return (
     <section className="partner-dashboard__workspace">
@@ -328,6 +304,22 @@ function SmartPlannerShoppingView() {
                   <span>To wydarzenie jest oznaczone jako bez full service, wiec skladniki nie sa naliczane.</span>
                 </div>
               )}
+
+              {deleteState.error ? <p className="partner-dashboard__error">{deleteState.error}</p> : null}
+              {deleteState.status === 'success' ? (
+                <p className="partner-dashboard__notice">Booking zostal usuniety z listy smartplannera.</p>
+              ) : null}
+
+              <div className="partner-dashboard__edit-actions">
+                <button
+                  type="button"
+                  className="partner-dashboard__secondary-action partner-dashboard__secondary-action--danger"
+                  disabled={!canDeleteBooking || deleteState.status === 'loading'}
+                  onClick={() => void handleDeleteBooking()}
+                >
+                  {deleteState.status === 'loading' ? 'Usuwanie...' : 'Usun booking'}
+                </button>
+              </div>
             </>
           ) : null}
         </div>

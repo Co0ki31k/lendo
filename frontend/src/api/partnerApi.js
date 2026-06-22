@@ -158,3 +158,7 @@ export async function decideSmartPlannerBooking(bookingId, payload) {
   const response = await api.patch(`/api/partner/smart-planner/bookings/${bookingId}/decision`, payload)
   return response.data
 }
+
+export async function deleteSmartPlannerBooking(bookingId) {
+  await api.delete(`/api/partner/smart-planner/bookings/${bookingId}`)
+}

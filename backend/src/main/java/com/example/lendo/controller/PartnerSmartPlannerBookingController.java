@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -62,5 +63,15 @@ public class PartnerSmartPlannerBookingController {
             @Valid @RequestBody SmartPlannerBookingDecisionRequest request
     ) {
         return ResponseEntity.ok(smartPlannerBookingService.decideBooking(user, bookingId, request));
+    }
+
+    @DeleteMapping("/{bookingId}")
+    @Operation(summary = "Delete archived smart planner booking for current partner")
+    public ResponseEntity<Void> deleteBooking(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long bookingId
+    ) {
+        smartPlannerBookingService.deleteManagerBooking(user, bookingId);
+        return ResponseEntity.noContent().build();
     }
 }
