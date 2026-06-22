@@ -93,9 +93,33 @@ public class PartnerWeddingMenuManagementService {
     }
 
     @Transactional
+    public DishSummaryResponse createVenueDish(User user, Long venueId, DishUpsertRequest request) {
+        Venue venue = requireManagedVenue(user, venueId);
+        Dish dish = dishRepository.save(
+                Dish.builder()
+                        .name(normalizeName(request.name()))
+                        .category(request.category())
+                        .venue(venue)
+                        .build()
+        );
+
+        return DishSummaryResponse.from(dish);
+    }
+
+    @Transactional
     public DishSummaryResponse updateDish(User user, Long weddingMenuId, Long dishId, DishUpsertRequest request) {
         WeddingMenu weddingMenu = requireManagedWeddingMenu(user, weddingMenuId);
         Dish dish = requireDishInMenuVenue(weddingMenu, dishId);
+
+        dish.setName(normalizeName(request.name()));
+        dish.setCategory(request.category());
+        return DishSummaryResponse.from(dish);
+    }
+
+    @Transactional
+    public DishSummaryResponse updateVenueDish(User user, Long venueId, Long dishId, DishUpsertRequest request) {
+        Venue venue = requireManagedVenue(user, venueId);
+        Dish dish = requireDishInVenue(venue, dishId);
 
         dish.setName(normalizeName(request.name()));
         dish.setCategory(request.category());
@@ -111,6 +135,18 @@ public class PartnerWeddingMenuManagementService {
         if (dish.getWeddingMenus().isEmpty()) {
             dishRepository.delete(dish);
         }
+    }
+
+    @Transactional
+    public void deleteVenueDish(User user, Long venueId, Long dishId) {
+        Venue venue = requireManagedVenue(user, venueId);
+        Dish dish = requireDishInVenue(venue, dishId);
+
+        for (WeddingMenu weddingMenu : List.copyOf(dish.getWeddingMenus())) {
+            removeDishFromMenu(weddingMenu, dish);
+        }
+
+        dishRepository.delete(dish);
     }
 
     @Transactional
@@ -139,9 +175,40 @@ public class PartnerWeddingMenuManagementService {
     }
 
     @Transactional
+    public List<RecipeResponse> getVenueDishRecipes(User user, Long venueId, Long dishId) {
+        Venue venue = requireManagedVenue(user, venueId);
+        Dish dish = requireDishInVenue(venue, dishId);
+        return recipeRepository.findAllDetailedByDishId(dish.getId()).stream()
+                .map(RecipeResponse::from)
+                .toList();
+    }
+
+    @Transactional
     public RecipeResponse createRecipe(User user, Long weddingMenuId, Long dishId, RecipeUpsertRequest request) {
         WeddingMenu weddingMenu = requireManagedWeddingMenu(user, weddingMenuId);
         Dish dish = requireDishInMenuVenue(weddingMenu, dishId);
+        Ingredient ingredient = requireIngredient(request.ingredientId());
+
+        if (recipeRepository.existsByDishIdAndIngredientId(dish.getId(), ingredient.getId())) {
+            throw new RuntimeException("Ten skladnik jest juz przypisany do potrawy");
+        }
+
+        Recipe recipe = recipeRepository.save(
+                Recipe.builder()
+                        .dish(dish)
+                        .ingredient(ingredient)
+                        .quantityPerGuest(request.quantityPerGuest())
+                        .build()
+        );
+
+        return RecipeResponse.from(recipeRepository.findById(recipe.getId())
+                .orElseThrow(() -> new RuntimeException("Receptura nie istnieje")));
+    }
+
+    @Transactional
+    public RecipeResponse createVenueDishRecipe(User user, Long venueId, Long dishId, RecipeUpsertRequest request) {
+        Venue venue = requireManagedVenue(user, venueId);
+        Dish dish = requireDishInVenue(venue, dishId);
         Ingredient ingredient = requireIngredient(request.ingredientId());
 
         if (recipeRepository.existsByDishIdAndIngredientId(dish.getId(), ingredient.getId())) {
@@ -179,9 +246,36 @@ public class PartnerWeddingMenuManagementService {
     }
 
     @Transactional
+    public RecipeResponse updateVenueDishRecipe(User user, Long venueId, Long dishId, Long recipeId, RecipeUpsertRequest request) {
+        Venue venue = requireManagedVenue(user, venueId);
+        Dish dish = requireDishInVenue(venue, dishId);
+        Recipe recipe = recipeRepository.findByIdAndDishId(recipeId, dish.getId())
+                .orElseThrow(() -> new RuntimeException("Receptura nie istnieje"));
+        Ingredient ingredient = requireIngredient(request.ingredientId());
+
+        if (!Objects.equals(recipe.getIngredient().getId(), ingredient.getId())
+                && recipeRepository.existsByDishIdAndIngredientId(dish.getId(), ingredient.getId())) {
+            throw new RuntimeException("Ten skladnik jest juz przypisany do potrawy");
+        }
+
+        recipe.setIngredient(ingredient);
+        recipe.setQuantityPerGuest(request.quantityPerGuest());
+        return RecipeResponse.from(recipe);
+    }
+
+    @Transactional
     public void deleteRecipe(User user, Long weddingMenuId, Long dishId, Long recipeId) {
         WeddingMenu weddingMenu = requireManagedWeddingMenu(user, weddingMenuId);
         Dish dish = requireDishInMenuVenue(weddingMenu, dishId);
+        Recipe recipe = recipeRepository.findByIdAndDishId(recipeId, dish.getId())
+                .orElseThrow(() -> new RuntimeException("Receptura nie istnieje"));
+        recipeRepository.delete(recipe);
+    }
+
+    @Transactional
+    public void deleteVenueDishRecipe(User user, Long venueId, Long dishId, Long recipeId) {
+        Venue venue = requireManagedVenue(user, venueId);
+        Dish dish = requireDishInVenue(venue, dishId);
         Recipe recipe = recipeRepository.findByIdAndDishId(recipeId, dish.getId())
                 .orElseThrow(() -> new RuntimeException("Receptura nie istnieje"));
         recipeRepository.delete(recipe);
@@ -268,6 +362,11 @@ public class PartnerWeddingMenuManagementService {
         }
 
         return dish;
+    }
+
+    private Dish requireDishInVenue(Venue venue, Long dishId) {
+        return dishRepository.findByIdAndVenueId(dishId, venue.getId())
+                .orElseThrow(() -> new RuntimeException("Potrawa nie istnieje albo nie jest przypisana do obiektu"));
     }
 
     private WeddingMenu requireManagedWeddingMenu(User user, Long weddingMenuId) {

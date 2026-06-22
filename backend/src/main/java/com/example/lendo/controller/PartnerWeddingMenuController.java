@@ -74,6 +74,85 @@ public class PartnerWeddingMenuController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/venues/{venueId}/dishes")
+    @Operation(summary = "Create venue dish in managed venue library")
+    public ResponseEntity<DishSummaryResponse> createVenueDish(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long venueId,
+            @Valid @RequestBody DishUpsertRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(partnerWeddingMenuManagementService.createVenueDish(user, venueId, request));
+    }
+
+    @PutMapping("/venues/{venueId}/dishes/{dishId}")
+    @Operation(summary = "Update venue dish in managed venue library")
+    public ResponseEntity<DishSummaryResponse> updateVenueDish(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long venueId,
+            @PathVariable Long dishId,
+            @Valid @RequestBody DishUpsertRequest request
+    ) {
+        return ResponseEntity.ok(partnerWeddingMenuManagementService.updateVenueDish(user, venueId, dishId, request));
+    }
+
+    @DeleteMapping("/venues/{venueId}/dishes/{dishId}")
+    @Operation(summary = "Delete venue dish from managed venue library")
+    public ResponseEntity<Void> deleteVenueDish(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long venueId,
+            @PathVariable Long dishId
+    ) {
+        partnerWeddingMenuManagementService.deleteVenueDish(user, venueId, dishId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/venues/{venueId}/dishes/{dishId}/recipes")
+    @Operation(summary = "List recipes for venue dish")
+    public ResponseEntity<List<RecipeResponse>> getVenueDishRecipes(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long venueId,
+            @PathVariable Long dishId
+    ) {
+        return ResponseEntity.ok(partnerWeddingMenuManagementService.getVenueDishRecipes(user, venueId, dishId));
+    }
+
+    @PostMapping("/venues/{venueId}/dishes/{dishId}/recipes")
+    @Operation(summary = "Create recipe item for venue dish")
+    public ResponseEntity<RecipeResponse> createVenueDishRecipe(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long venueId,
+            @PathVariable Long dishId,
+            @Valid @RequestBody RecipeUpsertRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(partnerWeddingMenuManagementService.createVenueDishRecipe(user, venueId, dishId, request));
+    }
+
+    @PutMapping("/venues/{venueId}/dishes/{dishId}/recipes/{recipeId}")
+    @Operation(summary = "Update recipe item for venue dish")
+    public ResponseEntity<RecipeResponse> updateVenueDishRecipe(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long venueId,
+            @PathVariable Long dishId,
+            @PathVariable Long recipeId,
+            @Valid @RequestBody RecipeUpsertRequest request
+    ) {
+        return ResponseEntity.ok(partnerWeddingMenuManagementService.updateVenueDishRecipe(user, venueId, dishId, recipeId, request));
+    }
+
+    @DeleteMapping("/venues/{venueId}/dishes/{dishId}/recipes/{recipeId}")
+    @Operation(summary = "Delete recipe item for venue dish")
+    public ResponseEntity<Void> deleteVenueDishRecipe(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long venueId,
+            @PathVariable Long dishId,
+            @PathVariable Long recipeId
+    ) {
+        partnerWeddingMenuManagementService.deleteVenueDishRecipe(user, venueId, dishId, recipeId);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/{weddingMenuId}")
     @Operation(summary = "Get wedding menu details for current partner")
     public ResponseEntity<WeddingMenuResponse> getWeddingMenu(

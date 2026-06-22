@@ -20,6 +20,9 @@ public interface DishRepository extends JpaRepository<Dish, Long> {
     @EntityGraph(attributePaths = {"venue", "venue.manager"})
     List<Dish> findAllByVenueIdOrderByNameAsc(Long venueId);
 
+    @EntityGraph(attributePaths = {"venue", "venue.manager"})
+    Optional<Dish> findByIdAndVenueId(Long id, Long venueId);
+
     @Query("""
             select distinct dish from Dish dish
             left join fetch dish.venue venue

@@ -1,4 +1,5 @@
 import EditVenueView from './EditVenueView.jsx'
+import VenueDishesView from './VenueDishesView.jsx'
 import VenueMenusView from './VenueMenusView.jsx'
 import VenueCalendarView from './VenueCalendarView.jsx'
 import VenueMessagesView from './VenueMessagesView.jsx'
@@ -30,6 +31,10 @@ function ObjectWorkspaceView({ selectedVenue, objectView, onVenueUpdated, onNoti
 
   if (objectView === 'menus') {
     return <VenueMenusView key={selectedVenue.id} selectedVenue={selectedVenue} onNotice={onNotice} onError={onError} />
+  }
+
+  if (objectView === 'dishes') {
+    return <VenueDishesView key={selectedVenue.id} selectedVenue={selectedVenue} onNotice={onNotice} onError={onError} />
   }
 
   return <VenueCalendarView selectedVenue={selectedVenue} />

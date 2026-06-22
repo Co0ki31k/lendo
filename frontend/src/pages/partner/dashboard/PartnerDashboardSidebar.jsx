@@ -106,7 +106,15 @@ function PartnerDashboardSidebar({
             onClick={() => hasSelectedVenue && onObjectViewChange('menus')}
             disabled={!hasSelectedVenue}
           >
-            Menu i potrawy
+            Sklad menu
+          </button>
+          <button
+            type="button"
+            className={`partner-dashboard__nav-button${managerView === 'object' && objectView === 'dishes' ? ' partner-dashboard__nav-button--active' : ''}`}
+            onClick={() => hasSelectedVenue && onObjectViewChange('dishes')}
+            disabled={!hasSelectedVenue}
+          >
+            Potrawy i skladniki
           </button>
         </div>
       </section>

@@ -60,6 +60,20 @@ export async function getVenueMenuDishes(venueId) {
   return response.data
 }
 
+export async function createVenueDish(venueId, payload) {
+  const response = await api.post(`/api/partner/wedding-menus/venues/${venueId}/dishes`, payload)
+  return response.data
+}
+
+export async function updateVenueDish(venueId, dishId, payload) {
+  const response = await api.put(`/api/partner/wedding-menus/venues/${venueId}/dishes/${dishId}`, payload)
+  return response.data
+}
+
+export async function deleteVenueDish(venueId, dishId) {
+  await api.delete(`/api/partner/wedding-menus/venues/${venueId}/dishes/${dishId}`)
+}
+
 export async function createMenuDish(weddingMenuId, payload) {
   const response = await api.post(`/api/partner/wedding-menus/${weddingMenuId}/dishes`, payload)
   return response.data
@@ -84,8 +98,18 @@ export async function getDishRecipes(weddingMenuId, dishId) {
   return response.data
 }
 
+export async function getVenueDishRecipes(venueId, dishId) {
+  const response = await api.get(`/api/partner/wedding-menus/venues/${venueId}/dishes/${dishId}/recipes`)
+  return response.data
+}
+
 export async function createDishRecipe(weddingMenuId, dishId, payload) {
   const response = await api.post(`/api/partner/wedding-menus/${weddingMenuId}/dishes/${dishId}/recipes`, payload)
+  return response.data
+}
+
+export async function createVenueDishRecipe(venueId, dishId, payload) {
+  const response = await api.post(`/api/partner/wedding-menus/venues/${venueId}/dishes/${dishId}/recipes`, payload)
   return response.data
 }
 
@@ -94,8 +118,17 @@ export async function updateDishRecipe(weddingMenuId, dishId, recipeId, payload)
   return response.data
 }
 
+export async function updateVenueDishRecipe(venueId, dishId, recipeId, payload) {
+  const response = await api.put(`/api/partner/wedding-menus/venues/${venueId}/dishes/${dishId}/recipes/${recipeId}`, payload)
+  return response.data
+}
+
 export async function deleteDishRecipe(weddingMenuId, dishId, recipeId) {
   await api.delete(`/api/partner/wedding-menus/${weddingMenuId}/dishes/${dishId}/recipes/${recipeId}`)
+}
+
+export async function deleteVenueDishRecipe(venueId, dishId, recipeId) {
+  await api.delete(`/api/partner/wedding-menus/venues/${venueId}/dishes/${dishId}/recipes/${recipeId}`)
 }
 
 export async function submitVenueForReview(venueId) {

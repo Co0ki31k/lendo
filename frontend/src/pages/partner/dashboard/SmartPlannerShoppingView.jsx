@@ -53,12 +53,6 @@ function SmartPlannerShoppingView() {
     error: '',
     booking: null,
   })
-  const [deleteState, setDeleteState] = useState({
-    status: 'idle',
-    error: '',
-  })
-
-  const canDeleteBooking = detailState.booking && ['REJECTED', 'EXPIRED', 'CANCELLED'].includes(detailState.booking.status)
 
   const loadBookings = useCallback(async (preserveSelection = true) => {
     setListState({ status: 'loading', error: '', data: null })
@@ -113,7 +107,6 @@ function SmartPlannerShoppingView() {
         }
 
         setDetailState({ status: 'ready', error: '', booking: response })
-        setDeleteState({ status: 'idle', error: '' })
       } catch (requestError) {
         if (!isMounted) {
           return
@@ -142,26 +135,6 @@ function SmartPlannerShoppingView() {
       + detailState.booking.dietLogistics.menuVeganCount
       + detailState.booking.dietLogistics.menuGlutenFreeCount
     : 0
-
-  async function handleDeleteBooking() {
-    if (!detailState.booking || !canDeleteBooking) {
-      return
-    }
-
-    setDeleteState({ status: 'loading', error: '' })
-
-    try {
-      await partnerApi.deleteSmartPlannerBooking(detailState.booking.bookingId)
-      setDetailState({ status: 'idle', error: '', booking: null })
-      await loadBookings(false)
-      setDeleteState({ status: 'success', error: '' })
-    } catch (requestError) {
-      setDeleteState({
-        status: 'error',
-        error: requestError.response?.data?.message ?? 'Nie udalo sie usunac bookingu smartplannera.',
-      })
-    }
-  }
 
   return (
     <section className="partner-dashboard__workspace">
@@ -304,22 +277,6 @@ function SmartPlannerShoppingView() {
                   <span>To wydarzenie jest oznaczone jako bez full service, wiec skladniki nie sa naliczane.</span>
                 </div>
               )}
-
-              {deleteState.error ? <p className="partner-dashboard__error">{deleteState.error}</p> : null}
-              {deleteState.status === 'success' ? (
-                <p className="partner-dashboard__notice">Booking zostal usuniety z listy smartplannera.</p>
-              ) : null}
-
-              <div className="partner-dashboard__edit-actions">
-                <button
-                  type="button"
-                  className="partner-dashboard__secondary-action partner-dashboard__secondary-action--danger"
-                  disabled={!canDeleteBooking || deleteState.status === 'loading'}
-                  onClick={() => void handleDeleteBooking()}
-                >
-                  {deleteState.status === 'loading' ? 'Usuwanie...' : 'Usun booking'}
-                </button>
-              </div>
             </>
           ) : null}
         </div>
