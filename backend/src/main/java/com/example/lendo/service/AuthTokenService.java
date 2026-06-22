@@ -80,6 +80,9 @@ public class AuthTokenService {
 
         RefreshToken verifiedToken = refreshTokenService.verifyExpiration(token);
         User user = verifiedToken.getUser();
+        if (!user.isActive()) {
+            throw new RuntimeException("Account is inactive");
+        }
 
         String newAccessToken = jwtService.generateAccessToken(user);
 

@@ -11,9 +11,7 @@ import com.example.lendo.dto.AdminPartnerProfileResponse;
 import com.example.lendo.repository.VenueAddressRepository;
 import com.example.lendo.repository.VenueRepository;
 import com.example.lendo.model.PartnerProfile;
-import com.example.lendo.model.Role;
 import com.example.lendo.repository.PartnerProfileRepository;
-import com.example.lendo.repository.RoleRepository;
 import com.example.lendo.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -35,8 +33,8 @@ public class AdminPartnerService {
     private final VenueRepository venueRepository;
     private final VenueAddressRepository venueAddressRepository;
     private final PartnerVenueService partnerVenueService;
-    private final RoleRepository roleRepository;
     private final UserRepository userRepository;
+    private final AccountAnonymizationService accountAnonymizationService;
 
     @Transactional
     public AdminPartnerListResponse getAllPartnerProfiles(
@@ -84,16 +82,14 @@ public class AdminPartnerService {
         PartnerProfile profile = partnerProfileRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Profil partnera nie istnieje"));
 
-        for (Venue venue : List.copyOf(profile.getUser().getManagedVenues())) {
-            partnerVenueService.deleteVenueByAdmin(venue.getId());
+        if (!profile.getUser().isActive()) {
+            throw new RuntimeException("To konto partnera zostalo juz usuniete");
         }
 
-        Role clientRole = roleRepository.findByName("CLIENT")
-                .orElseThrow(() -> new IllegalStateException("Role CLIENT is missing"));
-
-        profile.getUser().setRole(clientRole);
+        accountAnonymizationService.anonymizePartnerProfile(profile);
+        accountAnonymizationService.anonymizeUser(profile.getUser());
         userRepository.save(profile.getUser());
-        partnerProfileRepository.delete(profile);
+        partnerProfileRepository.save(profile);
     }
 
     @Transactional

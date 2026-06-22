@@ -52,7 +52,7 @@ public class AdminPartnerController {
     }
 
     @DeleteMapping("/{userId}")
-    @Operation(summary = "Delete partner profile and reset account role")
+    @Operation(summary = "Deactivate and anonymize partner account")
     public ResponseEntity<Void> deletePartner(@PathVariable UUID userId) {
         adminPartnerService.deletePartner(userId);
         return ResponseEntity.noContent().build();

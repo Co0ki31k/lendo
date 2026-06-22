@@ -15,6 +15,7 @@ public record AdminPartnerProfileResponse(
         String taxId,
         String contactEmail,
         String description,
+        boolean active,
         boolean verified,
         ZonedDateTime createdAt,
         ZonedDateTime updatedAt
@@ -30,6 +31,7 @@ public record AdminPartnerProfileResponse(
                 profile.getTaxId(),
                 profile.getContactEmail(),
                 profile.getDescription(),
+                profile.getUser().isActive(),
                 profile.isVerified(),
                 profile.getCreatedAt(),
                 profile.getUpdatedAt()

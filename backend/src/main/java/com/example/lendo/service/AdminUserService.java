@@ -27,6 +27,7 @@ public class AdminUserService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final AccountAnonymizationService accountAnonymizationService;
 
     @Transactional
     public AdminUserListResponse getUsers(
@@ -93,7 +94,12 @@ public class AdminUserService {
             throw new RuntimeException("Nie mozesz usunac wlasnego konta");
         }
 
-        userRepository.delete(user);
+        if (!user.isActive()) {
+            throw new RuntimeException("To konto zostalo juz usuniete");
+        }
+
+        accountAnonymizationService.anonymizeUser(user);
+        userRepository.save(user);
     }
 
     private Specification<User> buildUserSpecification(String search, String role) {

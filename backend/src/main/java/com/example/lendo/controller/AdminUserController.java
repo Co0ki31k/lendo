@@ -55,7 +55,7 @@ public class AdminUserController {
     }
 
     @DeleteMapping("/{userId}")
-    @Operation(summary = "Delete user or admin account")
+    @Operation(summary = "Deactivate and anonymize user or admin account")
     public ResponseEntity<Void> deleteUser(
             @PathVariable UUID userId,
             @AuthenticationPrincipal User currentAdmin

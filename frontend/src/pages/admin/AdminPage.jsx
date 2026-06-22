@@ -728,8 +728,8 @@ function AdminPage() {
                         <p>{partner.firstName} {partner.lastName}</p>
                       </div>
 
-                      <span className={`admin-dashboard__status-badge ${partner.verified ? 'admin-dashboard__status-badge--approved' : 'admin-dashboard__status-badge--pending'}`}>
-                        {partner.verified ? 'Zweryfikowany' : 'Oczekuje'}
+                      <span className={`admin-dashboard__status-badge ${!partner.active ? 'admin-dashboard__status-badge--rejected' : partner.verified ? 'admin-dashboard__status-badge--approved' : 'admin-dashboard__status-badge--pending'}`}>
+                        {!partner.active ? 'Konto usuniete' : partner.verified ? 'Zweryfikowany' : 'Oczekuje'}
                       </span>
                     </div>
 
@@ -764,6 +764,10 @@ function AdminPage() {
                             <dt>Utworzono</dt>
                             <dd>{formatDateTime(partner.createdAt)}</dd>
                           </div>
+                          <div>
+                            <dt>Status konta</dt>
+                            <dd>{partner.active ? 'Aktywne' : 'Usuniete i zanonimizowane'}</dd>
+                          </div>
                         </dl>
                       </section>
                     ) : null}
@@ -772,7 +776,7 @@ function AdminPage() {
                       <button
                         type="button"
                         className="admin-dashboard__action admin-dashboard__action--approve"
-                        disabled={isSubmitting || isDeleting || partner.verified}
+                        disabled={isSubmitting || isDeleting || partner.verified || !partner.active}
                         onClick={() => handlePartnerVerification(partner.userId, true)}
                       >
                         Potwierdz
@@ -780,7 +784,7 @@ function AdminPage() {
                       <button
                         type="button"
                         className="admin-dashboard__action admin-dashboard__action--reject"
-                        disabled={isSubmitting || isDeleting || !partner.verified}
+                        disabled={isSubmitting || isDeleting || !partner.verified || !partner.active}
                         onClick={() => handlePartnerVerification(partner.userId, false)}
                       >
                         Cofnij
@@ -788,10 +792,10 @@ function AdminPage() {
                       <button
                         type="button"
                         className="admin-dashboard__action admin-dashboard__action--reject"
-                        disabled={isSubmitting || isDeleting}
+                        disabled={isSubmitting || isDeleting || !partner.active}
                         onClick={() => handlePartnerDelete(partner.userId)}
                       >
-                        {isDeleting ? 'Usuwanie...' : 'Usun partnera'}
+                        {isDeleting ? 'Usuwanie...' : partner.active ? 'Usun konto partnera' : 'Konto usuniete'}
                       </button>
                     </div>
                   </article>
@@ -1217,7 +1221,7 @@ function AdminPage() {
                       <button
                         type="button"
                         className="admin-dashboard__action admin-dashboard__action--approve"
-                        disabled={isRoleUpdating || isDeleting}
+                        disabled={isRoleUpdating || isDeleting || !account.active}
                         onClick={() => handleUserRoleUpdate(account.id, nextRole)}
                       >
                         {isRoleUpdating
@@ -1229,10 +1233,10 @@ function AdminPage() {
                       <button
                         type="button"
                         className="admin-dashboard__action admin-dashboard__action--reject"
-                        disabled={isRoleUpdating || isDeleting}
+                        disabled={isRoleUpdating || isDeleting || !account.active}
                         onClick={() => handleUserDelete(account.id)}
                       >
-                        {isDeleting ? 'Usuwanie...' : 'Usun konto'}
+                        {isDeleting ? 'Usuwanie...' : account.active ? 'Usun konto' : 'Konto usuniete'}
                       </button>
                     </div>
                   </article>
