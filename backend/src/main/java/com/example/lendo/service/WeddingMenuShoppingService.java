@@ -35,7 +35,7 @@ public class WeddingMenuShoppingService {
             return;
         }
 
-        if (!weddingMenu.getBooking().getVenue().getManager().getId().equals(user.getId())) {
+        if (!weddingMenu.getVenue().getManager().getId().equals(user.getId())) {
             throw new AccessDeniedException("Nie masz dostepu do tego menu weselnego");
         }
     }

@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface RecipeRepository extends JpaRepository<Recipe, Long> {
@@ -27,4 +28,18 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
             order by ingredient.category, ingredient.name
             """)
     List<ShoppingItemDTO> calculateShoppingItems(@Param("weddingMenuId") Long weddingMenuId, @Param("guestCount") int guestCount);
+
+    @Query("""
+            select recipe from Recipe recipe
+            join fetch recipe.ingredient ingredient
+            where recipe.dish.id = :dishId
+            order by ingredient.category, ingredient.name
+            """)
+    List<Recipe> findAllDetailedByDishId(@Param("dishId") Long dishId);
+
+    boolean existsByDishIdAndIngredientId(Long dishId, Long ingredientId);
+
+    boolean existsByIngredientId(Long ingredientId);
+
+    Optional<Recipe> findByIdAndDishId(Long id, Long dishId);
 }

@@ -2,6 +2,7 @@ package com.example.lendo.service;
 
 import com.example.lendo.dto.ShoppingItemDTO;
 import com.example.lendo.model.IngredientCategory;
+import com.example.lendo.model.MenuType;
 import com.example.lendo.model.Role;
 import com.example.lendo.model.UnitOfMeasure;
 import com.example.lendo.model.User;
@@ -108,7 +109,8 @@ class WeddingMenuShoppingServiceTest {
 
         return WeddingMenu.builder()
                 .id(7L)
-                .booking(com.example.lendo.model.Booking.builder().venue(venue).build())
+                .venue(venue)
+                .menuType(MenuType.STANDARD)
                 .build();
     }
 }
