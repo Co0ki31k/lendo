@@ -102,6 +102,8 @@ const EMPTY_INGREDIENT_FORM = {
   wastePercentage: '0.00',
 }
 
+const INGREDIENTS_PER_PAGE = 8
+
 function formatWastePercentage(value) {
   if (value == null || Number.isNaN(Number(value))) {
     return '-'
@@ -216,6 +218,7 @@ function AdminPage() {
   const [ingredientCategoryFilter, setIngredientCategoryFilter] = useState('all')
   const [ingredientForm, setIngredientForm] = useState(EMPTY_INGREDIENT_FORM)
   const [editingIngredientId, setEditingIngredientId] = useState(null)
+  const [ingredientPage, setIngredientPage] = useState(0)
   const [isLoadingPartners, setIsLoadingPartners] = useState(true)
   const [isLoadingVenues, setIsLoadingVenues] = useState(true)
   const [isLoadingUsers, setIsLoadingUsers] = useState(true)
@@ -613,15 +616,24 @@ function AdminPage() {
     { value: 'REJECTED', label: 'Odrzucone' },
   ], [])
 
-  const filteredIngredients = useMemo(() => {
-    const normalizedSearch = ingredientSearch.trim().toLowerCase()
-
-    return ingredients.filter((ingredient) => {
-      const matchesCategory = ingredientCategoryFilter === 'all' || ingredient.category === ingredientCategoryFilter
-      const matchesSearch = !normalizedSearch || ingredient.name.toLowerCase().includes(normalizedSearch)
-      return matchesCategory && matchesSearch
-    })
-  }, [ingredientCategoryFilter, ingredientSearch, ingredients])
+  const normalizedIngredientSearch = ingredientSearch.trim().toLowerCase()
+  const filteredIngredients = ingredients.filter((ingredient) => {
+    const matchesCategory = ingredientCategoryFilter === 'all' || ingredient.category === ingredientCategoryFilter
+    const matchesSearch = !normalizedIngredientSearch || ingredient.name.toLowerCase().includes(normalizedIngredientSearch)
+    return matchesCategory && matchesSearch
+  })
+  const ingredientTotalPages = filteredIngredients.length === 0 ? 0 : Math.ceil(filteredIngredients.length / INGREDIENTS_PER_PAGE)
+  const currentIngredientPage = ingredientTotalPages === 0 ? 0 : Math.min(ingredientPage, ingredientTotalPages - 1)
+  const ingredientStartIndex = currentIngredientPage * INGREDIENTS_PER_PAGE
+  const paginatedIngredients = filteredIngredients.slice(ingredientStartIndex, ingredientStartIndex + INGREDIENTS_PER_PAGE)
+  const ingredientPageMeta = {
+    page: currentIngredientPage,
+    size: INGREDIENTS_PER_PAGE,
+    totalItems: filteredIngredients.length,
+    totalPages: ingredientTotalPages,
+    hasPrevious: currentIngredientPage > 0,
+    hasNext: ingredientTotalPages > 0 && currentIngredientPage < ingredientTotalPages - 1,
+  }
 
   function renderPartnerView() {
     return (
@@ -1275,13 +1287,19 @@ function AdminPage() {
             type="search"
             className="admin-dashboard__input"
             value={ingredientSearch}
-            onChange={(event) => setIngredientSearch(event.target.value)}
+            onChange={(event) => {
+              setIngredientSearch(event.target.value)
+              setIngredientPage(0)
+            }}
             placeholder="Szukaj skladnika po nazwie"
           />
           <select
             className="admin-dashboard__select"
             value={ingredientCategoryFilter}
-            onChange={(event) => setIngredientCategoryFilter(event.target.value)}
+            onChange={(event) => {
+              setIngredientCategoryFilter(event.target.value)
+              setIngredientPage(0)
+            }}
           >
             <option value="all">Wszystkie kategorie</option>
             <option value="MIESO">Mieso</option>
@@ -1295,6 +1313,70 @@ function AdminPage() {
         </div>
 
         <div className="admin-dashboard__ingredient-layout">
+          <div className="admin-dashboard__ingredient-list">
+            {isLoadingIngredients ? (
+              <p className="admin-dashboard__empty">Ladowanie skladnikow...</p>
+            ) : filteredIngredients.length === 0 ? (
+              <p className="admin-dashboard__empty">Brak skladnikow dla wybranych filtrow.</p>
+            ) : (
+              paginatedIngredients.map((ingredient) => {
+                const isDeleting = Boolean(activeRequests[`ingredient-delete:${ingredient.id}`])
+                const isEditingCurrent = editingIngredientId === ingredient.id
+
+                return (
+                  <article key={ingredient.id} className="admin-dashboard__ingredient-card">
+                    <div className="admin-dashboard__ingredient-top">
+                      <div>
+                        <h3>{ingredient.name}</h3>
+                        <p>{INGREDIENT_CATEGORY_LABELS[ingredient.category] ?? ingredient.category}</p>
+                      </div>
+                      <span className="admin-dashboard__status-badge">
+                        {UNIT_LABELS[ingredient.defaultUnit] ?? ingredient.defaultUnit}
+                      </span>
+                    </div>
+
+                    <dl className="admin-dashboard__details-grid admin-dashboard__details-grid--compact">
+                      <div>
+                        <dt>Jednostka</dt>
+                        <dd>{UNIT_LABELS[ingredient.defaultUnit] ?? ingredient.defaultUnit}</dd>
+                      </div>
+                      <div>
+                        <dt>Strata</dt>
+                        <dd>{formatWastePercentage(ingredient.wastePercentage)}</dd>
+                      </div>
+                    </dl>
+
+                    <div className="admin-dashboard__actions">
+                      <button
+                        type="button"
+                        className="admin-dashboard__secondary-action"
+                        onClick={() => startIngredientEdit(ingredient)}
+                        disabled={isDeleting}
+                      >
+                        {isEditingCurrent ? 'Edytujesz' : 'Edytuj'}
+                      </button>
+                      <button
+                        type="button"
+                        className="admin-dashboard__action admin-dashboard__action--reject"
+                        onClick={() => handleIngredientDelete(ingredient.id)}
+                        disabled={isDeleting}
+                      >
+                        {isDeleting ? 'Usuwanie...' : 'Usun'}
+                      </button>
+                    </div>
+                  </article>
+                )
+              })
+            )}
+
+            {!isLoadingIngredients && filteredIngredients.length > 0 ? (
+              <PaginationControls
+                page={ingredientPageMeta}
+                onPageChange={(nextPage) => setIngredientPage(nextPage)}
+              />
+            ) : null}
+          </div>
+
           <form className="admin-dashboard__ingredient-form" onSubmit={handleIngredientSubmit}>
             <h3>{editingIngredientId == null ? 'Nowy skladnik' : 'Edytuj skladnik'}</h3>
 
@@ -1359,63 +1441,6 @@ function AdminPage() {
               </button>
             </div>
           </form>
-
-          <div className="admin-dashboard__ingredient-list">
-            {isLoadingIngredients ? (
-              <p className="admin-dashboard__empty">Ladowanie skladnikow...</p>
-            ) : filteredIngredients.length === 0 ? (
-              <p className="admin-dashboard__empty">Brak skladnikow dla wybranych filtrow.</p>
-            ) : (
-              filteredIngredients.map((ingredient) => {
-                const isDeleting = Boolean(activeRequests[`ingredient-delete:${ingredient.id}`])
-                const isEditingCurrent = editingIngredientId === ingredient.id
-
-                return (
-                  <article key={ingredient.id} className="admin-dashboard__ingredient-card">
-                    <div className="admin-dashboard__ingredient-top">
-                      <div>
-                        <h3>{ingredient.name}</h3>
-                        <p>{INGREDIENT_CATEGORY_LABELS[ingredient.category] ?? ingredient.category}</p>
-                      </div>
-                      <span className="admin-dashboard__status-badge">
-                        {UNIT_LABELS[ingredient.defaultUnit] ?? ingredient.defaultUnit}
-                      </span>
-                    </div>
-
-                    <dl className="admin-dashboard__details-grid admin-dashboard__details-grid--compact">
-                      <div>
-                        <dt>Jednostka</dt>
-                        <dd>{UNIT_LABELS[ingredient.defaultUnit] ?? ingredient.defaultUnit}</dd>
-                      </div>
-                      <div>
-                        <dt>Strata</dt>
-                        <dd>{formatWastePercentage(ingredient.wastePercentage)}</dd>
-                      </div>
-                    </dl>
-
-                    <div className="admin-dashboard__actions">
-                      <button
-                        type="button"
-                        className="admin-dashboard__secondary-action"
-                        onClick={() => startIngredientEdit(ingredient)}
-                        disabled={isDeleting}
-                      >
-                        {isEditingCurrent ? 'Edytujesz' : 'Edytuj'}
-                      </button>
-                      <button
-                        type="button"
-                        className="admin-dashboard__action admin-dashboard__action--reject"
-                        onClick={() => handleIngredientDelete(ingredient.id)}
-                        disabled={isDeleting}
-                      >
-                        {isDeleting ? 'Usuwanie...' : 'Usun'}
-                      </button>
-                    </div>
-                  </article>
-                )
-              })
-            )}
-          </div>
         </div>
       </section>
     )
