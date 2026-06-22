@@ -100,6 +100,14 @@ function PartnerDashboardSidebar({
           >
             Zdjecia
           </button>
+          <button
+            type="button"
+            className={`partner-dashboard__nav-button${managerView === 'object' && objectView === 'menus' ? ' partner-dashboard__nav-button--active' : ''}`}
+            onClick={() => hasSelectedVenue && onObjectViewChange('menus')}
+            disabled={!hasSelectedVenue}
+          >
+            Menu i potrawy
+          </button>
         </div>
       </section>
     </aside>

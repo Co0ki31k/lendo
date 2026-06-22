@@ -1,9 +1,10 @@
 import EditVenueView from './EditVenueView.jsx'
+import VenueMenusView from './VenueMenusView.jsx'
 import VenueCalendarView from './VenueCalendarView.jsx'
 import VenueMessagesView from './VenueMessagesView.jsx'
 import VenueImagesView from './VenueImagesView.jsx'
 
-function ObjectWorkspaceView({ selectedVenue, objectView, onVenueUpdated }) {
+function ObjectWorkspaceView({ selectedVenue, objectView, onVenueUpdated, onNotice, onError }) {
   if (!selectedVenue) {
     return (
       <section className="partner-dashboard__workspace">
@@ -25,6 +26,10 @@ function ObjectWorkspaceView({ selectedVenue, objectView, onVenueUpdated }) {
 
   if (objectView === 'images') {
     return <VenueImagesView selectedVenue={selectedVenue} />
+  }
+
+  if (objectView === 'menus') {
+    return <VenueMenusView key={selectedVenue.id} selectedVenue={selectedVenue} onNotice={onNotice} onError={onError} />
   }
 
   return <VenueCalendarView selectedVenue={selectedVenue} />

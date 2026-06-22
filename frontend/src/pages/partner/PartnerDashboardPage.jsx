@@ -305,6 +305,8 @@ function PartnerDashboardPage() {
         selectedVenue={selectedVenue}
         objectView={objectView}
         onVenueUpdated={handleVenueUpdated}
+        onNotice={setNotice}
+        onError={setError}
       />
     )
   }
