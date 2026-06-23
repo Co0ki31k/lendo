@@ -52,11 +52,9 @@ public class WeddDeal {
     @Builder.Default
     private boolean sourceFullService = false;
 
-    @Lob
     @Column(name = "source_service_notes")
     private String sourceServiceNotes;
 
-    @Lob
     @Column(name = "source_allergies_notes")
     private String sourceAllergiesNotes;
 
