@@ -17,6 +17,7 @@ import com.example.lendo.repository.BookingStatusRepository;
 import com.example.lendo.repository.GuestDietLogisticsRepository;
 import com.example.lendo.repository.WeddDealRepository;
 import com.example.lendo.repository.WeddChanceBookingRepository;
+import com.example.lendo.repository.VenueCalendarRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -39,6 +40,7 @@ public class WeddChanceSubmissionService {
     private final WeddChanceBookingRepository weddChanceBookingRepository;
     private final BookingRepository bookingRepository;
     private final GuestDietLogisticsRepository guestDietLogisticsRepository;
+    private final VenueCalendarRepository venueCalendarRepository;
 
     @Transactional
     public WeddChanceSubmissionResponse submitOffer(User user, Long dealId, SubmitWeddChanceOfferRequest request) {
@@ -61,6 +63,7 @@ public class WeddChanceSubmissionService {
 
         calendar.setStatus(confirmedStatus);
         calendar.setProvisionalExpiresAt(null);
+        venueCalendarRepository.save(calendar);
 
         BigDecimal totalEstimatedCost = deal.getSpecialPricePerGuest()
                 .multiply(BigDecimal.valueOf(request.guestCount()));
