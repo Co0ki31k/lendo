@@ -6,6 +6,19 @@ function formatCurrency(value) {
   }).format(Number(value ?? 0))
 }
 
+function formatCompactCurrency(value) {
+  const numericValue = Number(value ?? 0)
+
+  if (Math.abs(numericValue) >= 1000) {
+    return new Intl.NumberFormat('pl-PL', {
+      notation: 'compact',
+      maximumFractionDigits: 1,
+    }).format(numericValue).replace(/\s/g, '')
+  }
+
+  return formatCurrency(numericValue)
+}
+
 function formatNumber(value) {
   return new Intl.NumberFormat('pl-PL').format(Number(value ?? 0))
 }
@@ -56,16 +69,16 @@ function StatsView({ stats }) {
           <strong>{formatNumber(stats.kpi.activeBookings)}</strong>
         </article>
         <article className="partner-dashboard__stat-card">
-          <span>Inquiry</span>
+          <span>Zapytania</span>
           <strong>{formatNumber(stats.kpi.totalInquiries)}</strong>
         </article>
         <article className="partner-dashboard__stat-card">
-          <span>Favorites</span>
+          <span>Ulubione</span>
           <strong>{formatNumber(stats.kpi.totalFavorites)}</strong>
         </article>
         <article className="partner-dashboard__stat-card">
-          <span>Approved revenue</span>
-          <strong>{formatCurrency(stats.kpi.approvedEstimatedRevenue)}</strong>
+          <span>Przychod est.</span>
+          <strong>{formatCompactCurrency(stats.kpi.approvedEstimatedRevenue)}</strong>
         </article>
         <article className="partner-dashboard__stat-card">
           <span>Aktywne WeddChance</span>
@@ -138,19 +151,19 @@ function StatsView({ stats }) {
 
         <article className="partner-dashboard__smartplanner-card">
           <div className="partner-dashboard__section-heading">
-            <h3 className="partner-dashboard__section-title">Lejek bookingow</h3>
+            <h3 className="partner-dashboard__section-title">Statusy rezerwacji</h3>
             <span className="partner-dashboard__sidebar-meta">
-              Approval rate {formatPercent(approvalRate)} | sredni czas decyzji {formatNumber(stats.bookings.averageDecisionHours)} h
+              Wskaznik akceptacji {formatPercent(approvalRate)} | sredni czas decyzji {formatNumber(stats.bookings.averageDecisionHours)} h
             </span>
           </div>
           <dl className="partner-dashboard__venue-meta partner-dashboard__venue-meta--flush">
-            <div><dt>Submitted</dt><dd>{formatNumber(stats.bookings.submitted)}</dd></div>
-            <div><dt>Approved</dt><dd>{formatNumber(stats.bookings.approved)}</dd></div>
-            <div><dt>Change requested</dt><dd>{formatNumber(stats.bookings.changeRequested)}</dd></div>
-            <div><dt>Cancellation requested</dt><dd>{formatNumber(stats.bookings.cancellationRequested)}</dd></div>
-            <div><dt>Rejected</dt><dd>{formatNumber(stats.bookings.rejected)}</dd></div>
-            <div><dt>Expired</dt><dd>{formatNumber(stats.bookings.expired)}</dd></div>
-            <div><dt>Cancelled</dt><dd>{formatNumber(stats.bookings.cancelled)}</dd></div>
+            <div><dt>Nowe</dt><dd>{formatNumber(stats.bookings.submitted)}</dd></div>
+            <div><dt>Zatwierdzone</dt><dd>{formatNumber(stats.bookings.approved)}</dd></div>
+            <div><dt>Prosba o zmiane</dt><dd>{formatNumber(stats.bookings.changeRequested)}</dd></div>
+            <div><dt>Prosba o anulowanie</dt><dd>{formatNumber(stats.bookings.cancellationRequested)}</dd></div>
+            <div><dt>Odrzucone</dt><dd>{formatNumber(stats.bookings.rejected)}</dd></div>
+            <div><dt>Wygasle</dt><dd>{formatNumber(stats.bookings.expired)}</dd></div>
+            <div><dt>Anulowane</dt><dd>{formatNumber(stats.bookings.cancelled)}</dd></div>
             <div><dt>Srednio gosci</dt><dd>{formatNumber(stats.bookings.averageGuests)}</dd></div>
             <div><dt>Srednia cena / os.</dt><dd>{formatCurrency(stats.bookings.averagePricePerGuest)}</dd></div>
             <div><dt>Total estymacja</dt><dd>{formatCurrency(stats.bookings.totalEstimatedRevenue)}</dd></div>
@@ -176,12 +189,18 @@ function StatsView({ stats }) {
         <article className="partner-dashboard__smartplanner-card">
           <div className="partner-dashboard__section-heading">
             <h3 className="partner-dashboard__section-title">Popyt</h3>
-            <span className="partner-dashboard__sidebar-meta">Suma zapytan i zapisow do ulubionych dla Twoich obiektow.</span>
+            <span className="partner-dashboard__sidebar-meta">Szybki odczyt zainteresowania Twoimi obiektami.</span>
           </div>
-          <dl className="partner-dashboard__venue-meta partner-dashboard__venue-meta--flush">
-            <div><dt>Inquiry</dt><dd>{formatNumber(stats.demand.totalInquiries)}</dd></div>
-            <div><dt>Favorites</dt><dd>{formatNumber(stats.demand.totalFavorites)}</dd></div>
-          </dl>
+          <div className="partner-dashboard__demand-grid">
+            <div className="partner-dashboard__demand-card">
+              <span>Zapytania</span>
+              <strong>{formatNumber(stats.demand.totalInquiries)}</strong>
+            </div>
+            <div className="partner-dashboard__demand-card">
+              <span>Ulubione</span>
+              <strong>{formatNumber(stats.demand.totalFavorites)}</strong>
+            </div>
+          </div>
         </article>
 
         <article className="partner-dashboard__smartplanner-card">
@@ -211,10 +230,10 @@ function StatsView({ stats }) {
               <div className="partner-dashboard__stats-table-header">
                 <span>Obiekt</span>
                 <span>Status</span>
-                <span>Favorites</span>
-                <span>Inquiry</span>
+                <span>Ulubione</span>
+                <span>Zapytania</span>
                 <span>Bookingi</span>
-                <span>Approved revenue</span>
+                <span>Przychod est.</span>
               </div>
               {stats.topVenues.map((venue) => (
                 <div key={venue.venueId} className="partner-dashboard__stats-table-row">
