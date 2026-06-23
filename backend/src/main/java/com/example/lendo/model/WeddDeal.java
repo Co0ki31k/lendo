@@ -48,6 +48,34 @@ public class WeddDeal {
     @Column(name = "original_guest_count", nullable = false)
     private Integer originalGuestCount;
 
+    @Column(name = "source_full_service", nullable = false)
+    @Builder.Default
+    private boolean sourceFullService = false;
+
+    @Lob
+    @Column(name = "source_service_notes")
+    private String sourceServiceNotes;
+
+    @Lob
+    @Column(name = "source_allergies_notes")
+    private String sourceAllergiesNotes;
+
+    @Column(name = "source_menu_standard_count", nullable = false)
+    @Builder.Default
+    private Integer sourceMenuStandardCount = 0;
+
+    @Column(name = "source_menu_vegetarian_count", nullable = false)
+    @Builder.Default
+    private Integer sourceMenuVegetarianCount = 0;
+
+    @Column(name = "source_menu_vegan_count", nullable = false)
+    @Builder.Default
+    private Integer sourceMenuVeganCount = 0;
+
+    @Column(name = "source_menu_gluten_free_count", nullable = false)
+    @Builder.Default
+    private Integer sourceMenuGlutenFreeCount = 0;
+
     @Column(name = "allow_guest_count_adjustment", nullable = false)
     @Builder.Default
     private boolean allowGuestCountAdjustment = false;

@@ -312,7 +312,7 @@ public class SmartPlannerBookingService {
         }
 
         if (decision == CancellationDecision.APPROVE_CANCELLATION_WEDDCHANCE) {
-            createWeddChanceFromBooking(booking, request);
+            createWeddChanceFromBooking(booking, dietLogistics, request);
         }
 
         BookingStatus availableStatus = resolveCalendarStatus(AVAILABLE);
@@ -327,7 +327,11 @@ public class SmartPlannerBookingService {
         return response;
     }
 
-    private void createWeddChanceFromBooking(Booking booking, SmartPlannerBookingDecisionRequest request) {
+    private void createWeddChanceFromBooking(
+            Booking booking,
+            GuestDietLogistics dietLogistics,
+            SmartPlannerBookingDecisionRequest request
+    ) {
         if (weddDealRepository.existsByCalendarId(booking.getCalendar().getId())) {
             throw new RuntimeException("Dla tego terminu istnieje juz oferta WeddChance");
         }
@@ -353,6 +357,13 @@ public class SmartPlannerBookingService {
                         .discountPercentage(pricing.discountPercentage())
                         .specialPricePerGuest(pricing.specialPricePerGuest())
                         .originalGuestCount(booking.getEstimatedGuests())
+                        .sourceFullService(booking.isFullService())
+                        .sourceServiceNotes(booking.getServiceNotes())
+                        .sourceAllergiesNotes(dietLogistics.getAllergiesNotes())
+                        .sourceMenuStandardCount(dietLogistics.getMenuStandardCount())
+                        .sourceMenuVegetarianCount(dietLogistics.getMenuVegetarianCount())
+                        .sourceMenuVeganCount(dietLogistics.getMenuVeganCount())
+                        .sourceMenuGlutenFreeCount(dietLogistics.getMenuGlutenFreeCount())
                         .allowGuestCountAdjustment(allowAdjustment)
                         .minGuestCount(minGuestCount)
                         .maxGuestCount(maxGuestCount)

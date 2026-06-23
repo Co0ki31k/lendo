@@ -27,20 +27,6 @@ function formatDate(value) {
   }).format(new Date(value))
 }
 
-function formatDateTime(value) {
-  if (!value) {
-    return '-'
-  }
-
-  return new Intl.DateTimeFormat('pl-PL', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(value))
-}
-
 function WeddChancePage() {
   const { isAuthenticated } = useAuth()
   const [state, setState] = useState({
@@ -59,8 +45,10 @@ function WeddChancePage() {
     successMessage: '',
   })
 
-  async function loadOffers() {
-    setState({ status: 'loading', error: '', data: null })
+  async function loadOffers({ showLoading = true } = {}) {
+    if (showLoading) {
+      setState({ status: 'loading', error: '', data: null })
+    }
 
     try {
       const response = await weddChanceApi.getOffers({ page: 0, size: 12 })
@@ -75,7 +63,35 @@ function WeddChancePage() {
   }
 
   useEffect(() => {
-    void loadOffers()
+    let isMounted = true
+
+    async function loadInitialOffers() {
+      try {
+        const response = await weddChanceApi.getOffers({ page: 0, size: 12 })
+
+        if (!isMounted) {
+          return
+        }
+
+        setState({ status: 'ready', error: '', data: response })
+      } catch (error) {
+        if (!isMounted) {
+          return
+        }
+
+        setState({
+          status: 'error',
+          error: error.response?.data?.message ?? 'Nie udalo sie pobrac ofert WeddChance.',
+          data: null,
+        })
+      }
+    }
+
+    void loadInitialOffers()
+
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   const offers = state.data?.offers?.content ?? []
@@ -104,7 +120,7 @@ function WeddChancePage() {
     setSubmitState({ status: 'loading', error: '', successMessage: '' })
 
     try {
-      const response = await weddChanceApi.submitOffer(offer.dealId, {
+      await weddChanceApi.submitOffer(offer.dealId, {
         guestCount: Number(submissionForm.guestCount),
         message: submissionForm.message.trim() ? submissionForm.message.trim() : null,
       })
@@ -112,7 +128,7 @@ function WeddChancePage() {
       setSubmitState({
         status: 'success',
         error: '',
-        successMessage: `Zgloszenie zostalo wyslane. Termin jest wstepnie zablokowany do ${formatDateTime(response.provisionalExpiresAt)}.`,
+        successMessage: 'Oferta zostala zaakceptowana i zapisana w Twoich zwyklych zgloszeniach.',
       })
       setSelectedDealId(null)
       await loadOffers()
