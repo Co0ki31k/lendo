@@ -44,6 +44,69 @@ const EMPTY_VENUE_PAGE = {
   },
 }
 
+const EMPTY_STATS = {
+  kpi: {
+    totalVenues: 0,
+    approvedVenues: 0,
+    activeBookings: 0,
+    approvedBookings: 0,
+    approvedEstimatedRevenue: 0,
+    totalInquiries: 0,
+    totalFavorites: 0,
+    activeWeddDeals: 0,
+  },
+  venues: {
+    total: 0,
+    approved: 0,
+    pending: 0,
+    draft: 0,
+    rejected: 0,
+    averagePricePerGuest: 0,
+    averageCapacityMin: 0,
+    averageCapacityMax: 0,
+    withAccommodation: 0,
+    withCivilWeddingGarden: 0,
+    byStyle: [],
+    byVoivodeship: [],
+  },
+  bookings: {
+    total: 0,
+    submitted: 0,
+    approved: 0,
+    changeRequested: 0,
+    cancellationRequested: 0,
+    rejected: 0,
+    expired: 0,
+    cancelled: 0,
+    averageGuests: 0,
+    averagePricePerGuest: 0,
+    totalEstimatedRevenue: 0,
+    approvedEstimatedRevenue: 0,
+    averageDecisionHours: 0,
+    fullServiceCount: 0,
+    withoutFullServiceCount: 0,
+    dietTotals: {
+      standard: 0,
+      vegetarian: 0,
+      vegan: 0,
+      glutenFree: 0,
+    },
+  },
+  demand: {
+    totalInquiries: 0,
+    totalFavorites: 0,
+  },
+  weddChance: {
+    activeDeals: 0,
+    averageDiscountPercentage: 0,
+    averageSpecialPricePerGuest: 0,
+    totalBookings: 0,
+    totalEstimatedRevenue: 0,
+  },
+  monthlyTrends: [],
+  topVenues: [],
+}
+
 function buildVenueListParams(query) {
   return {
     page: query.page,
@@ -59,6 +122,7 @@ function PartnerDashboardPage() {
   const { user } = useAuth()
   const [profile, setProfile] = useState(null)
   const [venueData, setVenueData] = useState(EMPTY_VENUE_PAGE)
+  const [stats, setStats] = useState(EMPTY_STATS)
   const [selectedVenueId, setSelectedVenueId] = useState(null)
   const [venueFormValues, setVenueFormValues] = useState(INITIAL_VENUE_FORM_VALUES)
   const [status, setStatus] = useState('loading')
@@ -77,8 +141,12 @@ function PartnerDashboardPage() {
     }
 
     try {
-      const venuesResponse = await partnerApi.getOwnVenues(buildVenueListParams(query))
+      const [venuesResponse, statsResponse] = await Promise.all([
+        partnerApi.getOwnVenues(buildVenueListParams(query)),
+        partnerApi.getStatsOverview(),
+      ])
       setVenueData(venuesResponse)
+      setStats(statsResponse ?? EMPTY_STATS)
       setSelectedVenueId((currentSelectedVenueId) => {
         const nextActionableVenues = venuesResponse.items.filter((venue) => ['APPROVED', 'DRAFT'].includes(venue.status))
 
@@ -101,12 +169,14 @@ function PartnerDashboardPage() {
     setNotice('')
 
     try {
-      const [profileResponse, venuesResponse] = await Promise.all([
+      const [profileResponse, venuesResponse, statsResponse] = await Promise.all([
         partnerApi.getPartnerProfile(),
         partnerApi.getOwnVenues(buildVenueListParams(venueQuery)),
+        partnerApi.getStatsOverview(),
       ])
       setProfile(profileResponse)
       setVenueData(venuesResponse)
+      setStats(statsResponse ?? EMPTY_STATS)
       setSelectedVenueId((currentSelectedVenueId) => {
         const nextAllVenues = venuesResponse.items
         const nextActionableVenues = nextAllVenues.filter((venue) => ['APPROVED', 'DRAFT'].includes(venue.status))
@@ -259,7 +329,7 @@ function PartnerDashboardPage() {
 
   function renderWorkspace() {
     if (managerView === 'stats') {
-      return <StatsView summary={venueData.summary} />
+      return <StatsView stats={stats} />
     }
 
     if (managerView === 'create') {

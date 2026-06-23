@@ -15,6 +15,11 @@ export async function getOwnVenues(params = {}) {
   return response.data
 }
 
+export async function getStatsOverview() {
+  const response = await api.get('/api/partner/stats/overview')
+  return response.data
+}
+
 export async function createVenue(payload) {
   const response = await api.post('/api/partner/venues', payload)
   return response.data

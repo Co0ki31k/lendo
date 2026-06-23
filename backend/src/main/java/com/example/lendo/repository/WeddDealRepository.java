@@ -11,10 +11,13 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
 
 @Repository
 public interface WeddDealRepository extends JpaRepository<WeddDeal, Long> {
     boolean existsByCalendarId(Long calendarId);
+    List<WeddDeal> findAllByVenueManagerIdAndActiveTrue(UUID managerId);
 
     @Query("""
             select wd
