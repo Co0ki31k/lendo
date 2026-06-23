@@ -2,7 +2,7 @@ export const SMART_PLANNER_STATUS_LABELS = {
   SUBMITTED: 'Oczekujace',
   APPROVED: 'Zatwierdzone',
   CHANGE_REQUESTED: 'Zmiana do akceptacji',
-  CANCELLATION_REQUESTED: 'Prosba o anulacje',
+  CANCELLATION_REQUESTED: 'Prośba o anulowanie',
   REJECTED: 'Odrzucone',
   EXPIRED: 'Wygasle',
   CANCELLED: 'Anulowane',

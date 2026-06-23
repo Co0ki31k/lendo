@@ -35,6 +35,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -331,11 +332,9 @@ public class SmartPlannerBookingService {
             throw new RuntimeException("Dla tego terminu istnieje juz oferta WeddChance");
         }
 
-        if (request.discountPercentage() == null || request.specialPricePerGuest() == null) {
-            throw new RuntimeException("Do stworzenia WeddChance wymagany jest rabat i cena specjalna");
-        }
+        WeddChancePricing pricing = resolveWeddChancePricing(booking.getVenue().getBasePricePerGuest(), request);
 
-        if (request.specialPricePerGuest().compareTo(booking.getVenue().getBasePricePerGuest()) >= 0) {
+        if (pricing.specialPricePerGuest().compareTo(booking.getVenue().getBasePricePerGuest()) >= 0) {
             throw new RuntimeException("Cena specjalna musi byc nizsza niz standardowa cena obiektu");
         }
 
@@ -351,8 +350,8 @@ public class SmartPlannerBookingService {
                 WeddDeal.builder()
                         .venue(booking.getVenue())
                         .calendar(booking.getCalendar())
-                        .discountPercentage(request.discountPercentage())
-                        .specialPricePerGuest(request.specialPricePerGuest())
+                        .discountPercentage(pricing.discountPercentage())
+                        .specialPricePerGuest(pricing.specialPricePerGuest())
                         .originalGuestCount(booking.getEstimatedGuests())
                         .allowGuestCountAdjustment(allowAdjustment)
                         .minGuestCount(minGuestCount)
@@ -361,6 +360,44 @@ public class SmartPlannerBookingService {
                         .active(true)
                         .build()
         );
+    }
+
+    private WeddChancePricing resolveWeddChancePricing(
+            BigDecimal basePricePerGuest,
+            SmartPlannerBookingDecisionRequest request
+    ) {
+        Integer discountPercentage = request.discountPercentage();
+        BigDecimal specialPricePerGuest = request.specialPricePerGuest();
+
+        if (discountPercentage == null && specialPricePerGuest == null) {
+            throw new RuntimeException("Do stworzenia WeddChance podaj rabat albo cene specjalna");
+        }
+
+        if (discountPercentage != null && (discountPercentage < 1 || discountPercentage > 100)) {
+            throw new RuntimeException("Rabat musi byc w zakresie 1-100");
+        }
+
+        if (specialPricePerGuest != null && specialPricePerGuest.compareTo(BigDecimal.ZERO) < 0) {
+            throw new RuntimeException("Cena specjalna nie moze byc ujemna");
+        }
+
+        if (specialPricePerGuest == null) {
+            BigDecimal multiplier = BigDecimal.ONE.subtract(
+                    BigDecimal.valueOf(discountPercentage).divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP)
+            );
+            specialPricePerGuest = basePricePerGuest.multiply(multiplier).setScale(2, RoundingMode.HALF_UP);
+        }
+
+        if (discountPercentage == null) {
+            BigDecimal discountRatio = BigDecimal.ONE.subtract(
+                    specialPricePerGuest.divide(basePricePerGuest, 4, RoundingMode.HALF_UP)
+            );
+            discountPercentage = discountRatio.multiply(BigDecimal.valueOf(100))
+                    .setScale(0, RoundingMode.HALF_UP)
+                    .intValueExact();
+        }
+
+        return new WeddChancePricing(discountPercentage, specialPricePerGuest);
     }
 
     private void deleteBookingTraces(Booking booking, GuestDietLogistics dietLogistics) {
@@ -725,6 +762,12 @@ public class SmartPlannerBookingService {
             Integer menuVeganCount,
             Integer menuGlutenFreeCount,
             String allergiesNotes
+    ) {
+    }
+
+    private record WeddChancePricing(
+            Integer discountPercentage,
+            BigDecimal specialPricePerGuest
     ) {
     }
 }
