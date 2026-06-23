@@ -137,7 +137,7 @@ function SmartPlannerBookingDetailPage() {
     } catch (requestError) {
       setActionState({
         status: 'error',
-        error: requestError.response?.data?.message ?? 'Nie udalo sie wyslac prosby o anulacje.',
+        error: requestError.response?.data?.message ?? 'Nie udalo sie wyslac prośby o anulowanie.',
       })
     }
   }
@@ -372,7 +372,7 @@ function SmartPlannerBookingDetailPage() {
 
         {isApproved ? (
           <section className="smartplanner-booking-detail__block">
-            <h2>Prosba o anulacje</h2>
+            <h2>Prośba o anulowanie</h2>
             <form className="smartplanner-booking-detail__form" onSubmit={(event) => void handleCancellationRequest(event)}>
               <label className="smartplanner-booking-detail__field smartplanner-booking-detail__field--full">
                 <span>Powod anulacji</span>
@@ -380,14 +380,14 @@ function SmartPlannerBookingDetailPage() {
               </label>
 
               <button type="submit" className="smartplanner-booking-detail__action smartplanner-booking-detail__action--danger" disabled={actionState.status === 'loading'}>
-                {actionState.status === 'loading' ? 'Wysylanie...' : 'Wyslij prosbe o anulacje'}
+                {actionState.status === 'loading' ? 'Wysylanie...' : 'Wyslij prośbę o anulowanie'}
               </button>
             </form>
           </section>
         ) : null}
 
         {actionState.status === 'error' ? <p className="smartplanner-booking-detail__error smartplanner-booking-detail__error--inline">{actionState.error}</p> : null}
-        {actionState.status === 'success' ? <div className="smartplanner-booking-detail__success">Prosba zostala wyslana do managera.</div> : null}
+        {actionState.status === 'success' ? <div className="smartplanner-booking-detail__success">Prośba została wysłana do managera.</div> : null}
       </section>
     </main>
   )

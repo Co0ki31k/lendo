@@ -141,6 +141,88 @@
   line-height: 1.6;
 }
 
+.weddchance-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.weddchance-page__action {
+  width: fit-content;
+  padding: 12px 20px;
+  border: 0;
+  border-radius: 999px;
+  background: #7d2f27;
+  color: #fff7f1;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 14px 30px rgba(125, 47, 39, 0.18);
+  transition: transform 0.18s ease, background-color 0.18s ease;
+}
+
+.weddchance-page__action:hover,
+.weddchance-page__action:focus-visible {
+  background: #68271f;
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.weddchance-page__action:disabled {
+  cursor: default;
+  opacity: 0.6;
+  transform: none;
+}
+
+.weddchance-page__hint {
+  color: #5b4a41;
+}
+
+.weddchance-page__form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(100, 66, 45, 0.1);
+}
+
+.weddchance-page__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #241712;
+  font-weight: 600;
+}
+
+.weddchance-page__field--full {
+  grid-column: 1 / -1;
+}
+
+.weddchance-page__field input,
+.weddchance-page__field textarea {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid rgba(100, 66, 45, 0.16);
+  border-radius: 12px;
+  background: #fffdf9;
+  color: #241712;
+  font: inherit;
+}
+
+.weddchance-page__field textarea {
+  resize: vertical;
+}
+
+.weddchance-page__field input:focus,
+.weddchance-page__field textarea:focus {
+  outline: none;
+  border-color: rgba(125, 47, 39, 0.3);
+  box-shadow: 0 0 0 4px rgba(125, 47, 39, 0.08);
+}
+
 .weddchance-page__notice,
 .weddchance-page__error {
   margin-top: 24px;
@@ -154,12 +236,31 @@
   color: #7a1d1d;
 }
 
+.weddchance-page__error--inline {
+  width: 100%;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.weddchance-page__success {
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px solid rgba(51, 122, 76, 0.18);
+  border-radius: 12px;
+  background: rgba(51, 122, 76, 0.1);
+  color: #245236;
+}
+
 @media (max-width: 960px) {
   .weddchance-page__card {
     grid-template-columns: 1fr;
   }
 
   .weddchance-page__summary {
+    grid-template-columns: 1fr;
+  }
+
+  .weddchance-page__form {
     grid-template-columns: 1fr;
   }
 }
